@@ -12,7 +12,7 @@
 	this.useRetsFieldName="system";
 
 
-	this.arrColumns=listtoarray("activestatusdate,additionalapplicantfee,additionalmembershipavailableyn,additionalparcelyn,additionalpetfees,additionalrooms,additionaltaxids,address,listoffice_mui,adjoiningproperty,listagent_mui,agentfax,agenthomepage,agentofficeext,agentpagercell,airconditioning,alternatekeyfolionum,annualcddfee,annualexpenses,annualgrossincome,officewebsite,annualnetincome,annualrent,annualtotalscheduledincome,appliancesincluded,applicationfee,architecturalstyle,assocapprreqyn,associationapplicationfee,associationapprovalfee,associationfeeincludes,auctionyn,availability,availabilitycom,avgrent1bed1bath,avgrent2bed1bath,avgrent2bed2bath,avgrent3bed1bath,avgrent3bed2bath,awcremarks,bathsfull,bathshalf,bathstotal,assocapprovreqyn,bedstotal,blockparcel,buildingnamenumber,buildingnumfloors,campersqft,cddyn,cdom,ceilingheight,deedrestrictionsyn,ceilingtype,classofspace,closedate,closeprice,colistagentdirectworkphone,colistagentfullname,colistagentmlsid,yrsofownerpriortoleasingreqyn,colistofficemlsid,colistofficename,communityfeatures,complexcommunitynamenccb,complexdevelopmentname,condoenvironmentyn,condofees,condofeesterm,waterfrontagefeetlake,approvalprocess,constructionstatus,contractstatus,convertedresidenceyn,cosellingagentfullname,waterfrontagefeetcanalsalt,cosellingagentmlsid,cosellingofficemlsid,cosellingofficename,country,countylandusecode,countyorparish,countypropertyusecode,currentadjacentuse,currentprice,dateavailable,buyerspremium,waterfrontagefeeticw,amenitiesaddnlfees,disastermitigation,enddateoflse,easementscom,disclosures,dom,listofficeheadoffice_mui,doorheight,vaclpsqft,doorwidth,dprurl,buildingelevatoryn,dprurl2,dpryn,drivingdirections,easements,eavesheight,efficienciesnumberof,efficiencyavgrent,condolandincludedyn,electricalservice,elementaryschool,estannualmarketincome,auctiontype,existingleasebuyoutallow,expectedclosingdate,exteriorconstruction,exteriorfeatures,fences,financialsource,financingavailable,financingterms,fireplacedescription,fireplaceyn,flexspacesqft,floodzonecode,floorcovering,floornum,floorsinunit,forleaseyn,foundation,freezerspaceyn,frontagedescription,frontexposure,frontfootage,furnishings,futurelanduse,garagecarport,garagedimensions,garagedoorheight,garagefeatures,greencertifications,numofownyrspriortolse,greenenergyfeatures,greenlandscaping,greensiteimprovements,greenwaterfeatures,heatingandfuel,canpropertybelsedyn,hersindex,highschool,hoacommonassn,hoafee,waterfrontagefeetgulfocean,hoapaymentschedule,waterfrontagefeetocean2bay,homesteadyn,housingforolderpersons,idxoptinyn,waterfrontagefeetbayou,idxvowdisplaycommentsyn,indoorairquality,interiorfeatures,interiorlayout,internetyn,kitchenfeatures,landleasefee,lastdateavailable,lastmonthsrent,leasefee,leaseprice,leasepriceperacre,leasepricepersf,leasepriceperyr,leaseremarks,leaseterms,legaldescription,legalsubdivisionname,lengthoflease,listagentdirectworkphone,listagentemail,listagentfullname,listagentmlsid,listingcontractdate,listingtype,listingwphotoapprovedyn,listofficemlsid,listofficename,listofficephone,listprice,waterfrontagefeetbeachprvt,location,longtermyn,lotdimensions,lotnum,lotsizeacres,lotsizesqft,lpsqft,lsclistside,lscsellside,maintenanceincludes,management,mandatoryfees,existlsetenantyn,masterbathfeatures,masterbedsize,matrix_unique_id,matrixmodifieddt,maxpetweight,mfrconsumeryn,floodzonepanel,mhwidth,middleorjuniorschool,millagerate,minimumdaysleased,minimumlease,miscellaneous,miscellaneous2,mlsareamajor,mlsnumber,modelmake,modelname,momaintamtadditiontohoa,monthlycondofeeamount,monthlyhoaamount,netleasablesqft,netoperatingincome,netoperatingincometype,newconstructionyn,nonrepcomp,num1bed1bath,num2bed1bath,num2bed2bath,num3bed1bath,num3bed2bath,numofaddparcels,currencymonthlyrentamt,numofbays,numofbaysdockhigh,weeksavailable2016,numofbaysgradelevel,numofconferencemeetingrooms,numofhotelmotelrms,numofoffices,numofpets,mthtomthorweeklyyn,vacspsqft,numofrestrooms,numtimesperyear,officefax,officeprimaryboardid,waterfrontagefeetcanalfresh,officeretailspacesqft,offmarketdate,waterfrontagefeetcreek,offseasonrent,originalentrytimestamp,auctionfirm_website,originallistprice,otherexemptionsyn,otherfees,otherfeesamount,additionalwaterinformation,otherfeesterm,otherfeesyn,parcelnumber,parking,petdeposit,petfeenonrefundable,petrestrictions,waterfrontagefeetcanalbrackish,petrestrictionsyn,petsallowedyn,petsize,photocount,photomodificationtimestamp,plannedunitdevelopmentyn,platbookpage,pool,pooldimensions,pooltype,porches,waterfrontagefeetbayharbor,postalcode,postalcodeplus4,pricechangetimestamp,priceperacre,projectedcompletiondate,propertydescription,propertystatus,propertystyle,daystoclosed,propertystylecom,propertytype,propertyuse,providermodificationtimestamp,publicremarksnew,range,realtorinfo,realtoronlyremarks,recipsellagentname,floodzonedate,recipsellofficename,rentalratetype,rentconcession,rentincludes,roadfrontage,roadfrontageft,additionallserestrict,roof,roomcount,seasonalrent,daysnoticetotenantifnotrenew,section,securitydeposit,sellingagentfullname,sellingagentmlsid,sellingofficemlsid,sellingofficename,showpropaddroninternetyn,auctionpropaccessyn,sidewalkyn,singleagentcomp,waterfrontagefeetmarina,siteimprovements,soldremarks,waterfrontagefeetfcwlsc,spacetype,speciallistingtype,waterfrontagefeetpond,specialsaleprovision,specialtaxdisttampayn,splpratio,spsqft,sqftgross,sqftheated,sqfttotal,squarefootsource,statelandusecode,stateorprovince,statepropertyusecode,status,statuschangetimestamp,waterfrontagefeetlagoon,streetcity,streetdirprefix,streetdirsuffix,waterfrontagefeetbrackishwater,streetname,streetnumber,streetsuffix,studiodimensions,subdivisionnum,subdivisionsectionnumber,swsubdivcommunityname,swsubdivcondonum,taxes,taxyear,teamname,tempoffmarketdate,totalacreage,totalmonthlyexpenses,fanniemaedtc,totalmonthlyrent,totalnumbuildings,totalunits,township,transbrokercomp,transportationaccess,unitcount,unitnumber,waterfrontagefeetriver,units,weeksavailable2015,usecode,utilities,virtualtourlink,virtualtoururl2,warehousespaceheated,warehousespacetotal,wateraccess,wateraccessyn,waterextras,waterextrasyn,waterfrontage,waterfrontageyn,waterfrontfeet,watername,waterview,waterviewyn,weeklyrent,weeksavailable2011,weeksavailable2012,waterfrontagefeetlakechain,weeksavailable2013,weeksavailable2014,windowcoverings,yearbuilt,zoning,zoningcompatibleyn,waterfrontagefeetbeachpub", ",");
+	this.arrColumns=listtoarray("ActiveStatusDate,AdditionalApplicantFee,AdditionalLseRestrict,AdditionalMembershipAvailableYN,AdditionalParcelYN,AdditionalPetFees,AdditionalRooms,AdditionalTaxIDs,AdditionalWaterInformation,Address,AdjoiningProperty,AgentFax,AgentHomePage,AgentOfficeExt,AgentPagerCell,AirConditioning,AlternateKeyFolioNum,AmenitiesAddnlFees,AnnualCDDFee,AnnualExpenses,AnnualGrossIncome,AnnualNetIncome,AnnualRent,AnnualTotalScheduledIncome,AppliancesIncluded,ApplicationFee,ApprovalProcess,ArchitecturalStyle,AssocApprReqYN,AssocApprovReqYN,AssociationApplicationFee,AssociationApprovalFee,AssociationFeeIncludes,AuctionFirm_Website,AuctionPropAccessYN,AuctionType,AuctionYN,Availability,AvailabilityCOM,AvgRent1Bed1Bath,AvgRent2Bed1Bath,AvgRent2Bed2Bath,AvgRent3Bed1Bath,AvgRent3Bed2Bath,AvgRent4PlusBed1Bath,AvgRent4PlusBed2PlusBath,AWCRemarks,BathsFull,BathsHalf,BathsTotal,BedsTotal,BlockParcel,BuildingElevatorYN,BuildingNameNumber,BuildingNumFloors,BuyersPremium,CAMPerSqFt,CanPropertyBeLsedYN,CDDYN,CDOM,CeilingHeight,CeilingType,ClassofSpace,CloseDate,ClosePrice,CoListAgentDirectWorkPhone,CoListAgentFullName,CoListAgentMLSID,CoListOfficeMLSID,CoListOfficeName,CoSellingAgentFullName,CoSellingAgentMLSID,CoSellingOfficeMLSID,CoSellingOfficeName,CommunityFeatures,ComplexCommunityNameNCCB,ComplexDevelopmentName,ConditionExpDate,CondoEnvironmentYN,CondoFees,CondoFeesTerm,CondoLandIncludedYN,ConstructionStatus,ContractStatus,ConvertedResidenceYN,Country,CountyLandUseCode,CountyOrParish,CountyPropertyUseCode,CurrencyMonthlyRentAmt,CurrentAdjacentUse,CurrentPrice,DateAvailable,DaysNoticetoTenantifnotRenew,DaysToClosed,DeedRestrictionsYN,DisasterMitigation,Disclosures,DOM,DoorHeight,DoorWidth,DPRURL,DPRURL2,DPRYN,DrivingDirections,Easements,EasementsCOM,EavesHeight,EfficienciesNumberOf,EfficiencyAvgRent,ElectricalService,ElementarySchool,EndDateofLse,EstAnnualMarketIncome,ExistLseTenantYN,ExistingLeaseBuyoutAllow,ExpectedClosingDate,ExteriorConstruction,ExteriorFeatures,FannieMaeDTC,Fences,FinancialSource,FinancingAvailable,FinancingTerms,FireplaceDescription,FireplaceYN,FlexSpaceSqFt,FloodZoneCode,FloodZoneDate,FloodZonePanel,FloorCovering,FloorNum,FloorsinUnit,ForLeaseYN,Foundation,FreezerSpaceYN,FrontExposure,FrontFootage,FrontageDescription,Furnishings,FutureLandUse,GarageCarport,GarageDimensions,GarageDoorHeight,GarageFeatures,GreenCertifications,GreenEnergyFeatures,GreenLandscaping,GreenSiteImprovements,GreenWaterFeatures,HeatingandFuel,HERSIndex,HighSchool,HOACommonAssn,HOAFee,HOAPaymentSchedule,HomesteadYN,HousingForOlderPersons,IDXOptInYN,IDXVOWDisplayCommentsYN,IndoorAirQuality,InteriorFeatures,InteriorLayout,InternetYN,KitchenFeatures,LandLeaseFee,LastDateAvailable,LastMonthsRent,Latitude,LeaseFee,LeasePrice,LeasePricePerAcre,LeasePricePerYr,LeasePriceperSF,LeaseRemarks,LeaseTerms,LegalDescription,LegalSubdivisionName,LengthofLease,ListAgentDirectWorkPhone,ListAgentEmail,ListAgentFullName,ListAgentMLSID,ListAgent_MUI,ListOfficeHeadOffice_MUI,ListOfficeMLSID,ListOffice_MUI,ListOfficeName,ListOfficePhone,ListPrice,ListingContractDate,ListingType,ListingwPhotoApprovedYN,Location,LongTermYN,Longitude,LotDimensions,LotNum,LotSizeAcres,LotSizeSqFt,LPSqFt,LSCListSide,LSCSellSide,MaintenanceIncludes,Management,MandatoryFees,MasterBathFeatures,MasterBedSize,MatrixModifiedDT,Matrix_Unique_ID,MaxPetWeight,MHWidth,MiddleorJuniorSchool,MillageRate,MinimumDaysLeased,MinimumLease,Miscellaneous,Miscellaneous2,MLSAreaMajor,MLSNumber,MoMaintAmtadditiontoHOA,ModelMake,ModelName,MonthlyCondoFeeAmount,MonthlyHOAAmount,MonthsAvailable2016,MonthsAvailable2017,MonthsAvailable2018,MthtoMthorWeeklyYN,NetLeasableSqFt,NetOperatingIncome,NetOperatingIncomeType,NewConstructionYN,NonRepComp,Num1Bed1Bath,Num2Bed1Bath,Num2Bed2Bath,Num3Bed1Bath,Num3Bed2Bath,Num4PlusBed1Bath,Num4PlusBed2PlusBath,NumTimesperYear,NumofAddParcels,NumofBays,NumofBaysDockHigh,NumofBaysGradeLevel,NumofConferenceMeetingRooms,NumofHotelMotelRms,NumofOffices,NumofOwnYrsPriortoLse,NumofPets,NumofRestrooms,OffMarketDate,OffSeasonRent,OfficeFax,OfficePrimaryBoardID,OfficeRetailSpaceSqFt,OfficeWebsite,OriginalEntryTimestamp,OriginalListPrice,OtherExemptionsYN,OtherFees,OtherFeesAmount,OtherFeesTerm,OtherFeesYN,ParcelNumber,Parking,PetDeposit,PetFeeNonRefundable,PetRestrictions,PetRestrictionsYN,PetSize,PetsAllowedYN,PhotoCount,PhotoModificationTimestamp,PlannedUnitDevelopmentYN,PlatBookPage,Pool,PoolDimensions,PoolType,Porches,PostalCode,PostalCodePlus4,PriceChangeTimestamp,PricePerAcre,ProjectedCompletionDate,PropertyDescription,PropertyStatus,PropertyStyle,PropertyStyleCOM,PropertyType,PropertyUse,ProviderModificationTimestamp,PublicRemarksNew,Range,RealtorInfo,RealtorOnlyRemarks,RecipSellAgentName,RecipSellOfficeName,RentConcession,RentIncludes,RentalRateType,RoadFrontage,RoadFrontageFt,Roof,RoomCount,SeasonalRent,Section,SecurityDeposit,SellingAgentFullName,SellingAgentMLSID,SellingOfficeMLSID,SellingOfficeName,ShowPropAddrOnInternetYN,SidewalkYN,SingleAgentComp,SiteImprovements,SoldRemarks,SPSqFt,SpaceType,SpecialListingType,SpecialSaleProvision,SpecialTaxDistTampaYN,SPLPRatio,SqFtGross,SqFtHeated,SqFtTotal,SquareFootSource,StateLandUseCode,StatePropertyUseCode,StateOrProvince,Status,StatusChangeTimestamp,StreetCity,StreetDirPrefix,StreetDirSuffix,StreetName,StreetNumber,StreetSuffix,StudioDimensions,SubdivisionNum,SubdivisionSectionNumber,SWSubdivCommunityName,SWSubdivCondoNum,TaxYear,Taxes,TeamName,TempOffMarketDate,TotalAcreage,TotalMonthlyExpenses,TotalMonthlyRent,TotalNumBuildings,TotalUnits,Township,TransBrokerComp,TransportationAccess,UnitCount,UnitNumber,Units,UseCode,Utilities,VACLPSqFt,VACSPSqFt,VirtualTourLink,VirtualTourURL2,WarehouseSpaceHeated,WarehouseSpaceTotal,WaterAccess,WaterAccessYN,WaterExtras,WaterExtrasYN,WaterFrontage,WaterFrontageFeetBayHarbor,WaterFrontageFeetBayou,WaterFrontageFeetBeachPrvt,WaterFrontageFeetBeachPub,WaterFrontageFeetBrackishWater,WaterFrontageFeetCanalBrackish,WaterFrontageFeetCanalFresh,WaterFrontageFeetCanalSalt,WaterFrontageFeetCreek,WaterFrontageFeetFCWLSC,WaterFrontageFeetGulfOcean,WaterFrontageFeetICW,WaterFrontageFeetLagoon,WaterFrontageFeetLake,WaterFrontageFeetLakeChain,WaterFrontageFeetMarina,WaterFrontageFeetOcean2Bay,WaterFrontageFeetPond,WaterFrontageFeetRiver,WaterFrontageYN,WaterName,WaterView,WaterViewYN,WaterfrontFeet,WeeklyRent,WeeksAvailable2011,WeeksAvailable2012,WeeksAvailable2013,WeeksAvailable2014,WeeksAvailable2015,WeeksAvailable2016,WeeksAvailable2017,WeeksAvailable2018,WindowCoverings,WithdrawnStatus,YearBuilt,YrsOfOwnerPriorToLeasingReqYN,Zoning,ZoningCompatibleYN", ",");
 	this.arrFieldLookupFields=arraynew(1);
 	this.mls_provider="rets25";
 	this.sysidfield="rets25_matrix_unique_id";
@@ -45,21 +45,7 @@
 	this.remapFieldStruct=variables.t5;
 
 	
-	</cfscript>
-
-    <cffunction name="deleteListings" localmode="modern" output="no" returntype="any">
-    	<cfargument name="idlist" type="string" required="yes">
-    	<cfscript>
-		var db=request.zos.queryObject;
-		var arrId=listtoarray(mid(replace(arguments.idlist," ","","ALL"),2,len(arguments.idlist)-2),"','");
-		super.deleteListings(arguments.idlist);
-		db.sql="DELETE FROM #db.table("rets25_property", request.zos.zcoreDatasource)#  
-		WHERE rets25_mlsnumber LIKE #db.param('#this.mls_id#-%')# and 
-		rets25_mlsnumber IN (#db.trustedSQL(arguments.idlist)#)";
-		db.execute("q"); 
-		</cfscript>
-    </cffunction>
-    
+	</cfscript> 
     
     <cffunction name="parseRawData" localmode="modern" output="yes" returntype="any">
     	<cfargument name="ss" type="struct" required="yes">
@@ -103,7 +89,7 @@
 				if(structkeyexists(request.zos.listing.mlsStruct[this.mls_id].sharedStruct.metaStruct["property"].tableFields, this.arrColumns[i])){
 					this.emptyStruct[request.zos.listing.mlsStruct[this.mls_id].sharedStruct.metaStruct["property"].tableFields[this.arrColumns[i]].longname]="";
 				}else{
-					application.zcore.template.fail("I must update the arrColumns list with show fields from rets25_property");	
+					application.zcore.template.fail("I must update the arrColumns list");	
 				}
 			}
 		}
@@ -114,8 +100,7 @@
 DELETE FROM `#request.zos.zcoreDatasource#`.listing_track WHERE listing_id LIKE '25-%';
 DELETE FROM `#request.zos.zcoreDatasource#`.listing WHERE listing_id LIKE '25-%';
 DELETE FROM `#request.zos.zcoreDatasource#`.listing_data WHERE listing_id LIKE '25-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.`listing_memory` WHERE listing_id LIKE '25-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.rets25_property where rets25_mlsnumber LIKE '25-%';
+DELETE FROM `#request.zos.zcoreDatasource#`.`listing_memory` WHERE listing_id LIKE '25-%'; 
 		
 		
 		*/
@@ -552,6 +537,7 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets25_property where rets25_mlsnumb
 		rs.listing_data_detailcache3=listing_data_detailcache3;
 		//writedump(rs);		writedump(ts);abort;
 
+		rs.listing_track_sysid=ts["rets25_matrix_unique_id"];
 
 		tempTime=gettickcount('nano');
 		application.idxImportTimerStruct.parseRow2+=(tempTime-startTime);
@@ -564,62 +550,32 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets25_property where rets25_mlsnumb
 		};
 		</cfscript>
     </cffunction>
-    
-    <cffunction name="getJoinSQL" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="joinType" type="string" required="no" default="INNER">
-		<cfscript>
-		var db=request.zos.queryObject;
-		</cfscript>
-    	<cfreturn "#arguments.joinType# JOIN #db.table("rets25_property", request.zos.zcoreDatasource)# rets25_property ON rets25_property.rets25_mlsnumber = listing.listing_id">
-    </cffunction>
-    <cffunction name="getPropertyListingIdSQL" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets25_property.rets25_mlsnumber">
-    </cffunction>
-    <cffunction name="getListingIdField" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets25_mlsnumber">
-    </cffunction>
+
     <cffunction name="getDetails" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="query" type="query" required="yes">
+    	<cfargument name="ss" type="struct" required="yes">
         <cfargument name="row" type="numeric" required="no" default="#1#">
         <cfargument name="fulldetails" type="boolean" required="no" default="#false#">
-    	<cfscript>
-		var q1=0;
-		var t1=0;
-		var t3=0;
-		var t2=0;
-		var i10=0;
-		var value=0;
-		var shortColumn=0;
-		var curTableData=0;
-		var t4=0;
-		var i=0;
-		var n=0;
-		var column=0;
-		var arrV=0;
-		var t44444=0;
-		var t99=0;
-		var details=0;
-		var arrV2=0;
-		var idx=this.baseGetDetails(arguments.query, arguments.row, arguments.fulldetails);
+    	<cfscript> 
+		var idx=this.baseGetDetails(arguments.ss, arguments.row, arguments.fulldetails);
 		t99=gettickcount();
 		idx["features"]="";
 		t44444=0;
 		idx.listingSource=request.zos.listing.mlsStruct[listgetat(idx.listing_id,1,'-')].mls_disclaimer_name;
 		
 		request.lastPhotoId="";
-		if(arguments.query.listing_photocount EQ 0){
+		if(arguments.ss.listing_photocount EQ 0){
 			idx["photo1"]='/z/a/listing/images/image-not-available.gif';
 		}else{
 			i=1;
 			
-			for(i=1;i LTE arguments.query.listing_photocount;i++){
+			for(i=1;i LTE arguments.ss.listing_photocount;i++){
 				
-				local.fNameTemp1=arguments.query.listing_id&"-"&i&".jpeg";
+				local.fNameTemp1=arguments.ss.listing_id&"-"&i&".jpeg";
 				local.fNameTempMd51=lcase(hash(local.fNameTemp1, 'MD5'));
 				local.absPath='#request.zos.sharedPath#mls-images/25/'&left(local.fNameTempMd51,2)&"/"&mid(local.fNameTempMd51,3,1)&"/"&local.fNameTemp1;
 				//if(fileexists(local.absPath)){
 					if(i EQ 1){
-						request.lastPhotoId=arguments.query.listing_id;
+						request.lastPhotoId=arguments.ss.listing_id;
 					}
 					idx["photo"&i]=request.zos.retsPhotoPath&'25/'&left(local.fNameTempMd51,2)&"/"&mid(local.fNameTempMd51,3,1)&"/"&local.fNameTemp1;
 				/*}else{
@@ -630,25 +586,25 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets25_property where rets25_mlsnumb
 				}*/
 			}
 		}
-			idx["agentName"]=arguments.query["rets25_listagentfullname"];
-			idx["agentPhone"]=arguments.query["RETS25_LISTAGENTDIRECTWORKPHONE"];
-			idx["agentEmail"]=arguments.query["rets25_listagentemail"];
-			idx["officeName"]=arguments.query["rets25_listofficename"];
-			idx["officePhone"]=arguments.query["RETS25_LISTOFFICEPHONE"];
+			idx["agentName"]=arguments.ss["rets25_listagentfullname"];
+			idx["agentPhone"]=arguments.ss["RETS25_LISTAGENTDIRECTWORKPHONE"];
+			idx["agentEmail"]=arguments.ss["rets25_listagentemail"];
+			idx["officeName"]=arguments.ss["rets25_listofficename"];
+			idx["officePhone"]=arguments.ss["RETS25_LISTOFFICEPHONE"];
 			idx["officeCity"]="";
 			idx["officeAddress"]="";
 			idx["officeZip"]="";
 			idx["officeState"]="";
 			idx["officeEmail"]="";
 			
-		idx["virtualtoururl"]=arguments.query["rets25_virtualtourlink"];
-		idx["zipcode"]=arguments.query["rets#this.mls_id#_postalcode"][arguments.row];
-		if(arguments.query["rets25_totalmonthlyexpenses"][arguments.row] NEQ ""){
-			idx["maintfees"]=arguments.query["rets25_totalmonthlyexpenses"][arguments.row];
-		}else if(arguments.query["rets#this.mls_id#_hoafee"][arguments.row] NEQ ""){
-			idx["maintfees"]=arguments.query["rets#this.mls_id#_hoafee"][arguments.row];
-		}else if(arguments.query["rets#this.mls_id#_condofees"][arguments.row] NEQ ""){
-			idx["maintfees"]=arguments.query["rets#this.mls_id#_condofees"][arguments.row];
+		idx["virtualtoururl"]=application.zcore.functions.zso(arguments.ss, "rets25_virtualtourlink");
+		idx["zipcode"]=application.zcore.functions.zso(arguments.ss, "rets#this.mls_id#_postalcode");
+		if(application.zcore.functions.zso(arguments.ss, "rets25_totalmonthlyexpenses") NEQ ""){
+			idx["maintfees"]=arguments.ss["rets25_totalmonthlyexpenses"];
+		}else if(application.zcore.functions.zso(arguments.ss, "rets#this.mls_id#_hoafee") NEQ ""){
+			idx["maintfees"]=arguments.ss["rets#this.mls_id#_hoafee"];
+		}else if(application.zcore.functions.zso(arguments.ss, "rets#this.mls_id#_condofees") NEQ ""){
+			idx["maintfees"]=arguments.ss["rets#this.mls_id#_condofees"];
 			
 		}else{
 			idx["maintfees"]=0;

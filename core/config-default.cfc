@@ -15,7 +15,7 @@
 	ts.zos.testDomain="127.0.0.2.xip.io";
     ts.zos.productionTestDomain="zsite.info"; // configure to be a valid domain you own with wildcard dns record (*) to ease setting up new sites with working dns.
 	ts.zos.testManagerDomain="127.0.0.2.xip.io";  // xip.io is much slower then using your local hosts file or a local dns server, but it works without additional configuration.  Learn more about xip.io: http://xip.io/  - You can also host your own xip daemon using node.js.
-	if(findnocase("."&ts.zos.testDomain, arguments.tempCgi.http_host) NEQ 0 or findnocase("."&ts.zos.testManagerDomain, arguments.tempCgi.http_host) NEQ 0){
+	if(findnocase("."&ts.zos.testDomain, arguments.tempCgi.local_host) NEQ 0 or findnocase("."&ts.zos.testManagerDomain, arguments.tempCgi.local_host) NEQ 0){
 		ts.zos.installPath="/var/jetendo-server/jetendo/";
 		ts.zOS.istestserver=true;
 	}else{
@@ -26,7 +26,7 @@
 		return duplicate(server["jetendo_"&ts.zos.installPath&"_globalscache"]); 
 	}
 	
-
+	ts.zos.disable404Log=true; // set to false to store all 404 errors in log404 table.
 	ts.zos.debugLeadRoutingSiteIdStruct={}; // if you want to debug leading routing in production for specific site_ids, add the site_id as a key to this struct.
 
 	ts.zos.customCFMLVersion = ""; // if you build your own lucee/railo, and features for specific versions, then put in the custom lucee/railo version number here, i.e. 4.2.1.102

@@ -8,11 +8,11 @@ if(request.zos.istestserver){
 	variables.hqPhotoPath="#request.zos.sharedPath#mls-images/28/";
 }else{
 	variables.hqPhotoPath="#request.zos.sharedPath#mls-images/28/";
-}
+} 
 this.caseSensitiveLookup=true;
 this.useRetsFieldName="system";
 this.arrTypeLoop=[];//["A","B","C","D", "F", "G"];
-this.arrColumns=listtoarray("AdCode,AdditionalRooms,Age,AgeDescription,AgentIDX,AgentRemarks,AgentStatus,AlternateKey,AnnualRent,Appliances,ApplicationFeeAmount,APXBuildingSqFt,AsIsConditionYN,AssessedValuation,Assessment,AssessmentDesc,AssessmentFeeAmount,AssessmentFeePeriod,AssocApprovalRequiredYN,AssociationFee,AssociationFeeCovers,AssociationFeePeriod,AttachmentCount,AttachmentYN,AVMYN,BackUpOffersAcceptedYN,BathsPartial,BathsTotal,Bedroom1Length,Bedroom1Width,Bedroom2Length,Bedroom2Width,Bedroom3Length,Bedroom3Width,Bedroom4Length,Bedroom4Width,Bedrooms,BetweenUS1andRiver,BusinessName,BusinessOnlyYN,BuyerAgentCommAmount,BuyerName,CandRYN,CeilingHeight,City,ClearedYNP,CloseDate,ClosePrice,CoListingAgentID,CoListingAgentName,CoListingOfficeID,CoListingOfficeName,CommentaryYN,CommercialClass,CommunityOver55YN,ComplexUnits,ConcessionAmount,ConfidentialListingYN,ConformingYN,Construction,ConstructionMaterial,ContractDate,Cooling,CoSellAgentName,CoSellingAgentID,CoSellingOfficeID,CoSellingOfficeName,County,CurrentlyLeasedYN,DateAvailable,DateBackOnMarket,DateChange,DateContingency,DateDeleted,DateEstimatedCompletion,DateExpirationExtended,DateLeased,DateListingConfirmed,DateListingUnconfirmed,DateNewListing,DateOwnershipTransfer,DatePriceChange,DateWithdrawn,DaysOnMarket,DaysOnMarketContinuous,DiningRoomLength,DiningRoomWidth,Direction,Directions,Dishwashers,DisplayFlagAddress,DisplayFlagListing,DocumentsAndDisclosures,DoorFaces,Dryers,Electric,ElectricalExpense,ElectricityMeters,ElectricMeters,ElementarySchool,Employees,EquipmentAndAppliances,EstimateValueYN,ExclusiveAgency,ExpirationDate,ExteriorFeatures,ExteriorFinish,FamilyRoomLength,FamilyRoomWidth,FinancialPackageYN,Floor,FloorLocation,FloorNumber,Floors,FloorsPerUnit,FloridaRoomLength,FloridaRoomWidth,ForeignSellerYN,FreestandingYN,FurnishedYN,FutureLandUse,Garage,GarageAndCarStorage,GarageCarportSpaces,GasExpense,GasMeters,GenericTextField1,GenericTextField2,GrossIncome,GroundFloorBedroomYN,GroundsExpense,Heating,HeatingAndAc,HighSchool,HOAYN,HowSoldDesc,IDX,InLawSuite,InsideFeatures,InsuranceExpense,InteriorFeatures,Irrigation,Kickout,KitchenLength,KitchenWidth,LandDimensions,LandStyle,LandType,LaundryLength,LaundryWidth,LeaseAgent,LeaseBoard,LeaseFirm,LeaseInfo,LeaseOffice,LeaseOption,LeaseTerms,LegalDescription,LicAssistingSeller,LicensedREALTORYN,LimitedServiceYN,ListAgentAgentID,ListAgentKey,ListDate,ListingAgentID,ListingAgentName,ListingArea,ListingBoardID,ListingDetail,ListingFirmID,ListingID,ListingOfficeID,ListingStatus,ListingType,ListOfficeAffilliation,ListOfficeOfficeID,ListPrice,LivingArea,LivingRoomLength,LivingRoomWidth,LoadingDocks,LocationDescription,LockboxSerialNumber,LoginIDLastUpdateAgent,LoginIDOriginalListAgent,LoginIDOriginalSellAgent,LotSize,LotSizeArea,MaintenanceExpense,MaintFeeCovers,ManagementExpense,MasterBath,MaxRatedOccupancy,Microwaves,MiddleSchool,Miscellaneous,MiscellaneousN,MLSNumberOriginal,ModificationTimestamp,MonthlyRent,NearHighwayYN,NetIncome,NoDriveBeachYN,NonRepCommDesc,OfficeIDX,OfficeSqFt,OfficeStatus,OpenHouseAid,OpenHouseDt,OpenHouseRem,OpenHouseTm,OpenHouseYN,OperatingExpense,OriginalListingFirmName,OriginalListPrice,OriginalSellingFirmName,OtherAvailbleFeatures,OtherExpense,OtherRoom1Length,OtherRoom1Name,OtherRoom1Width,OtherRoom2Length,OtherRoom2Name,OtherRoom2Width,OverheadDoorNumber,OwnerName,ParcelNumber,Parking,ParkingSpaceYN,ParkingTotal,PendingAgentAgentID,PendingOfficeOfficeID,PetFeeAmount,PetsYNR,PhotoCode,PhotoCount,PhotoFrameNumber,PhotoModificationTimestamp,PhotoRollNumber,Pool,PoolDescription,PoolFeatures,PoolPresent,PorchLength,PorchWidth,Possession,PostalCode,PreviousListPrice,PriceChangeYN,PriceSqFt,ProjectPhase,PropertyFormat,PropertySubType,PropertyType,ProspectsExcludedYN,PublicRemarks,Ranges,RealtorRemarks,Refrigerators,RentalAmount,RentalCompensation,RentalPropertyType,RentalYN,RentIncludes,RentLow,RoadAccessYN,RoadFrontage,Roof,SaleAgentAgentID,SaleAgentCommission,SaleAgentName,SaleAgentOfficeAffiliation,SaleOfficeName,SaleOfficeOfficeID,SecurityAndMisc,SecurityDepositAmount,SellerConcessions,Sewer,ShowingInstructions,ShowInstructions,SpecialContingenciesApplyYN,SplitYN,SqFtLivingArea,SqFtTotal,StateOrProvince,StatusActualNumber,StatusChangeDate,StatusHotSheetNumber,StatusPreviousLetter,StatusPreviousNumber,StatusStatisticalLetter,StatusStatisticalNumber,Stories,StreetName,StreetNumber,Style,StyleFeatures,Subdivision,SurveyYN,TangibleTaxes,TaxAmount,TaxID,TaxYear,TenantExpenses,ThirdPartyApprovalYN,ThirdPartyYN,TitleInsuranceAvailable,TitleInsuranceAvailableYN,TotalLeases,TotalRooms,TotalUnits,TotSqftArea,TransBrokerCommAmount,TransBrokerCommDP,Type,TypeStreet,Unit1Baths,Unit1HalfBaths,Unit1MonthlyRent,Unit1Rooms,Unit1SqFt,Unit2Baths,Unit2HalfBaths,Unit2MonthlyRent,Unit2Rooms,Unit2SqFt,Unit3Baths,Unit3HalfBaths,Unit3MonthlyRent,Unit3Rooms,Unit3SqFt,Unit4Baths,Unit4HalfBaths,Unit4MonthlyRent,Unit4Rooms,Unit4SqFt,UnitNumber,UtilitiesOnsite,UtlitiesAndFuel,VariableRateCommYN,VirtualTourURL,VirtualTourYN,WasherDryerHookupsOnly,Washers,Water,WaterAndSewer,WaterFeatures,WaterMainSize,WaterMeters,WaterOther,WaterSewerExpense,WaterType,Windows,WindowsAndWindowTrtmnt,WindowTrtmnt,YearBuilt,Zoning",",");
+this.arrColumns=listtoarray("accessandtransportation,additionalrooms,age,agedescription,agentstatus,annualrent,appliances,applicationfeeamount,apxbuildingsqft,asisconditionyn,assessedvaluation,assessmentdesc,assessmentfeeamount,assessmentfeeperiod,assocapprovalrequiredyn,associationfee,associationfeecovers,associationfeeperiod,availablewithlease,avmyn,bathspartial,bathstotal,bedroom1length,bedroom1width,bedroom2length,bedroom2width,bedroom3length,bedroom3width,bedroom4length,bedroom4width,bedrooms,betweenus1andriver,businessname,businessonlyyn,ceilingheight,city,clearedynp,clearspan,closedate,closeprice,commentaryyn,commercialclass,communityname,communityover55yn,complexname,complexunits,confidentiallistingyn,construction,constructionmaterial,contractdate,cooling,county,currentlyleasedyn,dateavailable,datechange,dateestimatedcompletion,datenewlisting,streetnoidx,datepricechange,diningroomlength,diningroomwidth,direction,directions,dishwashers,displayflagaddress,displayflaglisting,documentsanddisclosures,doorfaces,dryers,electric,electricalexpense,electricitymeters,electricmeters,employees,equipmentandappliances,estimatevalueyn,exteriorfeatures,exteriorfinish,familyroomlength,familyroomwidth,floor,floorlocation,floornumber,floors,floorsperunit,floridaroomlength,floridaroomwidth,freestandingyn,furnishedyn,futurelanduse,garage,garageandcarstorage,garagecarportspaces,gasexpense,gasmeters,generictextfield1,blogyn,generictextfield2,grossincome,groundfloorbedroomyn,groundsexpense,harbormasteryn,heating,heatingandac,hoamaintfees,hoayn,idx,incluinmonthlyleaseamnt,insidefeatures,insuranceexpense,interiorfeatures,interiorimprovements,kitchenlength,kitchenwidth,landstyle,landtype,laundrylength,laundrywidth,incluinsale,leaseagent,leaseboard,leasefirm,leaseoffice,leaseoption,leaseprovisions,leaseterms,legaldescription,listagentagentid,listdate,listingagentid,listingarea,listingboardid,listingdetail,listingfirmid,listingid,listingofficeid,listingstatus,listingtype,listofficeofficeid,listprice,livingarea,livingroomlength,livingroomwidth,loadingdocks,locationdescription,lotsize,lotsizearea,maintefeecovers,maintenanceexpense,maintfeecovers,managementexpense,marinaamenities,masterbath,maxratedoccupancy,microwaves,miscellaneous,miscellaneousn,modificationtimestamp,monitorvhf16,monthlyrent,moorage,nearhighwayyn,netincome,nodrivebeachyn,occupancy,officeidx,officesqft,officestatus,openhouseaid,openhousedt,openhouserem,openhousetm,openhouseyn,operatingexpense,otheravailblefeatures,otherexpense,otherroom1length,otherroom1name,otherroom1width,otherroom2length,otherroom2name,overheaddoornumber,ownername,ownershiprequired,ownershiprequiredyn,parcelnumber,parking,parkingavailable,parkingspaceyn,parkingtotal,petfeeamount,petsynr,photocode,photocount,photoframenumber,photomodificationtimestamp,photorollnumber,pool,pooldescription,poolfeatures,poolpresent,porchlength,porchwidth,possession,postalcode,pricechangeyn,pricesqft,projectphase,propertyformat,propertysubtype,propertytype,publicremarks,ranges,refrigerators,rentalamount,rentalpropertytype,rentalrestrictions,rentalyn,rentincludes,roadfrontage,roof,security,securityandmisc,securitydepositamount,sellerconcessions,sewer,siteimprovements,slipamenities,slipdraft,slipsize,slipstorageyn,specialcontingenciesapplyyn,splityn,sqftlivingarea,sqfttotal,stateorprovince,stories,streetname,streetnumber,style,stylefeatures,subdivision,surveyyn,tangibletaxes,taxamount,taxyear,totalrooms,totalunits,totsqftarea,type,typestreet,unit1baths,unit1halfbaths,unit1monthlyrent,unit1rooms,unit1sqft,unit2baths,unit2halfbaths,unit2monthlyrent,unit2rooms,unit2sqft,unit3baths,unit3halfbaths,unit3monthlyrent,unit3rooms,unit3sqft,unit4baths,unit4halfbaths,unit4monthlyrent,unit4rooms,unit4sqft,unitnumber,useandpossibleuse,utilitiesonsite,utlitiesandfuel,virtualtoururl,virtualtouryn,washerdryerhookupsonly,washers,wastepumpyn,streetnameidx,water,waterandsewer,waterfeatures,watermainsize,watermeters,waterother,watersewerexpense,watertype,windows,windowsandwindowtrtmnt,windowtrtmnt,yearbuilt,zoning",",");
 this.arrFieldLookupFields=[];
 this.mls_provider="rets28";
 variables.resourceStruct=structnew();
@@ -28,32 +28,9 @@ variables.resourceStruct["agent"]=structnew();
 variables.resourceStruct["agent"].resource="agent";
 variables.resourceStruct["agent"].id="AgentUID";
  
-variables.tableLookup=structnew();
-/*
-variables.tableLookup["BoatDock"]="BoatDock";
-variables.tableLookup["CommercialProperty"]="CommercialProperty";
-variables.tableLookup["CommercialRental"]="CommercialRental";
-//variables.tableLookup["Keeplist"]="Keeplist";
-variables.tableLookup["ResidentialIncomeProperty"]="ResidentialIncomeProperty";
-variables.tableLookup["ResidentialProperty"]="ResidentialProperty";
-variables.tableLookup["ResidentialRental"]="ResidentialRental";
-variables.tableLookup["VacantLand"]="VacantLand"; */
+variables.tableLookup=structnew(); 
 </cfscript>
-
-
-
-<cffunction name="deleteListings" localmode="modern" output="no" returntype="any">
-	<cfargument name="idlist" type="string" required="yes">
-	<cfscript>
-	var db=request.zos.queryObject;
-	var arrId=listtoarray(mid(replace(arguments.idlist," ","","ALL"),2,len(arguments.idlist)-2),"','");
-	super.deleteListings(arguments.idlist);
-	
-	db.sql="DELETE FROM #db.table("rets28_property", request.zos.zcoreDatasource)#  
-	WHERE rets28_ListingID IN (#db.trustedSQL(arguments.idlist)#)";
-	db.execute("q"); 
-	</cfscript>
-</cffunction>
+ 
 
 <cffunction name="initImport" localmode="modern" output="no" returntype="any">
 	<cfargument name="resource" type="string" required="yes">
@@ -223,8 +200,8 @@ variables.tableLookup["VacantLand"]="VacantLand"; */
 		curLong=rs5.longitude;
 	}*/
 	
-	if(ts['rets28_unitnumber'] NEQ ''){
-		address&=" Unit: "&ts["rets28_unitnumber"];
+	if(ts['Address Unit Number'] NEQ ''){
+		address&=" Unit: "&ts["Address Unit Number"];
 	} 
 	
 	/*s2=structnew();
@@ -418,14 +395,36 @@ LookupMulti1C
 	}
 	rs.listing_office=ts["rets28_ListOfficeOfficeID"];//OfficeUID"];
 	rs.listing_agent=ts["rets28_ListAgentAgentID"];//AgentUID"]; 
-	db.sql="select * from #db.table("rets28_office", request.zos.zcoreDatasource)# 
-	where rets28_OfficeUID=#db.param(rs.listing_office)#";
-	qOffice=db.execute("qOffice");  
-	if(qOffice.recordcount NEQ 0){
-		rs.listing_office_name=qOffice.rets28_name;
+
+	if(not structkeyexists(request, 'rets28officeLookup')){
+		t2={};
+		path="#request.zos.sharedPath#mls-data/"&this.mls_id&"/office.txt";
+		f=application.zcore.functions.zReadFile(path);
+		if(f EQ false){
+			throw("Office file is missing for rets28");
+		}
+		arrLine=listToArray(f, chr(10));
+		first=true;
+		for(line in arrLine){
+			arrRow=listToArray(line, chr(9), true);
+			if(first){
+				arrColumn=arrRow;
+				first=false;
+			}else{
+				t3={};
+				for(g=1;g LTE arraylen(arrRow);g++){
+					t3[arrColumn[g]]=trim(arrRow[g]);
+				} 
+				t2[t3[variables.resourceStruct["office"].id]]=t3;
+			}
+		} 
+		request.rets28officeLookup=t2;
+	}
+	if(structkeyexists(request.rets28officeLookup, rs.listing_office)){
+		rs.listing_office_name=request.rets28officeLookup[rs.listing_office].name;
 	}else{
 		rs.listing_office_name='';
-	}
+	}  
 	rs.listing_latitude=curLat;
 	rs.listing_longitude=curLong;
 	rs.listing_pool=listing_pool;
@@ -448,6 +447,8 @@ LookupMulti1C
 	rs.listing_data_detailcache2=listing_data_detailcache2;
 	rs.listing_data_detailcache3=listing_data_detailcache3; 
 	//if(ts["WATERTYPE"] NEQ ""){ 	writedump(rs);abort;	}
+
+	rs.listing_track_sysid="";
 	rs2={
 		listingData:rs,
 		columnIndex:columnIndex,
@@ -457,42 +458,14 @@ LookupMulti1C
 	return rs2;
 	</cfscript>
 </cffunction>
-    
-<cffunction name="getJoinSQL" localmode="modern" output="yes" returntype="any">
-	<cfargument name="joinType" type="string" required="no" default="INNER">
-	<cfscript>
-	var db=request.zos.queryObject;
-	</cfscript>
-	<cfreturn "#arguments.joinType# JOIN #db.table("rets28_property", request.zos.zcoreDatasource)# rets28_property ON rets28_property.rets28_listingid = listing.listing_id">
-</cffunction>
-    <cffunction name="getPropertyListingIdSQL" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets28_property.rets28_listingid">
-    </cffunction>
-    <cffunction name="getListingIdField" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets28_ListingID">
-    </cffunction>
+     
     
 <cffunction name="getDetails" localmode="modern" output="yes" returntype="any">
-	<cfargument name="query" type="query" required="yes">
+	<cfargument name="ss" type="struct" required="yes">
 	<cfargument name="row" type="numeric" required="no" default="#1#">
 	<cfargument name="fulldetails" type="boolean" required="no" default="#false#">
-	<cfscript>
-	var q1=0;
-	var t44444=0;
-	var t99=0;
-	var qOffice=0;
-	var details=0;
-	var i=0;
-	var t1=0;
-	var t3=0;
-	var t2=0;
-	var i10=0;
-	var value=0;
-	var n=0;
-	var column=0;
-	var arrV=0;
-	var arrV2=0;
-	var idx=this.baseGetDetails(arguments.query, arguments.row, arguments.fulldetails);
+	<cfscript> 
+	var idx=this.baseGetDetails(arguments.ss, arguments.row, arguments.fulldetails);
 	t99=gettickcount();
 	idx["features"]="";
 	idx.listingSource=request.zos.listing.mlsStruct[listgetat(idx.listing_id,1,'-')].mls_disclaimer_name;
@@ -520,13 +493,13 @@ LookupMulti1C
 	idx["officeState"]="";
 	idx["officeEmail"]="";
 		
-	idx["virtualtoururl"]=arguments.query["rets28_virtualtoururl"];
-	idx["zipcode"]=arguments.query["listing_zip"][arguments.row];
+	idx["virtualtoururl"]=application.zcore.functions.zso(arguments.ss, "rets28_virtualtoururl");
+	idx["zipcode"]=arguments.ss["listing_zip"];
 	idx["maintfees"]=""; 
-	if(isnumeric(arguments.query["rets#this.mls_id#_HOAMaintFees"][arguments.row])){
-		idx["maintfees"]=arguments.query["rets#this.mls_id#_HOAMaintFees"][arguments.row]; 
-	}else if(isnumeric(arguments.query["rets#this.mls_id#_MaintenanceExpense"][arguments.row])){
-		idx["maintfees"]=arguments.query["rets#this.mls_id#_MaintenanceExpense"][arguments.row]; 
+	if(isnumeric(application.zcore.functions.zso(arguments.ss, "rets#this.mls_id#_HOAMaintFees"))){
+		idx["maintfees"]=application.zcore.functions.zso(arguments.ss, "rets#this.mls_id#_HOAMaintFees"); 
+	}else if(isnumeric(application.zcore.functions.zso(arguments.ss, "rets#this.mls_id#_MaintenanceExpense"))){
+		idx["maintfees"]=application.zcore.functions.zso(arguments.ss, "rets#this.mls_id#_MaintenanceExpense"); 
 	}
 	
 	</cfscript>
@@ -554,22 +527,10 @@ LookupMulti1C
 </cffunction>
 	
 <cffunction name="getLookupTables" localmode="modern" access="public" output="no" returntype="struct">
-	<cfscript>
-	var i=0;
-	var s=0;
-	var arrSQL=[];
-	var fd=0;
-	var arrError=[];
-	var i2=0;
-	var tmp=0;
-	var g=0;
-	var db=request.zos.queryObject;
-	var qD2=0;
-	var arrC=0;
-	var tempState=0;
-	var failStr=0;
-	var qD=0;
-	var qZ=0;
+	<cfscript> 
+	var arrSQL=[]; 
+	var arrError=[]; 
+	var db=request.zos.queryObject; 
 	var cityCreated=false; 
 
 	fd={};

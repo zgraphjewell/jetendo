@@ -25,7 +25,7 @@
 <cffunction name="init" localmode="modern" access="private" roles="member">
 	<cfscript>
 	var db=request.zos.queryObject;
-    application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Rentals");
+    application.zcore.adminSecurityFilter.requireFeatureAccess("Rentals");
 	form.rental_tax=application.zcore.functions.zso(form, 'rental_tax',false,'0');
 	form.start=application.zcore.functions.zso(form, 'start',false,'');
 	
@@ -217,7 +217,7 @@
 				<cfif qProp.rental_enable_calendar EQ 1 and application.zcore.app.getAppData("rental").optionstruct.rental_config_availability_calendar EQ 1>
 					<a href="/z/rental/admin/availability/select?rental_id=#qProp.rental_id#">Calendar</a> |
 				</cfif>
-				<cfif not application.zcore.user.checkServerAccess() and qProp.rental_url NEQ "">
+				<cfif not application.zcore.functions.zIsForceDeleteEnabled(qProp.rental_url)>
 					Delete disabled
 				<cfelse>
 					<a href="/z/rental/admin/rates/deleteRental?rental_id=#qProp.rental_id#">Delete</a> 
@@ -291,7 +291,7 @@
 	var qCheck=0;
 	var result=0;
 	variables.init();
-    application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Rentals", true);
+    application.zcore.adminSecurityFilter.requireFeatureAccess("Rentals", true);
     form.rental_id=application.zcore.functions.zso(form, 'rental_id');
 	db.sql=" SELECT * FROM #request.zos.queryObject.table("rental", request.zos.zcoreDatasource)# rental 
 	WHERE rental_id = #db.param(form.rental_id)# and 
@@ -350,7 +350,7 @@
 	var result=0;
 	var qCheck=0;
 	variables.init();
-    application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Rentals", true);
+    application.zcore.adminSecurityFilter.requireFeatureAccess("Rentals", true);
 	db.sql=" SELECT * FROM #request.zos.queryObject.table("rate", request.zos.zcoreDatasource)# rate 
 	LEFT JOIN #request.zos.queryObject.table("rental", request.zos.zcoreDatasource)# rental ON 
 	rental.rental_id = rate.rental_id and 
@@ -435,7 +435,7 @@
 	var ts=0;
 	var errors=0;
 	variables.init();
-    application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Rentals", true);
+    application.zcore.adminSecurityFilter.requireFeatureAccess("Rentals", true);
 	if(form.method EQ "update"){
 		db.sql=" SELECT * FROM #request.zos.queryObject.table("rental", request.zos.zcoreDatasource)# rental 
 		WHERE rental_id = #db.param(form.rental_id)# and 
@@ -557,7 +557,7 @@
 	var arrD=0;
 	var tempLink=0;
 	variables.init();
-    application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Rentals", true);
+    application.zcore.adminSecurityFilter.requireFeatureAccess("Rentals", true);
 	form.rental_id=application.zcore.functions.zso(form, 'rental_id');
 	uniqueChanged=false;
 	if(form.method EQ 'insertRental' and application.zcore.functions.zso(form, 'rental_url') NEQ ""){
@@ -1614,7 +1614,12 @@
 			<tr>
 				<th style="white-space:nowrap; width:1%;vertical-align:top;">#application.zcore.functions.zOutputHelpToolTip("Override URL","member.rental.editRental rental_url")#</th>
 				<td colspan="2"  style="white-space:nowrap;">
-					#application.zcore.functions.zInputUniqueUrl("rental_url")#</td>
+					<cfif form.method EQ "addRental">
+						#application.zcore.functions.zInputUniqueUrl("rental_url", true)#
+					<cfelse>
+						#application.zcore.functions.zInputUniqueUrl("rental_url")#
+					</cfif>
+				</td>
 			</tr>
 		</table>
 		#tabCom.endFieldSet()#

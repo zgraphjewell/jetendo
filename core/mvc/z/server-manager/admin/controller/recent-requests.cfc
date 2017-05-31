@@ -1,5 +1,6 @@
 <cfcomponent>
 <cfoutput>
+
 <cffunction name="index" localmode="modern" access="remote" roles="serveradministrator">
 	<cfscript>
 	var countStruct=0;
@@ -158,7 +159,7 @@
 	</cfif>
 	<cfscript>
 	if(isDefined('application.zcore.runningScriptStruct')){
-		t9=application.zcore.runningScriptStruct;
+		t9=duplicate(application.zcore.runningScriptStruct);
 		
 		writeoutput('<h2>Robots hitting spam trap</h2>');
 		if(structkeyexists(application.zcore,'robotThatHitSpamTrap')){
@@ -175,15 +176,13 @@
 		writeoutput('<h2>Running Scripts</h2><p><a href="#request.cgi_script_name#?clearOldRunning=1">Clear Old Scripts</a></p><table style="border-spacing:0px; padding:5px;">
 		<tr><td>Running Time (seconds)</td><td>URL</td></tr>');
 		
-		for(i in t9){
-			if(structkeyexists(form, 'i') and structkeyexists(t9, i)){
-				seconds=datediff("s",t9[i].startTime, now());
-				if(structkeyexists(form, 'clearOldRunning') and seconds GT 60){
-					structdelete(t9,i);	
-				}else{
-					writeoutput('<tr><td>'&seconds&'</td><td>'&t9[i].url&'</td></tr>');
-				}
-			}
+		for(i in t9){  
+			seconds=datediff("s",t9[i].startTime, now());
+			if(structkeyexists(form, 'clearOldRunning') and seconds GT 3600){
+				structdelete(application.zcore.runningScriptStruct,i);	
+			}else{
+				writeoutput('<tr><td>'&seconds&'</td><td>'&t9[i].url&'</td></tr>');
+			} 
 		}
 		writeoutput('</table>');
 		if(structkeyexists(form, 'clearOldRunning')){

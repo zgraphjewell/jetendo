@@ -33,6 +33,8 @@ ts.showPlaceholders     = false; // false will remove the form element "placehol
 ts.searchFormClass      = 'sidebar-member-form'; // Add any css class(es) you want on the search form element
 ts.searchResultsClass   = ''; // css class(es) for the results container element
 ts.searchButtonText     = 'Search'; // the search form submit value
+ts.resetButton          = true; // true to show a reset button on the form, or false to hide it
+ts.resetButtonText      = 'Reset Filters'; // the reset button text
 
 directorySearchCom.init(ts);
 
@@ -58,7 +60,8 @@ arrField = [
 			'member_address',
 			'member_zip',
 		],
-		// matchFilter can be contains or exact
+		// matchFilter can be contains or exact or list or range.  
+		// List allows searching within a comma separated list of values, usually used in combination with a multiple select manager field which stores ids or values without commas in them.
 		// contains performs a match against AND "like" search sorting exact matches first, and then relevance sorting the rest.
 		// exact matches uses "=" in query
 		'matchFilter': 'contains', 
@@ -124,7 +127,9 @@ This is the structure of the renderMethod function
 		showPlaceholders     : true,
 		searchFormClass      : '',
 		searchResultsClass   : '',
-		searchButtonText     : 'Search'
+		searchButtonText     : 'Search',
+		resetButton          : false,
+		resetButtonText      : 'Reset'
 
 	}
 	structappend(ss, ts, false);
@@ -186,7 +191,8 @@ This is the structure of the renderMethod function
 		'fieldType': '',
 		'defaultValue': '',
 		'searchFields': [], 
-		'matchFilter': 'exact'
+		'matchFilter': 'exact',
+		'custom': false
 	};
 	validType={
 		"checkboxes":true,
@@ -197,7 +203,9 @@ This is the structure of the renderMethod function
 	}
 	validMatch={
 		"contains":true,
-		"exact":true
+		"exact":true,
+		"list":true,
+		"range":true
 	}
 	for(i=1;i<=arraylen(variables.arrField);i++){
 		field=variables.arrField[i];
@@ -224,6 +232,9 @@ This is the structure of the renderMethod function
 		}
 		if(not structkeyexists(validMatch, field.matchFilter)){
 			throw(e&' is not a valid match filter, "#field.matchFilter#".  Accepted values are #structkeylist(validMatch, ', ')#');
+		}
+		if ( field.custom NEQ true AND field.custom NEQ false ) {
+			throw(e&' is not a valid value for custom. Accepted values are true, false.');
 		}
 	}
 	</cfscript>
@@ -297,13 +308,15 @@ This is the structure of the renderMethod function
 				selectStruct[form[fieldKey]]=true;
 			}
 			</cfscript>
-			<div class="directory-search-field"> 
-				<cfif field["fieldType"] EQ 'text'>
+			<cfif field["fieldType"] EQ 'text'>
+				<div class="directory-search-field">
 					<cfif variables.showSearchFormLabels>
 						<label for="#fieldKey#">#field["fieldLabel"]#</label><br />
 					</cfif>
 					<input type="text" name="#field["fieldKey"]#" id="#fieldKey#" value="#htmleditformat( form[ field["fieldKey"] ] )#"<cfif variables.showPlaceholders AND field["placeholder"] NEQ ""> placeholder="#htmleditformat( field["placeholder"] )#"</cfif> />
-				<cfelseif field["fieldType"] EQ 'select'>
+				</div>
+			<cfelseif field["fieldType"] EQ 'select'>
+				<div class="directory-search-field">
 					<cfif variables.showSearchFormLabels>
 						<label for="#fieldKey#">#field["fieldLabel"]#</label><br />
 					</cfif>
@@ -336,7 +349,9 @@ This is the structure of the renderMethod function
 						application.zcore.functions.zSetupMultipleSelect(fieldKey, v);
 					}
 					</cfscript>
-				<cfelseif field["fieldType"] EQ 'checkboxes'>
+				</div>
+			<cfelseif field["fieldType"] EQ 'checkboxes'>
+				<div class="directory-search-field">
 					<cfif variables.showSearchFormLabels>
 						<label for="#fieldKey#">#field["fieldLabel"]#</label><br />
 					</cfif>
@@ -357,19 +372,26 @@ This is the structure of the renderMethod function
 							}
 						</cfscript>
 					</div>
-				<cfelseif field["fieldType"] EQ 'hidden'>
-					<input type="hidden" name="#field["fieldKey"]#" id="#fieldKey#" value="#htmleditformat( form[ field["fieldKey"] ] )#" />
-				<cfelse>
+				</div>
+			<cfelseif field["fieldType"] EQ 'hidden'>
+				<input type="hidden" name="#field["fieldKey"]#" id="#fieldKey#" value="#htmleditformat( form[ field["fieldKey"] ] )#" />
+			<cfelse>
+				<div class="directory-search-field">
 					<cfif variables.showSearchFormLabels>
 						<label for="#fieldKey#">#field["fieldLabel"]#</label><br />
 					</cfif>
 					<input type="text" name="#field["fieldKey"]#" id="#fieldKey#" value="#htmleditformat( form[ field["fieldKey"] ] )#"<cfif variables.showPlaceholders AND field["placeholder"] NEQ ""> placeholder="#htmleditformat( field["placeholder"] )#"</cfif> />
-				</cfif>
-			</div>
+				</div>
+			</cfif>
 		</cfloop>
 		<div class="directory-search-submit">
 			<button type="submit" class="z-button"><span class="z-t-24">#variables.searchButtonText#</span></button>
 		</div>
+		<cfif variables.resetButton EQ true>
+			<div class="directory-search-reset">
+				<a href="#variables.directoryURL#" class="z-button"><span class="z-t-18">#variables.resetButtonText#</span></a>
+			</div>
+		</cfif>
 	</form> 
 </cffunction>
 
@@ -428,10 +450,20 @@ This is the structure of the renderMethod function
 	paginationURL = '';
 
 	for ( field in variables.arrField ) {
+		fieldKey=replace(field["fieldKey"], '[]', '');
 		if ( paginationURL EQ '' ) {
-			paginationURL = request.zos.originalURL & '?' & field["fieldKey"] & '=' & urlencodedformat( form[ field["fieldKey"] ] );
+			if ( isArray( form[ fieldKey ] ) ) {
+				for ( fieldValue in form[ fieldKey ] ) {
+					if ( paginationURL EQ '' ) {
+						paginationURL = request.zos.originalURL & '?' & field["fieldKey"] & '=' & urlencodedformat( fieldValue );
+					} else {
+						paginationURL &= '&' & field["fieldKey"] & '=' & urlencodedformat( fieldValue );
+					}
+				}
+			} else {
+				paginationURL = request.zos.originalURL & '?' & field["fieldKey"] & '=' & urlencodedformat( form[ fieldKey ] );
+			}
 		} else {
-			fieldKey=replace(field["fieldKey"], '[]', '');
 			if ( isArray( form[ fieldKey ]) ) {
 				for ( fieldValue in form[ fieldKey ] ) {
 					paginationURL &= '&' & field["fieldKey"] & '=' & urlencodedformat( fieldValue );
@@ -440,6 +472,10 @@ This is the structure of the renderMethod function
 				paginationURL &= '&' & field["fieldKey"] & '=' & urlencodedformat( form[ fieldKey ] );
 			}
 		}
+	}
+
+	if ( paginationURL EQ '' ) {
+		paginationURL = request.zos.originalURL;
 	}
 
 	return paginationURL;
@@ -467,6 +503,11 @@ This is the structure of the renderMethod function
 
 	db = request.zos.queryObject;
 
+	if(not isnumeric(form[variables.offsetName]) or form[variables.offsetName] > 100000){
+		// robot or bug, kill request to avoid error
+		application.zcore.functions.z404("Invalid request");
+	}
+
 	// Build the query to get the total number of items.
 	db.sql = 'SELECT COUNT( ' & variables.tableName & '_id ) AS count
 		FROM ' & db.table( variables.tableName, request.zos.globals.datasource ) & '
@@ -477,6 +518,10 @@ This is the structure of the renderMethod function
 	//writedump(variables.arrField);
 	//writedump(form);abort;
 	for ( field in variables.arrField ) {
+		if ( field['custom'] EQ true ) {
+			// Don't process custom fields within the filter query.
+			continue;
+		}
 		fieldKey=replace(field['fieldKey'], '[]', '');
 		arrValue=form[ fieldKey ];
 		if(not isArray(form[ fieldKey ])){
@@ -484,23 +529,66 @@ This is the structure of the renderMethod function
 		} 
 		first2=true;
 		for(value in arrValue){
-			if ( value NEQ '' ) {
+			if ( value NEQ '' OR ( structKeyExists( field, 'allowQueryEmpty' ) AND field['allowQueryEmpty'] EQ true ) ) {
 				if(not first2){
 					db.sql&=" OR ";
 				}else{
 					db.sql &= ' AND ( ';
-				}
-				if(field['matchFilter'] EQ 'contains') {
+				}  
+				if(field['matchFilter'] EQ 'list') {
+					fields=arrayToList(field['searchFields'], '`, `');
+					db.sql &= ' concat(#db.param(",")#, `' & fields & '`, #db.param(",")#) LIKE #db.param("%,#application.zcore.functions.zescape(value)#,%")# ';
+ 
+				}else if(field['matchFilter'] EQ 'contains') {
 					fields=arrayToList(field['searchFields'], '`, `');
 					db.sql &= ' ( 
-					MATCH( `' & fields & '` ) AGAINST ( ' & db.param( value ) & ' ) ';
+					MATCH( `' & fields & '` ) AGAINST ( ' & db.param( replace(value, '*', ' ', 'all') ) & ' ) ';
 					if(arrayLen(field['searchFields']) EQ 1){
 						db.sql&= ' OR `'&fields&'` LIKE ' & db.param( '%' & value & '%' );
 					}else{
 						db.sql&= ' OR concat(`'&fields&'`) LIKE ' & db.param( '%' & value & '%' );
 					}
 					db.sql&=' ) ';
-				}else{ 
+				} else if ( field['matchFilter'] EQ 'range' ) {
+					// range
+					db.sql &= ' ( ';
+
+					if ( right( value, 1 ) EQ '+' ) {
+						// 10000+
+						rangeMinimum = left( value, ( len( value ) - 1 ) );
+
+						first = true;
+
+						for ( searchField in field['searchFields'] ) {
+							if ( not first ) {
+								db.sql &= ' or ';
+							}
+							first = false;
+
+							db.sql &= " ( `" & searchField & "` >= " & db.param( rangeMinimum ) & " ) ";
+						}
+					} else {
+						// 7500-10000
+						range = listToArray( value, '-' );
+
+						rangeMinimum = range[ 1 ];
+						rangeMaximum = range[ 2 ];
+
+						first = true;
+
+						for ( searchField in field['searchFields'] ) {
+							if ( not first ) {
+								db.sql &= ' or ';
+							}
+							first = false;
+
+							db.sql &= " ( `" & searchField & "` >= " & db.param( rangeMinimum ) & "
+								AND `" & searchField & "` <= " & db.param( rangeMaximum ) & " ) ";
+						}
+					}
+
+					db.sql &= ' ) ';
+				} else {
 					// exact 
 					db.sql&=" ( ";
 					first=true;
@@ -533,7 +621,13 @@ This is the structure of the renderMethod function
 	// Loop over each of the fields and determine if an exact match or
 	// a partial match. Exact matches are listed first.
 	for(i=1;i<=arraylen(variables.arrField);i++){
-		field=variables.arrField[i]; 
+		field=variables.arrField[i];
+
+		if ( field['custom'] EQ true ) {
+			// Don't process custom fields within the filter query.
+			continue;
+		}
+
 		fieldKey=replace(field['fieldKey'], '[]', '');
 		arrValue=form[ fieldKey ];
 		if(not isArray(form[ fieldKey ])){
@@ -548,10 +642,10 @@ This is the structure of the renderMethod function
 			if(arrayLen(field['searchFields']) EQ 1){ 
 				// faster without concat
 				db.sql &= ', IF ( `'&fields&'` LIKE ' & db.param( '%' & application.zcore.functions.zURLEncode( values, '%' ) & '%' ) & ', ' & db.param( '1' ) & ', ' & db.param( '0' ) & ' ) exactMatch_'&i&', 
-					MATCH( `' & fields & '` ) AGAINST( ' & db.param( values ) & ' ) relevance_'&i&' ';
+					MATCH( `' & fields & '` ) AGAINST( ' & db.param( replace(values, '*', ' ', 'all') ) & ' ) relevance_'&i&' ';
 			}else{
 				db.sql &= ', IF ( concat(`'&fields&'`) LIKE ' & db.param( '%' & application.zcore.functions.zURLEncode( values, '%' ) & '%' ) & ', ' & db.param( '1' ) & ', ' & db.param( '0' ) & ' ) exactMatch_'&i&', 
-					MATCH( `' & fields & '` ) AGAINST( ' & db.param( values ) & ' ) relevance_'&i&' ';
+					MATCH( `' & fields & '` ) AGAINST( ' & db.param( replace(values, '*', ' ', 'all') ) & ' ) relevance_'&i&' ';
 			}
 		}else{
 			// exact needs no special sort fields.
@@ -565,6 +659,12 @@ This is the structure of the renderMethod function
 
 	// Loop over each of the fields and add it to the query.
 	for ( field in variables.arrField ) {
+
+		if ( field['custom'] EQ true ) {
+			// Don't process custom fields within the filter query.
+			continue;
+		}
+
 		fieldKey=replace(field['fieldKey'], '[]', '');
 		arrValue=form[ fieldKey ];
 		if(not isArray(form[ fieldKey ])){
@@ -572,16 +672,20 @@ This is the structure of the renderMethod function
 		}
 		first2=true;
 		for(value in arrValue){
-			if ( value NEQ '' ) {
+			if ( value NEQ '' OR ( structKeyExists( field, 'allowQueryEmpty' ) AND field['allowQueryEmpty'] EQ true ) ) {
 				if(not first2){
 					db.sql&=" OR ";
 				}else{
 					db.sql &= ' AND ( ';
 				}
-				if(field['matchFilter'] EQ 'contains') {
+				if(field['matchFilter'] EQ 'list') {
+					fields=arrayToList(field['searchFields'], '`, `');
+					db.sql &= ' concat(#db.param(",")#, `' & fields & '`, #db.param(",")#) LIKE #db.param("%,#application.zcore.functions.zescape(value)#,%")# ';
+ 
+				}else if(field['matchFilter'] EQ 'contains') {
 					fields=arrayToList(field['searchFields'], '`, `');
 					db.sql &= ' ( 
-					MATCH( `' & fields & '` ) AGAINST ( ' & db.param( value ) & ' ) ';
+					MATCH( `' & fields & '` ) AGAINST ( ' & db.param( replace(value, '*', ' ', 'all') ) & ' ) ';
 					if(arrayLen(field['searchFields']) EQ 1){
 						// faster without concat
 						db.sql&= ' OR `'&fields&'` LIKE ' & db.param( '%' & value & '%' );
@@ -589,7 +693,46 @@ This is the structure of the renderMethod function
 						db.sql&= ' OR concat(`'&fields&'`) LIKE ' & db.param( '%' & value & '%' );
 					}
 					db.sql&=' ) ';
-				}else{ 
+				} else if ( field['matchFilter'] EQ 'range' ) {
+					// range
+					db.sql &= ' ( ';
+
+					if ( right( value, 1 ) EQ '+' ) {
+						// 10000+
+						rangeMinimum = left( value, ( len( value ) - 1 ) );
+
+						first = true;
+
+						for ( searchField in field['searchFields'] ) {
+							if ( not first ) {
+								db.sql &= ' or ';
+							}
+							first = false;
+
+							db.sql &= " ( `" & searchField & "` >= " & db.param( rangeMinimum ) & " ) ";
+						}
+					} else {
+						// 7500-10000
+						range = listToArray( value, '-' );
+
+						rangeMinimum = range[ 1 ];
+						rangeMaximum = range[ 2 ];
+
+						first = true;
+
+						for ( searchField in field['searchFields'] ) {
+							if ( not first ) {
+								db.sql &= ' or ';
+							}
+							first = false;
+
+							db.sql &= " ( `" & searchField & "` >= " & db.param( rangeMinimum ) & "
+								AND `" & searchField & "` <= " & db.param( rangeMaximum ) & " ) ";
+						}
+					}
+
+					db.sql &= ' ) ';
+				} else {
 					// exact 
 					db.sql&=" ( ";
 					first=true;
@@ -617,7 +760,13 @@ This is the structure of the renderMethod function
 
 	// Loop over each of the fields and set up the ORDER BY clause.
 	for(i=1;i<=arraylen(variables.arrField);i++){
-		field=variables.arrField[i]; 
+		field=variables.arrField[i];
+
+		if ( field['custom'] EQ true ) {
+			// Don't process custom fields within the filter query.
+			continue;
+		}
+
 		fieldKey=replace(field['fieldKey'], '[]', '');
 		arrValue=form[ fieldKey ];
 		if(not isArray(form[ fieldKey ])){
@@ -681,6 +830,16 @@ This is the structure of the renderMethod function
 		matches  = {};
 
 		for ( field in variables.arrField ) {
+ 
+			if( structKeyExists( field, 'allowQueryEmpty' ) AND field['allowQueryEmpty'] EQ true ){
+				throw("allowQueryEmpty was not tested/implemented in filterItemsWithLoop yet.");
+			}
+
+			if ( field['custom'] EQ true ) {
+				// Don't process custom fields within the filter loop.
+				continue;
+			}
+
 			fieldKey=replace(field["fieldKey"], '[]', '');
 			searches[fieldKey ] = false;
 			matches[ fieldKey ]  = false;
@@ -704,7 +863,20 @@ This is the structure of the renderMethod function
 			}
 
 			if ( searches[ fieldKey ]) {
-				if(field["matchFilter"] EQ 'contains'){
+				if(field['matchFilter'] EQ 'list') {
+					if ( isArray( form[ fieldKey ] ) ) {
+						for(value in form[fieldKey]){ 
+							if ( findnocase( ","&form[ fieldKey ]&",", ","&item[ field["searchFields"][1] ]&"," ) ) {
+								matches[ fieldKey ] = true;
+								break;
+							}
+						}
+					}else{
+						if ( findnocase( ","&form[ fieldKey ]&",", ","&item[ field["searchFields"][1] ]&"," ) ) {
+							matches[ fieldKey ] = true;
+						}
+					} 
+				}else if(field["matchFilter"] EQ 'contains'){
 					if ( isArray( form[ fieldKey ] ) ) {
 						for(value in form[fieldKey]){ 
 							if ( findnocase( form[ fieldKey ], item[ field["searchFields"][1] ] ) ) {

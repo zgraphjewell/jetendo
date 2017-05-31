@@ -301,6 +301,7 @@
 			<p><a href="/z/server-manager/admin/white-label/index" target="_blank">White Label Settings</a></p>
 			<p><a href="/z/server-manager/admin/mobile-conversion/index">Mobile Conversion</a></p>
 		  	<h3>Maintenance Scripts</h3>
+			<p><a href="/?zInitStatus=1" target="_blank">Show Jetendo Init Status &amp; Statistics</a></p>
 			<p><a href="/z/server-manager/api/git-status/index" target="_blank">Developer git status report</a></p>
 		  	<p><a href="/z/server-manager/tasks/cache-robot/index" target="_blank">Cache Robot</a></p> 
 		  	<p><a href="/z/server-manager/tasks/validate-site-option-groups/index" target="_blank">Validate Site Option Groups</a></p>
@@ -325,6 +326,7 @@
 			}
 			</cfscript>
 			</p>
+			<p><a href="/z/server-manager/tasks/update-exchange-rate/index" target="_blank">Update Exchange Rates</a></p>
 			<p><a href="/z/server-manager/tasks/send-lead-reminders/index" target="_blank">Send Lead Reminders</a></p>
 			<p><a href="/z/server-manager/tasks/execute-http-queue/index" target="_blank">Execute HTTP Queue</a> (<a href="/z/server-manager/tasks/execute-http-queue/viewErrors" target="_blank">View errors</a>)</p>
 			<p><a href="/z/server-manager/tasks/publish-missing/index" target="_blank">Publish 404 pages</a></p>
@@ -333,7 +335,7 @@
 			<p><a href="/z/server-manager/tasks/resend-autoresponders/index" target="_blank">Resend Autoresponders / Confirm Opt-in</a></p>
 			<!--- <p><a href="/z/blog/admin/ping/index" target="_blank">Blog Ping</a></p> --->
 			<p><a href="/z/_com/display/skin?method=deleteOldCache">Delete Old Skin File Versioning Cache</a></p>
-			<p><a href="/z/server-manager/tasks/memory-dump/index" target="_blank">Memory Dump</a></p>
+			<!--- <p><a href="/z/server-manager/tasks/memory-dump/index" target="_blank">Memory Dump</a></p> --->
 			<p><a href="/z/misc/system/index" target="_blank">CFML server uptime and session clearing</a></p>
 			<p><a href="/z/event/tasks/project-events/index" target="_blank">Project Events</a></p>
 			<p><a href="/z/server-manager/tasks/site-backup/index" target="_blank">Backup All Sites</a></p>

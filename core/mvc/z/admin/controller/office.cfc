@@ -61,21 +61,46 @@ enable round robin for offices - need a new option to disable for staff.
 
 <cffunction name="update" localmode="modern" access="remote" roles="member">
 	<cfscript>
-	var ts={};
-	var result=0;
+	var ts={}; 
 	variables.init();
 	application.zcore.adminSecurityFilter.requireFeatureAccess("Offices", true);	
 	form.site_id = request.zos.globals.id;
 	ts.office_name.required = true;
-	result = application.zcore.functions.zValidateStruct(form, ts, Request.zsid,true);
-	if(result){	
+	fail = application.zcore.functions.zValidateStruct(form, ts, Request.zsid,true);
+
+	form.office_manager_email_list=application.zcore.functions.zso(form, 'office_manager_email_list');
+	arrEmail=listToArray(form.office_manager_email_list, ",");
+	arrNewEmail=[];
+	for(email in arrEmail){
+		email=trim(email);
+		if(email EQ ""){
+			// skip
+		}else if(not application.zcore.functions.zEmailValidate(email)){
+			fail=true;
+			application.zcore.status.setStatus(request.zsid, "You must enter valid email address list for the manager email list.", form, true);
+		}else{
+			arrayAppend(arrNewEmail, trim(email));
+		}
+	}
+	form.office_manager_email_list=arrayToList(arrNewEmail, ",");
+
+	metaCom=createObject("component", "zcorerootmapping.com.zos.meta");
+	arrError=metaCom.validate("office", form);
+	if(arrayLen(arrError)){
+		fail=true;
+		for(e in arrError){
+			application.zcore.status.setStatus(request.zsid, e, form, true);
+		}
+	}
+	if(fail){	
 		application.zcore.status.setStatus(Request.zsid, false,form,true);
 		if(form.method EQ 'insert'){
 			application.zcore.functions.zRedirect('/z/admin/office/add?zsid=#request.zsid#');
 		}else{
 			application.zcore.functions.zRedirect('/z/admin/office/edit?office_id=#form.office_id#&zsid=#request.zsid#');
 		}
-	}
+	} 
+	form.office_meta_json=metaCom.save("office", form); 
 	ts=StructNew();
 	ts.table='office';
 	ts.datasource=request.zos.zcoreDatasource;
@@ -127,7 +152,12 @@ enable round robin for offices - need a new option to disable for staff.
 	office_id=#db.param(form.office_id)#";
 	qRoute=db.execute("qRoute");
 	application.zcore.functions.zQueryToStruct(qRoute);
+
+	metaCom=createObject("component", "zcorerootmapping.com.zos.meta");
+
+	structappend(form, metaCom.getData("office", form), false); 
 	application.zcore.functions.zStatusHandler(request.zsid,true);
+
 	</cfscript>
 	<h2>
 		<cfif currentMethod EQ "add">
@@ -141,10 +171,20 @@ enable round robin for offices - need a new option to disable for staff.
 		Office</h2>
 	<form class="zFormCheckDirty" action="/z/admin/office/<cfif currentMethod EQ 'add'>insert<cfelse>update</cfif>?office_id=#form.office_id#" method="post">
 		<table style="width:100%;" class="table-list">
+			#metaCom.displayForm("office", "Basic", "first")#
 			<tr>
 				<th>Office Name</th>
 				<td><input type="text" name="office_name" value="#htmleditformat(form.office_name)#" /></td>
 			</tr>
+			<cfif application.zcore.functions.zso(request.zos.globals, 'enableLeadReminderOfficeManagerCC', true, 0) EQ 1> 
+				<tr>
+					<th>Manager Email List</th>
+					<td><input type="text" name="office_manager_email_list" value="#htmleditformat(form.office_manager_email_list)#" />
+					<br>
+					Note: Managers are CC'd on lead notifications if this feature is enabled.	
+					</td>
+				</tr>
+			</cfif>
 			<tr>
 				<th style="width:1%; white-space:nowrap;" class="table-white">Photos:</th>
 				<td colspan="2" class="table-white"><cfscript>
@@ -208,6 +248,8 @@ enable round robin for offices - need a new option to disable for staff.
 				<th>Zip Code</th>
 				<td><input type="text" name="office_zip" value="#htmleditformat(form.office_zip)#" /></td>
 			</tr>
+			
+			#metaCom.displayForm("office", "Basic", "last")#
 			<tr>
 				<th style="width:1%;">&nbsp;</th>
 				<td><button type="submit" name="submitForm">Save Office</button>
@@ -307,6 +349,7 @@ enable round robin for offices - need a new option to disable for staff.
 					<td>#qOffice.office_phone#</td>
 					<td style="vertical-align:top; ">#variables.queueSortCom.getAjaxHandleButton(qOffice.office_id)#</td>
 					<td><!--- #variables.queueSortCom.getLinks(qOffice.recordcount, qOffice.currentrow, "/z/admin/office/index?office_id=#qOffice.office_id#", "vertical-arrows")#  --->
+					<a href="/z/inquiries/admin/manage-inquiries/index?search_office_id=#qOffice.office_id#">Manage Leads</a> | 
 					<a href="/z/admin/office/edit?office_id=#qOffice.office_id#">Edit</a> | 
 					<a href="/z/admin/office/delete?office_id=#qOffice.office_id#">Delete</a></td>
 				</tr>

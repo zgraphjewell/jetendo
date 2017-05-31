@@ -970,7 +970,7 @@ writeoutput(application.zcore.functions.zInput_RadioGroup(ts));
 		}else{
 			output = output&' /> ';
 		}
-		output = output&'<label for="#arguments.ss.name#_#i#">'&label&"</label></span> ";
+		output = output&'<label for="#arguments.ss.name#_#i#" style="cursor:pointer;">'&label&"</label></span> ";
 	}
 	if(arguments.ss.style NEQ ''){
 		output = output&'</span>';
@@ -1137,7 +1137,9 @@ writeoutput(application.zcore.functions.zInput_Checkbox(ts));
 	    	<script type="text/javascript">
 	    	zArrDeferredFunctions.push(function(){
 	    		$("###arguments.ss.name#_name#i#").bind("click", function(){ 
-		    		#arguments.ss.onclick# });
+		    		#arguments.ss.onclick#
+		    		$("###arguments.ss.name#").trigger("change");
+		    	});
 	    	});
 	    	</script>
 		</cfif>
@@ -3331,6 +3333,7 @@ echo('
 <cffunction name="zFakeFormFieldsNotEmpty" localmode="modern" output="yes" access="public" returntype="any">
 	<cfscript>
 	if(trim(application.zcore.functions.zso(form, 'form_first_name')&application.zcore.functions.zso(form, 'form_last_name')&application.zcore.functions.zso(form, 'form_comments')) NEQ ""){
+		application.zcore.functions.z404("Invalid request - Robot lead submission detected");
 		return true;
 	}else{
 		return false;
@@ -3367,6 +3370,7 @@ echo('
 <!--- application.zcore.functions.zInputUniqueUrl("field_name"); --->
 <cffunction name="zInputUniqueUrl" localmode="modern" returntype="any" output="yes">
 	<cfargument name="field" type="string" required="yes">
+	<cfargument name="forceEnableEditing" type="boolean" required="no" default="#false#">
 	<cfscript>
 	if(application.zcore.functions.zso(request.zos, "zFormCurrentName") NEQ ""){
 		ds=structNew(); 
@@ -3384,16 +3388,16 @@ echo('
 	}
 	value=application.zcore.functions.zso(form, arguments.field);
 	if(value NEQ ""){
-		if(application.zcore.user.checkServerAccess()){
+		if(arguments.forceEnableEditing or application.zcore.user.checkServerAccess() or application.zcore.functions.zso(request.zos.globals, "administratorEnableForceDelete", true, 0) EQ 1){
 			echo('<input type="text" name="#arguments.field#" id="#arguments.field#" value="#htmleditformat(value)#" style="width:95%;" maxlength="255" /><br />
-			<strong>Warning:</strong> Incorrect use of this field can cause broken links.  It is used to change the site''s internal link for this record.');
+			<strong>Warning:</strong> Incorrect use of this field can cause broken links.  It is used to change the site''s internal link for this record. Internal links usually start with "/".  ');
 		}else{
 			echo(value&" | Locked");
 			echo('<input type="hidden" name="#arguments.field#" id="#arguments.field#" value="#htmleditformat(value)#" />');
 		}
 	}else{
 		echo('<input type="text" name="#arguments.field#" id="#arguments.field#" value="#htmleditformat(value)#" style="width:95%;" maxlength="255" /><br />
-		<strong>Warning:</strong> Incorrect use of this field can cause broken links.  It is used to change the site''s internal link for this record.');
+		<strong>Warning:</strong> Incorrect use of this field can cause broken links.  It is used to change the site''s internal link for this record. Internal links usually start with "/".');
 		if(not application.zcore.user.checkServerAccess()){
 			echo('This field will not be editable after it is set.');
 		}
@@ -3401,6 +3405,43 @@ echo('
 	</cfscript>
 </cffunction>
 		
+<!--- 
+arrField=[
+	{label:"Field", value:"Value"},
+];
+application.zcore.functions.zLogForm(arrField);
+ --->
+<cffunction name="zLogForm" localmode="modern" access="public">
+	<cfargument name="arrField" type="array" required="yes">
+	<cfscript>
+	arrField=arguments.arrField;
+	if(arrayLen(arrField) GT 20){
+		throw("zLogForm currently only supports 20 fields.");
+	}
+	ts={
+		datasource:request.zos.zcoreDatasource,
+		table:'form_log',
+		struct:{
+		  site_id:request.zos.globals.id,
+		  form_log_url:request.zos.originalURL&"?"&request.zos.cgi.query_string,
+		  form_log_datetime:request.zos.mysqlnow,
+		  form_log_ip_address:request.zos.cgi.remote_addr,
+		  form_log_user_agent:request.zos.cgi.http_user_agent,
+		  form_log_updated_datetime:request.zos.mysqlnow,
+		  form_log_deleted:0
+		}
+	};
+	for(i=1;i<arrayLen(arrField);i++){
+		ts.struct["form_log_field#i#_label"]=arrField[i].label;
+		ts.struct["form_log_field#i#_value"]=arrField[i].value;
+	}
+	if(not structkeyexists(request.zsession, 'zLogFormFirstTime')){
+		ts.struct.form_log_first_search=1;
+		request.zsession.zLogFormFirstTime=true;
+	}
+	application.zcore.functions.zInsert(ts);
+	</cfscript>
+</cffunction>
 
 </cfoutput>
 </cfcomponent>

@@ -6,6 +6,9 @@
 		headingScale:1.5,
 		textScale:1.5,
 		indentScale:1,
+		columnPaddingTopPercent:1,
+		columnPaddingSidePercent:1,
+		columnPaddingBottomPercent:1,
 		boxPaddingTopPercent:1,
 		boxPaddingSidePercent:1,
 		boxPaddingBottomPercent:1,
@@ -32,64 +35,53 @@
 			"Default":{
 				headingScale:1,
 				textScale:1,
-				minimumPadding:10,
-				textMinimumFontSize:10,
-				headingMinimumFontSize:10,
-				indentScale:1.2
-			},
+				minimumPadding:15,
+				textMinimumFontSize:14,
+				headingMinimumFontSize:14,
+				indentScale:1.2,
+				columnPaddingTopPercent:1,
+				columnPaddingSidePercent:1,
+				columnPaddingBottomPercent:1,
+			}, 
 			"1800":{
-				headingScale:1,
-				textScale:1,
-				indentScale:1.15
+				indentScale:1,
 			},
 			"1550":{
-				headingScale:1,
-				textScale:1,
-				indentScale:1.1
+				indentScale:1,
 			}, 
 			"1362":{
-				headingScale:0.836,
-				textScale:0.836,
 				indentScale:1,
-				/*boxPaddingTopPercent:0.836,
-				boxPaddingSidePercent:0.836,
-				boxPaddingBottomPercent:0.836,
-				boxMarginTopPercent:0.836,
-				boxMarginSidePercent:0.836,
-				boxMarginBottomPercent:0.836,*/
 			},
 			"992":{
-				headingScale:0.806,
-				textScale:0.806,
-				indentScale:0.806,
-				/*boxPaddingTopPercent:0.806,
-				boxPaddingSidePercent:0.806,
-				boxPaddingBottomPercent:0.806,
-				boxMarginTopPercent:0.806,
-				boxMarginSidePercent:0.806,
-				boxMarginBottomPercent:0.806,*/
+				headingScale:0.9,
+				indentScale:1,
+				textMinimumFontSize:16,
+				headingMinimumFontSize:16,
+				columnGapSidePercent:7,
+				columnGapBottomPercent:4,
+				columnPaddingTopPercent:2,
+				columnPaddingSidePercent:2,
+				columnPaddingBottomPercent:2
 			},
 			"767":{
-				headingScale:0.786,
-				textScale:0.786,
-				indentScale:0.786,
-				/*boxPaddingTopPercent:0.786,
-				boxPaddingSidePercent:0.786,
-				boxPaddingBottomPercent:0.786,
-				boxMarginTopPercent:0.786,
-				boxMarginSidePercent:0.786,
-				boxMarginBottomPercent:0.786,*/
+				headingScale:0.8,
+				indentScale:1, 
+				columnGapSidePercent:10,
+				columnGapBottomPercent:6,
+				columnPaddingTopPercent:3,
+				columnPaddingSidePercent:3,
+				columnPaddingBottomPercent:3,
 			},
 			"479":{
-				headingScale:0.736,
-				textScale:0.736,
-				indentScale:0.736,
-				/*boxPaddingTopPercent:0.736,
-				boxPaddingSidePercent:0.736,
-				boxPaddingBottomPercent:0.736,
-				boxMarginTopPercent:0.736,
-				boxMarginSidePercent:0.736,
-				boxMarginBottomPercent:0.736,*/
+				headingScale:0.7,
+				indentScale:1,
+				textMinimumFontSize:16,
+				headingMinimumFontSize:16,
+				columnGapSidePercent:15,
+				columnGapBottomPercent:10,
+				columnPaddingTopPercent:4,
+				columnPaddingSidePercent:4,
+				columnPaddingBottomPercent:4,
 			}
 		},
 		minimum_column_width:200,
@@ -329,14 +321,14 @@
 
 		if(frameworkEnabled){
 			if(breakpoint EQ "default"){
-				arrayAppend(arrCSS, 'body{ margin:0px; line-height:1.3;  }'&chr(10)&
+				arrayAppend(arrCSS, 'body{ margin:0px; line-height:1.5;  }'&chr(10)&
 				'form{ margin:0px; padding:0px;}'&chr(10)&
 				'img{border-style:none;}'&chr(10)&
 				'*, img{ -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing:border-box; }'&chr(10)&
 				'header, nav, section, aside, article, footer, .z-section, .z-row{ width:100%; float:left; min-height:1px; }'&chr(10));
 			}
 
-			v='body { line-height:#numberformat(dataStruct.textLineHeightScale*1.3, '_._')#; } ';
+			v='body { line-height:#numberformat(dataStruct.textLineHeightScale*1.5, '_._')#; } ';
 			if(not structkeyexists(uniqueStruct, v)){
 				uniqueStruct[v]=true;
 				arrayAppend(arrCSS, v);
@@ -351,18 +343,18 @@
 				uniqueStruct[v]=true;
 				arrayAppend(arrCSS, v);
 			} 
-			v='h1,h2,h3,h4,h5,h6{ line-height:#numberformat(dataStruct.headingLineHeightScale*1.3, '_._')#; margin:0px; padding:0px; }';
-			//v='.z-container h1,.z-container h2,.z-container h3,.z-container h4,.z-container h5,.z-container h6{ line-height:#numberformat(dataStruct.headingLineHeightScale*1.3, '_._')#; margin:0px; padding:0px; }';
+			v='h1,h2,h3,h4,h5,h6{ line-height:#numberformat(dataStruct.headingLineHeightScale*1.5, '_._')#; margin:0px; padding:0px; }';
+			//v='.z-container h1,.z-container h2,.z-container h3,.z-container h4,.z-container h5,.z-container h6{ line-height:#numberformat(dataStruct.headingLineHeightScale*1.5, '_._')#; margin:0px; padding:0px; }';
 			if(not structkeyexists(uniqueStruct, v)){
 				uniqueStruct[v]=true;
 				arrayAppend(arrCSS, v);
 			} 
 		}else{
 			if(breakpoint EQ "default"){
-				arrayAppend(arrCSS, 'section, z-container, header, section *, z-container *, header *{ line-height:1.3; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing:border-box; }'&chr(10));
+				arrayAppend(arrCSS, 'section, z-container, header, section *, z-container *, header *{ line-height:1.5; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing:border-box; }'&chr(10));
 			}
 		}
-		v='.z-container textarea, .z-container select, .z-container button, .z-container input{ font-size:#tempScaleText#px; line-height:#numberformat(dataStruct.headingLineHeightScale*1.3, '_._')#; }';
+		v='.z-container textarea, .z-container select, .z-container button, .z-container input{ font-size:#tempScaleText#px; line-height:#numberformat(dataStruct.headingLineHeightScale*1.5, '_._')#; }';
 		if(not structkeyexists(uniqueStruct, v)){
 			uniqueStruct[v]=true;
 			arrayAppend(arrCSS, v);
@@ -378,7 +370,7 @@
 			arrayAppend(arrCSS, v);
 		} 
 		if(n EQ arrayLen(breakStruct.arrBreak)){
-	 		v='.z-column, .z-1of1{ float:left; min-height:1px; width:100%; margin-left:0%;  margin-right:0%; padding-left:#dataStruct.boxPaddingSidePercent#%; padding-right:#dataStruct.boxPaddingSidePercent#%; padding-top:#dataStruct.boxPaddingTopPercent#%; padding-bottom:#dataStruct.boxPaddingBottomPercent#%; }';
+	 		v='.z-column, .z-1of1{ float:left; min-height:1px; width:#numberformat(100-dataStruct.columnGapSidePercent, '_.___')#%; margin-left:#numberformat(dataStruct.columnGapSidePercent/2, '_.___')#%;  margin-right:#numberformat(dataStruct.columnGapSidePercent/2, '_.___')#%; padding-left:#dataStruct.boxPaddingSidePercent#%; padding-right:#dataStruct.boxPaddingSidePercent#%; padding-top:#dataStruct.boxPaddingTopPercent#%; padding-bottom:#dataStruct.boxPaddingBottomPercent#%; }';
 		}else{
 	 		v='.z-column, .z-1of1{ float:left; min-height:1px; width:#numberformat(100-dataStruct.columnGapSidePercent, '_.___')#%; margin-left:#numberformat(dataStruct.columnGapSidePercent/2, '_.___')#%;  margin-right:#numberformat(dataStruct.columnGapSidePercent/2, '_.___')#%; padding-left:#dataStruct.boxPaddingSidePercent#%; padding-right:#dataStruct.boxPaddingSidePercent#%; padding-top:#dataStruct.boxPaddingTopPercent#%; padding-bottom:#dataStruct.boxPaddingBottomPercent#%; }';
 	 	}
@@ -453,16 +445,19 @@
 					}*/
 					width-=dataStruct.columnGapSidePercent;
 					maxWidth=100;  
-				}else if(breakpoint EQ 992){
+				}else if(breakpoint EQ 992){ 
 					if(percent <= 33.34){
 						percent=33.33;
 						columnCount=1;
+						isSingleColumn=true;
 					}else if(percent > 66.67){
 						percent=100;
 						columnCount=3;
+						isSingleColumn=false;
 					}else{
-						percent=66.66;
+						percent=50;//66.66;
 						columnCount=2;
+						isSingleColumn=false;
 					}
 					disableFirstLast=true;
 					width=n2*percent;
@@ -488,17 +483,18 @@
 					percentMargin=(percent/100)*totalMargin;
 					width-=percentMargin; 
 					width=min(maxWidth, int(width*100)/100);  
-				} 
-				padding=' padding-left:#dataStruct.boxPaddingSidePercent#%; padding-right:#dataStruct.boxPaddingSidePercent#%; padding-top:#dataStruct.boxPaddingTopPercent#%; padding-bottom:#dataStruct.boxPaddingBottomPercent#%;';
+				}  
+				padding=' padding-left:#dataStruct.columnPaddingSidePercent#%; padding-right:#dataStruct.columnPaddingSidePercent#%; padding-top:#dataStruct.columnPaddingTopPercent#%; padding-bottom:#dataStruct.columnPaddingBottomPercent#%;';
 
 				v='.z-#n2#of#limit#{ float:left; margin-left:#numberformat(margin, '_.___')#%; margin-right:#numberformat(margin, '_.___')#%; #padding# margin-bottom:#numberformat(dataStruct.columnGapBottomPercent, '_.___')#%;}';
-			
+
 				if(not structkeyexists(uniqueStruct, v)){
 					uniqueStruct[v]=true;
 					arrayAppend(arrCSS, v);
 				}  
 				if(isSingleColumn){
-					v='.z-#n2#of#limit#{ min-height:1px; max-width:100%; width:100%; margin-left:0px; margin-right:0px; display:block; }';
+					v='.z-#n2#of#limit#{ min-height:1px; max-width:100%; width:#numberformat(100-dataStruct.columnGapSidePercent, '_.___')#%; margin-left:#numberformat(dataStruct.columnGapSidePercent/2, '_.___')#%;  margin-right:#numberformat(dataStruct.columnGapSidePercent/2, '_.___')#%; display:block; }';
+					//v='.z-#n2#of#limit#{ min-height:1px; max-width:100%; width:100%; margin-left:0px; margin-right:0px; display:block; }';
 					if(not structkeyexists(uniqueStruct, v)){
 						uniqueStruct[v]=true;
 						arrayAppend(arrCSS, v);
@@ -514,6 +510,14 @@
 						arrayAppend(arrCSS, v);
 					}  
 				}
+				/*	if(n2 EQ 1 and limit EQ 2 ){
+					writedump(v);
+					writedump(percent);
+					writedump(breakpoint);
+					writedump(columnCount);
+					writedump(columnWidth&" < "&breakStruct.minimum_column_width&" | "&n2&":"&limit);
+					// abort;
+					}*/
 				if(not structkeyexists(uniqueStruct, v)){
 					uniqueStruct[v]=true;
 					arrayAppend(arrCSS, v);
@@ -792,7 +796,7 @@
 		application.zcore.functions.zWriteFile(request.zos.globals.privateHomeDir&"zupload/layout-setting-instance-#breakStruct.layout_setting_instance_id#.css", out);
 	}else{
 		application.zcore.functions.zWriteFile(request.zos.globals.privateHomeDir&"zupload/layout-global.css", out);
-	}
+	} 
 	</cfscript>
 
 </cffunction>
@@ -946,19 +950,22 @@ labelStruct={
 	headingScale:"Heading Scale",
 	textScale:"Text Scale",
 	indentScale:"Indent Scale",
-	boxPaddingTopPercent:"Box Padding Top %",
-	boxPaddingSidePercent:"Box Padding Side %",
-	boxPaddingBottomPercent:"Box Padding Bottom %",
-	boxMarginTopPercent:"Box Margin Top %",
-	boxMarginSidePercent:"Box Margin Side %",
-	boxMarginBottomPercent:"Box Margin Bottom %",
+	boxPaddingTopPercent:"Padding Class Top %",
+	boxPaddingSidePercent:"Padding Class Side %",
+	boxPaddingBottomPercent:"Padding Class Bottom %",
+	boxMarginTopPercent:"Margin Class Top %",
+	boxMarginSidePercent:"Margin Class Side %",
+	boxMarginBottomPercent:"Margin Class Bottom %",
 	columnGapSidePercent:"Column Gap Side %",
 	columnGapBottomPercent:"Column Gap Bottom %",
 	minimumPadding:"Minimum Padding",
 	headingMinimumFontSize:"Heading Minimum Font Size",
 	textMinimumFontSize:"Text Minimum Font Size",
 	headingLineHeightScale:"Heading Line Height Scale",
-	textLineHeightScale:"Text Line Height Scale"
+	textLineHeightScale:"Text Line Height Scale",
+	columnPaddingTopPercent:"Column Padding Top %",
+	columnPaddingSidePercent:"Column Padding Side %",
+	columnPaddingBottomPercent:"Column Padding Bottom %",
 };
 
 if(form.method EQ "index"){

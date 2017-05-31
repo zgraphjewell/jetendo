@@ -1749,7 +1749,7 @@ ts.count =  1;
 rs2=application.zcore.imageLibraryCom.getImageSQL(ts);
 	</cfscript>
 	<cfsavecontent variable="db.sql">
-	select *, count(distinct c1.blog_comment_id) cc1 , count(distinct c2.blog_comment_id) cc2 
+	select *, SUM(c1.blog_comment_approved) approvedComments, count(distinct c1.blog_comment_id) totalComments
 	<cfif form.searchtext NEQ ''>
 		<cfif application.zcore.enableFullTextIndex>
 			, MATCH(blog.blog_search) AGAINST (#db.param(form.searchText)#) as score,
@@ -1765,11 +1765,7 @@ rs2=application.zcore.imageLibraryCom.getImageSQL(ts);
 	left join #db.table("blog_comment", request.zos.zcoreDatasource)# c1 ON 
 	c1.blog_id = blog.blog_id and 
 	blog.site_id = c1.site_id and 
-	c1.blog_comment_deleted = #db.param(0)#
-	left join #db.table("blog_comment", request.zos.zcoreDatasource)# c2 ON 
-	c2.blog_id = blog.blog_id and c2.blog_comment_approved=#db.param(0)#  and 
-	blog.site_id = c2.site_id and 
-	c2.blog_comment_deleted = #db.param(0)#
+	c1.blog_comment_deleted = #db.param(0)# 
 	#db.trustedSQL(rs2.leftJoin)#
 	WHERE blog.site_id=#db.param(request.zos.globals.id)# and 
 	blog_deleted = #db.param(0)# and 
@@ -1915,7 +1911,7 @@ rs2=application.zcore.imageLibraryCom.getImageSQL(ts);
 			<a href="#viewlink#" target="_blank"><cfif previewEnabled>(Inactive, Click to Preview)<cfelse>View</cfif></a> | 
 			<cfif qList.blog_search_mls EQ 1><a href="#request.zos.currentHostName##application.zcore.functions.zURLAppend(request.zos.listing.functions.getSearchFormLink(), "zsearch_bid=#qList.blog_id#")#" target="_blank">Search Results Only</a> | </cfif>
 			<a href="/z/blog/admin/blog-admin/commentList?blog_id=#qList.blog_id#&amp;site_x_option_group_set_id=#form.site_x_option_group_set_id#">
-	<cfif application.zcore.functions.zIsExternalCommentsEnabled()>Comments<cfelse><cfif qList.cc1 NEQ 0> #qList.cc1# Comment<cfif qList.cc1 GT 1>s</cfif><cfif qList.cc2 NEQ 0> <strong>(#qList.cc2# New)</strong></cfif><cfelse>Comments</cfif></cfif></a> |
+	<cfif application.zcore.functions.zIsExternalCommentsEnabled()>Comments<cfelse><cfif qList.totalComments NEQ 0> #qList.totalComments# Comment<cfif qList.totalComments GT 1>s</cfif><cfif qList.totalComments-qList.approvedComments NEQ 0> <strong>(#qList.totalComments-qList.approvedComments# New)</strong></cfif><cfelse>Comments</cfif></cfif></a> |
 			<a href="/z/blog/admin/blog-admin/articleEdit?blog_id=#qList.blog_id#&amp;site_x_option_group_set_id=#form.site_x_option_group_set_id#">Edit</a> | 
 
 				<cfif not application.zcore.user.checkServerAccess() and qList.blog_unique_name NEQ "">
@@ -2370,10 +2366,6 @@ tabCom.enableSaveButtons();
 			</cfscript> | Selecting "Yes", will cache the external images in the html editor to this domain.
 			</td>
 		</tr>
-			</table>
-		#tabCom.endFieldSet()#
-		#tabCom.beginFieldSet("Advanced")# 
-	<table style="border-spacing:0px; width:100%; border:'0';" class="table-list">
 			<tr>
 				<th style="vertical-align:top; width:120px; ">#application.zcore.functions.zOutputHelpToolTip("Meta Keywords","member.blog.editTag blog_tag_metakey")#</th>
 				<td>
@@ -2386,6 +2378,10 @@ tabCom.enableSaveButtons();
 					<textarea name="blog_tag_metadesc" style="width:100%; height:60px; ">#form.blog_tag_metadesc#</textarea>
 				</td>
 			</tr>
+			</table>
+		#tabCom.endFieldSet()#
+		#tabCom.beginFieldSet("Advanced")# 
+	<table style="border-spacing:0px; width:100%; border:'0';" class="table-list">
 		<tr>
 		<th style="width:120px; white-space:nowrap;">#application.zcore.functions.zOutputHelpToolTip("Custom Fields","member.blog.editTag blog_tag_site_option_app_id")#</th>
 		<td colspan="2">
@@ -2400,7 +2396,13 @@ tabCom.enableSaveButtons();
 		</tr>
 <tr> 
 <th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("Unique URL","member.blog.editTag blog_tag_unique_name")#</th>
-<td style="vertical-align:top; ">#application.zcore.functions.zInputUniqueUrl("blog_tag_unique_name")#</td>
+<td style="vertical-align:top; ">
+		<cfif form.method EQ "tagAdd">
+			#application.zcore.functions.zInputUniqueUrl("blog_tag_unique_name", true)#
+		<cfelse>
+			#application.zcore.functions.zInputUniqueUrl("blog_tag_unique_name")#
+		</cfif>
+	</td>
 </tr>
 </table>
 		#application.zcore.hook.trigger("blog.tagEditCustomFields", {query=qEdit})#
@@ -2895,6 +2897,18 @@ tabCom.enableSaveButtons();
 				<th style="vertical-align:top; width:120px; ">#application.zcore.functions.zOutputHelpToolTip("Sticky?","member.blog.edit blog_sticky")#</th>
 				<td>#application.zcore.functions.zInput_Boolean("blog_sticky")# | Force to top of all pages.</td>
 			</tr>
+			<tr>
+				<th style="vertical-align:top; width:120px; ">#application.zcore.functions.zOutputHelpToolTip("Meta Keywords","member.blog.edit blog_metakey")#</th>
+				<td>
+					<textarea name="blog_metakey" style="width:100%; height:60px; ">#form.blog_metakey#</textarea>
+				</td>
+			</tr>
+			<tr>
+				<th style="vertical-align:top; width:120px; ">#application.zcore.functions.zOutputHelpToolTip("Meta Description","member.blog.edit blog_metadesc")#</th>
+				<td>
+					<textarea name="blog_metadesc" style="width:100%; height:60px; ">#form.blog_metadesc#</textarea>
+				</td>
+			</tr>
 		</table>
 		#tabCom.endFieldSet()#
 		#tabCom.beginFieldSet("Advanced")# 
@@ -2929,26 +2943,20 @@ tabCom.enableSaveButtons();
 			</td>
 			</tr>
 		</cfif>
-			<tr>
-				<th style="vertical-align:top; width:120px; ">#application.zcore.functions.zOutputHelpToolTip("Meta Keywords","member.blog.edit blog_metakey")#</th>
-				<td>
-					<textarea name="blog_metakey" style="width:100%; height:60px; ">#form.blog_metakey#</textarea>
-				</td>
-			</tr>
-			<tr>
-				<th style="vertical-align:top; width:120px; ">#application.zcore.functions.zOutputHelpToolTip("Meta Description","member.blog.edit blog_metadesc")#</th>
-				<td>
-					<textarea name="blog_metadesc" style="width:100%; height:60px; ">#form.blog_metadesc#</textarea>
-				</td>
-			</tr>
 		<cfscript>
+		db.sql="select * from #db.table("site_option", request.zos.zcoreDatasource)# 
+		WHERE site_option_appidlist like #db.param('%,10,%')# and 
+		site_id = #db.param(request.zos.globals.id)# and 
+		site_option_deleted=#db.param(0)#";
+		qOptionCheck=db.execute("qOptionCheck");
+
 		db.sql="select * from #db.table("site_option_group", request.zos.zcoreDatasource)# 
 		WHERE site_option_group_appidlist like #db.param('%,10,%')# and 
 		site_id = #db.param(request.zos.globals.id)# and 
 		site_option_group_deleted=#db.param(0)#";
 		qGroupCheck=db.execute("qGroupCheck");
 		</cfscript>
-		<cfif qGroupCheck.recordcount>
+		<cfif qOptionCheck.recordcount or qGroupCheck.recordcount>
 			<tr>
 			<th style="width:120px; white-space:nowrap;">#application.zcore.functions.zOutputHelpToolTip("Custom Fields","member.blog.edit blog_site_option_app_id")#</th>
 			<td colspan="2">
@@ -2965,7 +2973,13 @@ tabCom.enableSaveButtons();
 	
 		<tr> 
 		<th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("Unique URL","member.blog.edit blog_unique_name")#</th>
-		<td style="vertical-align:top; ">#application.zcore.functions.zInputUniqueUrl("blog_unique_name")#
+		<td style="vertical-align:top; ">
+			<cfif form.method EQ "articleAdd">
+				#application.zcore.functions.zInputUniqueUrl("blog_unique_name", true)#
+			<cfelse>
+				#application.zcore.functions.zInputUniqueUrl("blog_unique_name")#
+			</cfif>
+	
 		</td>
 		</tr> 
 		
@@ -3297,6 +3311,18 @@ tabCom.enableSaveButtons();
 			</cfscript> | Selecting "Yes", will cache the external images in the html editor to this domain.
 			</td>
 		</tr>
+		<tr>
+			<th style="vertical-align:top; width:120px; ">#application.zcore.functions.zOutputHelpToolTip("Meta Keywords","member.blog.formcat blog_category_metakey")#</th>
+			<td>
+				<textarea name="blog_category_metakey" style="width:100%; height:60px; ">#form.blog_category_metakey#</textarea>
+			</td>
+		</tr>
+		<tr>
+			<th style="vertical-align:top; width:120px; ">#application.zcore.functions.zOutputHelpToolTip("Meta Description","member.blog.formcat blog_category_metadesc")#</th>
+			<td>
+				<textarea name="blog_category_metadesc" style="width:100%; height:60px; ">#form.blog_category_metadesc#</textarea>
+			</td>
+		</tr>
 		</table>
 		#tabCom.endFieldSet()#
 		#tabCom.beginFieldSet("Advanced")# 
@@ -3326,18 +3352,6 @@ tabCom.enableSaveButtons();
 		</tr> 
  
 	
-		<tr>
-			<th style="vertical-align:top; width:120px; ">#application.zcore.functions.zOutputHelpToolTip("Meta Keywords","member.blog.formcat blog_category_metakey")#</th>
-			<td>
-				<textarea name="blog_category_metakey" style="width:100%; height:60px; ">#form.blog_category_metakey#</textarea>
-			</td>
-		</tr>
-		<tr>
-			<th style="vertical-align:top; width:120px; ">#application.zcore.functions.zOutputHelpToolTip("Meta Description","member.blog.formcat blog_category_metadesc")#</th>
-			<td>
-				<textarea name="blog_category_metadesc" style="width:100%; height:60px; ">#form.blog_category_metadesc#</textarea>
-			</td>
-		</tr>
 	<tr>
 	<th style="width:1%; white-space:nowrap;">#application.zcore.functions.zOutputHelpToolTip("Custom Fields","member.blog.formcat blog_category_site_option_app_id")#</th>
 	<td colspan="2">
@@ -3352,7 +3366,14 @@ tabCom.enableSaveButtons();
 	</tr>
 	<tr> 
 	<th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("Unique URL","member.blog.formcat blog_category_unique_name")#</th>
-	<td style="vertical-align:top; ">#application.zcore.functions.zInputUniqueUrl("blog_category_unique_name")#</td>
+	<td style="vertical-align:top; ">
+
+		<cfif form.method EQ "categoryAdd">
+			#application.zcore.functions.zInputUniqueUrl("blog_category_unique_name", true)#
+		<cfelse>
+			#application.zcore.functions.zInputUniqueUrl("blog_category_unique_name")#
+		</cfif>
+	</td>
 	</tr> 
 	</table>
 

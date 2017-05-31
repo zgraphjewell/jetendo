@@ -10,6 +10,7 @@
 	form.modalpopforced=application.zcore.functions.zso(form, 'modalpopforced',false,0);
 	if(application.zcore.functions.zFakeFormFieldsNotEmpty()){
 		form.inquiries_spam=1;
+		form.inquiries_spam_description="Fake form fields not empty"; 
 		//application.zcore.functions.zRedirect("/z/misc/thank-you/index?modalpopforced=#form.modalpopforced#");
 	}
 	form.content_id=application.zcore.functions.zso(form, 'content_id');
@@ -23,10 +24,12 @@
 	if(form.modalpopforced EQ 1){
 		if(application.zcore.functions.zso(form, 'js3811') NEQ "j219"){
 			form.inquiries_spam=1;
+			form.inquiries_spam_description="js3811 value not set";
 			//writeoutput('~n~');application.zcore.functions.zabort();
 		}
 		if(application.zcore.functions.zCheckFormHashValue(application.zcore.functions.zso(form, 'js3812')) EQ false){
 			form.inquiries_spam=1;
+			form.inquiries_spam_description="Form hash value was wrong";
 			//application.zcore.status.setStatus(request.zsid, "Your session has expired.  Please submit the form again.",form,true);
 			//application.zcore.functions.zRedirect("/z/misc/inquiry/index?modalpopforced=#form.modalpopforced#&zsid=#Request.zsid#&content_id=#form.content_id#");
 		}
@@ -34,12 +37,14 @@
 	local.pos=findnocase("</",application.zcore.functions.zso(form, 'inquiries_comments'));
 	if(local.pos NEQ 0){
 		form.inquiries_spam=1;
+		form.inquiries_spam_description="html found in comments";
 		//application.zcore.functions.zRedirect("/z/misc/thank-you/index?modalpopforced=#form.modalpopforced#");
 	}
-	if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
-		form.inquiries_spam=1;
+	/*	if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
+		form.inquiries_spam=1; 
+		form.inquiries_spam_description="zset9 was wrong";
 		//application.zcore.functions.zredirect('/');
-	}
+	}*/
 	if(structkeyexists(form, 'inquiries_start_date_month')){
 		form.inquiries_start_date=application.zcore.functions.zGetDateSelect("inquiries_start_date");
 		form.inquiries_start_date=dateformat(form.inquiries_start_date, "yyyy-mm-dd");
@@ -67,8 +72,8 @@
 	}
 	local.myForm.inquiries_first_name.required = true;
 	local.myForm.inquiries_first_name.friendlyName = "First Name";
-	//local.myForm.inquiries_last_name.required = true;
-	//local.myForm.inquiries_last_name.friendlyName = "Last Name";
+	local.myForm.inquiries_last_name.required = true;
+	local.myForm.inquiries_last_name.friendlyName = "Last Name";
 	if(application.zcore.app.getAppData("content").optionStruct.content_config_phone_required EQ 1){
 		local.myForm.inquiries_phone1.required = true;
 		local.myForm.inquiries_phone1.friendlyName = "Phone";
@@ -97,6 +102,7 @@
 	}
 	if(Find("@", form.inquiries_first_name) NEQ 0){
 		form.inquiries_spam=1;
+		form.inquiries_spam_description="@ symbol in first name";
 		// application.zcore.status.setStatus(Request.zsid, "Invalid Request",form,true);
 		//application.zcore.functions.zRedirect("/z/misc/inquiry/index?modalpopforced=#form.modalpopforced#&zsid=#Request.zsid#&content_id=#form.content_id#");
 	}
@@ -105,6 +111,7 @@
 		application.zcore.functions.zRedirect("/z/misc/inquiry/index?modalpopforced=#form.modalpopforced#&zsid=#request.zsid#&content_id=#form.content_id#");
 	}
 	form.site_id = request.zOS.globals.id;
+	form.inquiries_session_id=application.zcore.session.getSessionId();
 	
 	form.inquiries_primary=1;
 	db.sql="UPDATE #db.table("inquiries", request.zos.zcoreDatasource)# inquiries 
@@ -115,11 +122,7 @@
 	site_id = #db.param(request.zos.globals.id)# ";
 	db.execute("q"); 
 	//	Insert Into Inquiry Database
-	local.inputStruct = StructNew();
-	local.inputStruct.table = "inquiries";
-	local.inputstruct.datasource=request.zos.zcoreDatasource;
-	local.inputStruct.struct=form;
-	form.inquiries_id = application.zcore.functions.zInsert(local.inputStruct); 
+	form.inquiries_id=application.zcore.functions.zInsertLead();
 	
 	if(form.inquiries_id EQ false){
 		application.zcore.status.setStatus(Request.zsid, "Your inquiry has not been sent due to an error.", false,true);
@@ -133,7 +136,7 @@
 	if(application.zcore.functions.zso(form, 'inquiries_email') EQ "" or application.zcore.functions.zEmailValidate(form.inquiries_email) EQ false){
 		form.inquiries_email=request.fromemail;
 	}
-	if(form.inquiries_spam EQ 0){
+	//if(form.inquiries_spam EQ 0){
 		local.ts=structnew();
 		local.ts.inquiries_id=form.inquiries_id;
 		local.ts.subject="New Inquiry on #request.zos.globals.shortdomain#";
@@ -143,14 +146,14 @@
 			// failed to assign/email lead
 			//zdump(local.rs);
 		}
-	}
+	//}
 	form.mail_user_id=application.zcore.user.automaticAddUser(application.zcore.functions.zUserMapFormFields(structnew()));
-	if(form.inquiries_spam EQ 0){
+	//if(form.inquiries_spam EQ 0){
 		if(application.zcore.app.siteHasApp("rental") and application.zcore.app.getAppData("rental").optionstruct.rental_config_lodgix_email_to NEQ ""){
 			local.rentalFrontCom=application.zcore.functions.zcreateobject("component","zcorerootmapping.mvc.z.rental.controller.rental-front");
 			local.rentalFrontCom.lodgixInquiryTemplate();
 		}
-	}
+	//}
 	redirectURL=application.zcore.functions.zso(form, 'redirect_url');
 	if(redirectURL NEQ ""){
 		application.zcore.functions.zRedirect(redirectURL);

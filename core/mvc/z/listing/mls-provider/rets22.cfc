@@ -73,20 +73,7 @@ t5["style"].lookupfield="style";
 t5["view"].lookupfield="view";
 this.remapFieldStruct=t5;
 */
-</cfscript>
-
-<cffunction name="deleteListings" localmode="modern" output="no" returntype="any">
-	<cfargument name="idlist" type="string" required="yes">
-	<cfscript>
-	var db=request.zos.queryObject;
-	var arrId=listtoarray(mid(replace(arguments.idlist," ","","ALL"),2,len(arguments.idlist)-2),"','");
-	super.deleteListings(arguments.idlist);
-	
-	db.sql="DELETE FROM #db.table("rets22_property", request.zos.zcoreDatasource)#  
-	WHERE rets22_list_105 IN (#db.trustedSQL(arguments.idlist)#)";
-	db.execute("q"); 
-	</cfscript>
-</cffunction>
+</cfscript> 
 
 <cffunction name="initImport" localmode="modern" output="no" returntype="any">
 	<cfargument name="resource" type="string" required="yes">
@@ -441,14 +428,7 @@ this.remapFieldStruct=t5;
 	rs.listing_subdivision=local.listing_subdivision;
 	rs.listing_year_built=application.zcore.functions.zso(ts, "rets22_list_53");
 	rs.listing_office=ts["rets22_list_106"];
-	db.sql="select * from #db.table("rets22_office", request.zos.zcoreDatasource)# rets22_office 
-	where rets22_office_0=#db.param(rs.listing_office)#";
-	qOffice=db.execute("qOffice");  
-	if(qOffice.recordcount NEQ 0){
-		rs.listing_office_name=qOffice.rets22_office_2;
-	}else{
-		rs.listing_office_name="";
-	}
+	rs.listing_office_name=ts["rets22_listing_office_name"];
 	rs.listing_agent=ts["rets22_list_5"];
 	rs.listing_latitude=curLat;
 	rs.listing_longitude=curLong;
@@ -473,6 +453,7 @@ this.remapFieldStruct=t5;
 	rs.listing_data_detailcache3=local.listing_data_detailcache3; 
 
 
+	rs.listing_track_sysid=ts["rets22_list_1"];
 	//writedump(rs);abort;
 	return {
 		listingData:rs,
@@ -480,29 +461,14 @@ this.remapFieldStruct=t5;
 		arrData:arguments.ss.arrData
 	};
 	</cfscript>
-</cffunction>
-    
-<cffunction name="getJoinSQL" localmode="modern" output="yes" returntype="any">
-	<cfargument name="joinType" type="string" required="no" default="INNER">
-	<cfscript>
-	var db=request.zos.queryObject;
-	</cfscript>
-	<cfreturn "#arguments.joinType# JOIN #db.table("rets22_property", request.zos.zcoreDatasource)# rets22_property ON rets22_property.rets22_list_105 = listing.listing_id">
-</cffunction>
-
-    <cffunction name="getPropertyListingIdSQL" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets22_property.rets22_list_105">
-    </cffunction>
-    <cffunction name="getListingIdField" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets22_list_105">
-    </cffunction>
+</cffunction> 
     
 <cffunction name="getDetails" localmode="modern" output="yes" returntype="any">
-	<cfargument name="query" type="query" required="yes">
+	<cfargument name="ss" type="struct" required="yes">
 	<cfargument name="row" type="numeric" required="no" default="#1#">
 	<cfargument name="fulldetails" type="boolean" required="no" default="#false#">
 	<cfscript> 
-	var idx=this.baseGetDetails(arguments.query, arguments.row, arguments.fulldetails);
+	var idx=this.baseGetDetails(arguments.ss, arguments.row, arguments.fulldetails);
 	t99=gettickcount();
 	idx["features"]="";
 	idx.listingSource=request.zos.listing.mlsStruct[listgetat(idx.listing_id,1,'-')].mls_disclaimer_name;
@@ -530,11 +496,11 @@ this.remapFieldStruct=t5;
 	idx["officeState"]="";
 	idx["officeEmail"]="";
 		
-	idx["virtualtoururl"]=arguments.query["rets22_unbrandedidxvirtualtour"];
-	idx["zipcode"]=arguments.query["listing_zip"][arguments.row];
+	idx["virtualtoururl"]=application.zcore.functions.zso(arguments.ss, "rets22_unbrandedidxvirtualtour");
+	idx["zipcode"]=arguments.ss["listing_zip"];
 	idx["maintfees"]="";
-	/*if(arguments.query["rets#this.mls_id#_FEAT20130612195730582842000000"][arguments.row] NEQ ""){
-		idx["maintfees"]=arguments.query["rets#this.mls_id#_FEAT20130612195730582842000000"][arguments.row];
+	/*if(arguments.ss["rets#this.mls_id#_FEAT20130612195730582842000000"] NEQ ""){
+		idx["maintfees"]=arguments.ss["rets#this.mls_id#_FEAT20130612195730582842000000"];
 	}*/
 	
 	</cfscript>
@@ -562,22 +528,10 @@ this.remapFieldStruct=t5;
 </cffunction>
 	
 <cffunction name="getLookupTables" localmode="modern" access="public" output="no" returntype="struct">
-	<cfscript>
-	var i=0;
-	var s=0;
-	var arrSQL=[];
-	var fd=0;
-	var arrError=[];
-	var i2=0;
-	var tmp=0;
-	var g=0;
-	var db=request.zos.queryObject;
-	var qD2=0;
-	var arrC=0;
-	var tempState=0;
-	var failStr=0;
-	var qD=0;
-	var qZ=0;
+	<cfscript> 
+	var arrSQL=[]; 
+	var arrError=[]; 
+	var db=request.zos.queryObject; 
 	var cityCreated=false; 
 	fd=structnew();
 	fd["A"]="Residential";

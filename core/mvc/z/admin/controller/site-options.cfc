@@ -926,9 +926,21 @@
 			<tr>
 				<th>Code Name:</th>
 				<td>
-				<cfif currentMethod EQ "add">
-					<input type="text" size="50" name="site_option_name" id="site_option_name" value="#htmleditformat(form.site_option_name)#" onkeyup="var d1=document.getElementById('site_option_display_name');if(displayDefault){d1.value=this.value;} autofillFieldType(this.value);" onblur="var d1=document.getElementById('site_option_display_name');if(displayDefault){d1.value=this.value;}"><br />
-					Note: <a href="/z/admin/site-options/autocompleteTips" target="_blank">Autocomplete tips</a>
+				<input type="text" size="50" name="site_option_name" id="site_option_name" value="#htmleditformat(form.site_option_name)#" onkeyup="var d1=document.getElementById('site_option_display_name');if(displayDefault){d1.value=this.value;} autofillFieldType(this.value);" onblur="var d1=document.getElementById('site_option_display_name');if(displayDefault){d1.value=this.value;}"><br />
+				Note: <a href="/z/admin/site-options/autocompleteTips" target="_blank">Autocomplete tips</a>
+				<cfif currentMethod NEQ "add">
+					<br><strong><span style="color:##900;">BE EXTREMELY CAREFUL.</span>
+					If you EDIT the Code Name, you must manually change it on all servers.<br><br>
+
+					Sync only works when the Code Name matches on both servers.  You may cause data loss if you forget about this and Sync incorrectly.
+					<br><br>
+					  It is not recommended to change the Code Name after a project is live.  Be sure to communicate these changes to the other developers.<br><br>
+					  Any code that refers to the Code Name MUST be manually updated immediately after changing the name, or it will throw undefined errors.</strong>
+					<!--- #form.site_option_name#<br />
+					<input name="site_option_name" id="site_option_name" type="hidden" value="#htmleditformat(form.site_option_name)#"  />
+					Note: Code Name can't be changed after initial creation to allow for simple syncing between sites &amp; servers. --->
+				</cfif>
+
 					<script type="text/javascript">
 					var optionsSetByUser=false;
 					function autofillFieldType(v){
@@ -1138,11 +1150,6 @@
 						});
 					});
 					</script>
-				<cfelse>
-					#form.site_option_name#<br />
-					<input name="site_option_name" id="site_option_name" type="hidden" value="#htmleditformat(form.site_option_name)#"  />
-					Note: Code Name can't be changed after initial creation to allow for simple syncing between sites &amp; servers.
-				</cfif>
 				</td>
 			</tr>
 			<tr>
@@ -1326,7 +1333,7 @@
 				// options for query data
 				ts.multiple=true;
 				ts.query = qGroup2;
-				ts.queryLabelField = "user_group_name";
+				ts.queryLabelField = "user_group_friendly_name";
 				ts.queryValueField = "user_group_id";
 				application.zcore.functions.zSetupMultipleSelect(ts.name, application.zcore.functions.zso(form, 'site_option_user_group_id_list'));
 				application.zcore.functions.zInputSelectBox(ts);
@@ -1343,6 +1350,20 @@
 			<tr>
 				<th>Add Line Breaks:</th>
 				<td>#application.zcore.functions.zInput_Boolean("site_option_line_breaks")# (Useful for textarea field type to force newlines to &lt;br&gt;)</td>
+			</tr>
+			<tr>
+				<th>Label On Top?</th>
+				<td>#application.zcore.functions.zInput_Boolean("site_option_label_on_top")# (Allows putting longer labels above the field)</td>
+			</tr>
+			<!---
+			Not implemented yet
+			 <tr>
+				<th>Add To Previous Row:</th>
+				<td>#application.zcore.functions.zInput_Boolean("site_option_add_to_previous_row")# (Allows putting multiple fields on the same row)</td>
+			</tr> --->
+			<tr>
+				<th>Character Width:</th>
+				<td><input type="text" size="10" style="width:auto; min-width:auto;" name="site_option_character_width" id="site_option_character_width" value="#htmleditformat(form.site_option_character_width)#" onkeyup="displayDefault=false;"> (Only works for text/select input types)</td>
 			</tr>
 			<cfif variables.allowGlobal>
 				<tr>
@@ -1443,11 +1464,11 @@
 			application.zcore.functions.zredirect("/z/admin/site-options/index");
 		}  
 		  
-		theTitle="Manage Group Site Options: "&qGroup.site_option_group_display_name;
+		theTitle="Group Site Options: "&qGroup.site_option_group_display_name;
 		application.zcore.template.setTag("title",theTitle);
 		application.zcore.template.setTag("pagetitle",theTitle);
 	}else{
-		theTitle="Manage Site Options";
+		theTitle="Site Options";
 		application.zcore.template.setTag("title",theTitle);
 		application.zcore.template.setTag("pagetitle",theTitle);
 
@@ -1948,26 +1969,30 @@
 		form.inquiries_spam=0;
 		if(application.zcore.functions.zFakeFormFieldsNotEmpty()){
 			form.inquiries_spam=1;
+			form.inquiries_spam_description="Fake form fields not empty";
 			//application.zcore.status.setStatus(request.zsid, "Invalid submission.  Please submit the form again.",form,true);
 			//errors=true;
 		}
 		if(form.modalpopforced EQ 1){
 			if(application.zcore.functions.zso(form, 'js3811') NEQ "j219"){
 				form.inquiries_spam=1;
+				form.inquiries_spam_description="js3811 value not set";
 				//application.zcore.status.setStatus(request.zsid, "Invalid submission.  Please submit the form again.",form,true);
 				//errors=true;
 			}
 			if(application.zcore.functions.zCheckFormHashValue(application.zcore.functions.zso(form, 'js3812')) EQ false){
 				form.inquiries_spam=1;
+				form.inquiries_spam_description="Form hash value was wrong"; 
 				//application.zcore.status.setStatus(request.zsid, "Your session has expired.  Please submit the form again.",form,true);
 				//errors=true;
 			}
 		}
-		if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
+		/* if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
 			form.inquiries_spam=1;
+			form.inquiries_spam_description="zset9 was wrong";
 			//application.zcore.status.setStatus(request.zsid, "Invalid submission.  Please submit the form again.",form,true);
 			//errors=true;
-		}
+		}*/
 	}
 	if(methodBackup EQ "userInsertGroup" or methodBackup EQ "userUpdateGroup"){
 		if(qCheck.site_option_group_user_id_field NEQ ""){
@@ -2133,10 +2158,10 @@
 				newAction="editGroup";
 			}else{
 				newAction="addGroup";
-			}
-			if(methodBackup EQ "publicMapInsertGroup" or methodBackup EQ "internalGroupUpdate" or methodBackup EQ "importInsertGroup"){
+			}  
+			if(methodBackup EQ "publicAjaxInsertGroup" or methodBackup EQ "publicMapInsertGroup" or methodBackup EQ "internalGroupUpdate" or methodBackup EQ "importInsertGroup"){
 				return {success:false, zsid:request.zsid};
-			}else{
+			}else{ 
 				application.zcore.functions.zRedirect("/z/admin/site-options/#newAction#?site_option_app_id=#form.site_option_app_id#&site_option_group_id=#form.site_option_group_id#&site_x_option_group_set_id=#form.site_x_option_group_set_id#&site_x_option_group_set_parent_id=#form.site_x_option_group_set_parent_id#&zsid=#request.zsid#&modalpopforced=#form.modalpopforced#");
 			}
 		}
@@ -2479,7 +2504,7 @@
 				site_x_option_group_set_approved:dataStruct.__approved,
 				site_x_option_group_set_override_url:application.zcore.functions.zso(dataStruct, '__url'),
 				site_x_option_group_set_parent_id:dataStruct.__parentId,
-				site_x_option_group_set_image_library_id:application.zcore.functions.zso(dataStruct, '__image_library_id'),
+				site_x_option_group_set_image_library_id:application.zcore.functions.zso(dataStruct, '__image_library_id', true),
 				site_x_option_group_set_id:dataStruct.__setId
 			}; 
 			changeCom[qCheck.site_option_group_change_cfc_update_method](dataStruct, coreStruct);
@@ -2513,6 +2538,7 @@
 	disableSendEmail=false;
 	setIdBackup2=form.site_x_option_group_set_id;
 	groupIdBackup2=qCheck.site_option_group_id;
+	arrEmailStruct=[];
 	if((methodBackup EQ "publicInsertGroup" or methodBackup EQ "publicAjaxInsertGroup") and qCheck.site_option_group_lead_routing_enabled EQ 1 and not structkeyexists(form, 'disableGroupEmail')){
 
 		newDataStruct.site_x_option_group_set_id=setIdBackup2; 
@@ -2525,7 +2551,6 @@
 				cfcpath=qSet.site_option_group_email_cfc_path;
 			}
 		} 
-		arrEmailStruct=[];
 		if(qCheck.site_option_group_map_fields_type EQ 1){
  
 			if(qCheck.site_option_group_email_cfc_path NEQ "" and qCheck.site_option_group_email_cfc_method NEQ ""){ 
@@ -2562,6 +2587,9 @@
 	if(structkeyexists(request.zos, 'debugleadrouting')){
 		echo('mapRecord:#mapRecord#<br />');
 	}
+	if(qCheck.site_option_group_lead_routing_enabled NEQ 1){
+		disableSendEmail=true;
+	}
 	if(mapRecord){
 		if(qCheck.site_option_group_map_fields_type EQ 1){ 
 			newDataMappedStruct.site_option_group_id =form.site_option_group_id;
@@ -2595,6 +2623,7 @@
 	if(disableSendEmail and application.zcore.functions.zso(form, 'disableGroupEmail', false, false) EQ false){
 		if(structkeyexists(request.zos, 'debugleadrouting')){
 			echo('site-options|sendEmail<br />');
+			writedump(arrEmailStruct);
 		}
  
 		for(i=1;i<=arraylen(arrEmailStruct);i++){
@@ -2814,9 +2843,7 @@ Define this function in another CFC to override the default email format
 		writedump(form);
 		abort;
 	}*/
-	ts=structnew();
-	ts.table="inquiries";
-	ts.datasource=request.zos.zcoreDatasource;
+	form.inquiries_session_id=application.zcore.session.getSessionId(); 
 	form.inquiries_type_id=qGroup.inquiries_type_id;
 	form.inquiries_type_id_siteIDType=qGroup.inquiries_type_id_siteIDType; 
 
@@ -2843,9 +2870,8 @@ Define this function in another CFC to override the default email format
 		site_id = #db.param(request.zos.globals.id)# ";
 		db.execute("q"); 
 		application.zcore.tracking.setUserEmail(form.inquiries_email);
-	}
-	ts.struct=form;
-	form.inquiries_id=application.zcore.functions.zInsert(ts); 
+	} 
+	form.inquiries_id=application.zcore.functions.zInsertLead();
 	
 	application.zcore.tracking.setConversion('inquiry',form.inquiries_id);
 	 if(form.inquiries_spam EQ 0 and not arguments.disableEmail and application.zcore.functions.zso(form, 'disableGroupEmail', false, false) EQ false){
@@ -3350,7 +3376,7 @@ Define this function in another CFC to override the default email format
 			queueSortStruct.primaryKeyName = "site_x_option_group_set_id";
 			queueSortStruct.datasource=request.zos.zcoreDatasource;
 			queueSortStruct.ajaxTableId='sortRowTable';
-			queueSortStruct.ajaxURL=application.zcore.functions.zURLAppend(arguments.struct.listURL, "site_option_app_id=#form.site_option_app_id#&site_option_group_id=#form.site_option_group_id#&site_x_option_group_set_parent_id=#form.site_x_option_group_set_parent_id#&modalpopforced=#application.zcore.functions.zso(form, 'modalpopforced')#");
+			queueSortStruct.ajaxURL=application.zcore.functions.zURLAppend(arguments.struct.listURL, "site_option_app_id=#form.site_option_app_id#&site_option_group_id=#form.site_option_group_id#&site_x_option_group_set_parent_id=#form.site_x_option_group_set_parent_id#&modalpopforced=#application.zcore.functions.zso(form, 'modalpopforced')#&enableSorting=1");
 			
 			queueSortStruct.where =" site_x_option_group_set.site_option_app_id = '#application.zcore.functions.zescape(form.site_option_app_id)#' and  
 			site_option_group_id = '#application.zcore.functions.zescape(form.site_option_group_id)#' and 
@@ -3518,7 +3544,7 @@ Define this function in another CFC to override the default email format
 			if(methodBackup EQ "userManageGroup"){ 
 				application.zcore.template.setTag('pagenav', '<p><a href="/z/user/home/index">User Home Page</a></p>');
 			}
-			theTitle="Manage #htmleditformat(qGroup.site_option_group_display_name)#(s)";
+			theTitle="#htmleditformat(qGroup.site_option_group_display_name)#(s)";
 			application.zcore.template.setTag("title",theTitle);
 			application.zcore.template.setTag("pagetitle",theTitle);
 			curParentId=q12.site_option_group_parent_id;
@@ -3872,7 +3898,7 @@ Define this function in another CFC to override the default email format
 		
 		rowStruct={};
 		rowIndexFix=1;
-		if(structkeyexists(arguments.struct, 'recurse')){
+		if(structkeyexists(arguments.struct, 'recurse') and qS.recordcount NEQ 0){
 			echo('<h3>Sub-group: #q12.site_option_group_display_name#</h3>');
 		}
 		addEnabled=true;
@@ -3882,14 +3908,16 @@ Define this function in another CFC to override the default email format
 					addEnabled=false;
 				}
 			}
-			echo('<p>');
-			if(addEnabled){
-				writeoutput('<a href="#application.zcore.functions.zURLAppend(arguments.struct.addURL, "site_option_app_id=#form.site_option_app_id#&amp;site_option_group_id=#form.site_option_group_id#&amp;site_x_option_group_set_parent_id=#form.site_x_option_group_set_parent_id#")#">Add #htmleditformat(application.zcore.functions.zFirstLetterCaps(qGroup.site_option_group_display_name))#</a>');
-			} 
-			if(methodBackup EQ "manageGroup"){
-				echo(' | <a href="/z/admin/site-option-group/export?site_option_group_id=#qGroup.site_option_group_id#" target="_blank">Export CSV</a>');
+			if(structkeyexists(arguments.struct, 'recurse') EQ false or qS.recordcount NEQ 0){
+				echo('<p>');
+				if(addEnabled){
+					writeoutput('<a href="#application.zcore.functions.zURLAppend(arguments.struct.addURL, "site_option_app_id=#form.site_option_app_id#&amp;site_option_group_id=#form.site_option_group_id#&amp;site_x_option_group_set_parent_id=#form.site_x_option_group_set_parent_id#")#">Add #htmleditformat(application.zcore.functions.zFirstLetterCaps(qGroup.site_option_group_display_name))#</a>');
+				} 
+				if(methodBackup EQ "manageGroup"){
+					echo(' | <a href="/z/admin/site-option-group/export?site_option_group_id=#qGroup.site_option_group_id#" target="_blank">Export CSV</a>');
+				}
+				echo('</p>');
 			}
-			echo('</p>');
 		} 
 		if(not structkeyexists(arguments.struct, 'recurse')){
 			if(qGroup.site_option_group_enable_sorting EQ 1 and subgroupRecurseEnabled){
@@ -4056,7 +4084,7 @@ Define this function in another CFC to override the default email format
 							}
 						}
 						if(allowDelete){
-							if(methodBackup NEQ "userManageGroup" and methodBackup NEQ "userGetRowHTML" and not application.zcore.user.checkServerAccess() and row.site_x_option_group_set_override_url NEQ "" and qGroup.site_option_group_enable_locked_delete EQ 0){
+							if(methodBackup NEQ "userManageGroup" and methodBackup NEQ "userGetRowHTML" and not application.zcore.functions.zIsForceDeleteEnabled(row.site_x_option_group_set_override_url) and qGroup.site_option_group_enable_locked_delete EQ 0){
 								echo(' | Delete disabled');
 							}else{
 								echo(' | <a href="##"  onclick="zDeleteTableRecordRow(this, ''#deleteLink#'');  return false;">Delete</a>');
@@ -4406,8 +4434,12 @@ Define this function in another CFC to override the default email format
 	}else{
 		theTitle="Edit "&qCheck.site_option_group_display_name;
 	}
-	application.zcore.template.setTag("title",theTitle);
-	application.zcore.template.setTag("pagetitle",theTitle); 
+	if(application.zcore.template.getTagContent("title") EQ ""){
+		application.zcore.template.setTag("title",theTitle);
+	}
+	if(application.zcore.template.getTagContent("pagetitle") EQ ""){
+		application.zcore.template.setTag("pagetitle",theTitle); 
+	}
 	arrEnd=arraynew(1);
 	</cfscript>
 	<script type="text/javascript">
@@ -4598,13 +4630,29 @@ Define this function in another CFC to override the default email format
 					}
 					writeoutput('">');
 					if(rs.label and row.site_option_hide_label EQ 0){
-						tdOutput="";
-						if(row.site_option_small_width EQ 1){
-							tdOutput=' width:1%; white-space:nowrap; ';
+						if(row.site_option_label_on_top EQ 1){
+							echo('<th style="vertical-align:top; ">&nbsp;</th>
+							<td>');
+							echo('<div style="padding-bottom:0px;float:left; width:100%;">'&application.zcore.functions.zOutputToolTip(row.site_option_display_name, row.site_option_tooltip)&'<a id="soid_#row.site_option_id#" style="display:block; float:left;"></a> ');
+
+							if(row.site_option_required and row.site_option_hide_label EQ 0){
+								writeoutput(' <span style="font-size:80%;">*</span> ');
+							} 
+							echo('</div>'); 
+
+						}else{
+							tdOutput="";
+							if(row.site_option_small_width EQ 1){
+								tdOutput=' width:1%; white-space:nowrap; ';
+							}
+							writeoutput('<th style="vertical-align:top;#tdOutput#"><div style="padding-bottom:0px;float:left;">'&application.zcore.functions.zOutputToolTip(row.site_option_display_name, row.site_option_tooltip)&'<a id="soid_#row.site_option_id#" style="display:block; float:left;"></a> ');
+
+							if(row.site_option_required and row.site_option_hide_label EQ 0){
+								writeoutput(' <span style="font-size:80%;">*</span> ');
+							} 
+							echo('</div></th>
+							<td style="vertical-align:top; "><input type="hidden" name="site_option_id" value="#htmleditformat(row.site_option_id)#" />');
 						}
-						writeoutput('<th style="vertical-align:top;#tdOutput#"><div style="padding-bottom:0px;float:left;">'&application.zcore.functions.zOutputToolTip(row.site_option_display_name, row.site_option_tooltip)&'<a id="soid_#row.site_option_id#" style="display:block; float:left;"></a>
-						</div></th>
-						<td style="vertical-align:top; "><input type="hidden" name="site_option_id" value="#htmleditformat(row.site_option_id)#" />');
 					}else{
 						if(row.site_option_type_id EQ 11){
 							writeoutput('<td style="vertical-align:top; padding-top:15px; padding-bottom:0px;" colspan="2">');
@@ -4621,11 +4669,11 @@ Define this function in another CFC to override the default email format
 						echo(rs.value);
 					}
 				}
-				if(row.site_option_required){
+				if(row.site_option_required and row.site_option_hide_label EQ 1){
 					writeoutput(' <span style="font-size:80%;">*</span> ');
 				} 
 
-				if(row.site_option_readonly EQ 1 and labelStruct[row.site_option_name] NEQ ""){
+				if(row.site_option_readonly EQ 1){// and labelStruct[row.site_option_name] NEQ ""){
 					echo('</div>');
 					echo('<div id="zReadOnlyButton#currentRowIndex#" class="zReadOnlyButton">#labelStruct[row.site_option_name]#');
 					if(labelStruct[row.site_option_name] NEQ ""){
@@ -4697,8 +4745,13 @@ Define this function in another CFC to override the default email format
 				<cfif qS.site_option_group_is_home_page EQ 0 and qS.site_option_group_enable_unique_url EQ 1 and methodBackup NEQ "userAddGroup" and methodBackup NEQ "userEditGroup">
 					<tr <cfif tempIndex MOD 2 EQ 0>class="row1"<cfelse>class="row2"</cfif>>
 					<th style="vertical-align:top;"><div style="padding-bottom:0px;float:left;">Override URL:</div></th>
-					<td style="vertical-align:top; ">
-						#application.zcore.functions.zInputUniqueUrl("site_x_option_group_set_override_url")# 
+					<td style="vertical-align:top; "> 
+
+						<cfif form.method EQ "publicAddGroup" or form.method EQ "addGroup">
+							#application.zcore.functions.zInputUniqueUrl("site_x_option_group_set_override_url", true)#
+						<cfelse>
+							#application.zcore.functions.zInputUniqueUrl("site_x_option_group_set_override_url")# 
+						</cfif>
 					</td>
 					</tr>
 					<cfset tempIndex++>
@@ -4854,6 +4907,8 @@ Define this function in another CFC to override the default email format
 	var theTitle=0;
 	var i=0;
 	var result=0;   
+	setting requesttimeout="100000";
+
 	defaultStruct=getDefaultStruct();
 	form.returnJson=application.zcore.functions.zso(form, 'returnJson', true, 0);
 	//if(form.method EQ "deleteGroup"){

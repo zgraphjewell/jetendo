@@ -5,7 +5,7 @@
 <cffunction name="delete" localmode="modern" access="remote" roles="member">
 	<cfscript>
 	var db=request.zos.queryObject; 
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Events", true);	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Events", true);	
 	db.sql="SELECT * FROM #db.table("event", request.zos.zcoreDatasource)# event
 	WHERE event_id= #db.param(application.zcore.functions.zso(form,'event_id'))# and 
 	event_deleted = #db.param(0)# and
@@ -126,15 +126,15 @@
 				errors=true;
 			}
 		}
-		if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
+		/*if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
 			application.zcore.status.setStatus(request.zsid, "Invalid submission.  Please submit the form again.",form,true);
 			errors=true;
-		}
+		}*/
 		if(errors){
 			application.zcore.functions.zRedirect("/z/event/suggest-an-event/index?zsid=#request.zsid#");
 		}
 	}else{
-		application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Events", true);	
+		application.zcore.adminSecurityFilter.requireFeatureAccess("Events", true);	
 	}
 
 
@@ -151,7 +151,7 @@
 		result=true;
 	}
 
-	if(form.event_website NEQ ""){
+	if(application.zcore.functions.zso(form, 'event_website') NEQ ""){
 		success=application.zcore.functions.zValidateURL(form.event_website, false, false);
 		if(not success){
 			application.zcore.status.setStatus(request.zsid, "Website must be a valid url, starting with http:// or a link within this site.", form, true);
@@ -990,9 +990,34 @@
 					} 
 					</cfscript>#application.zcore.functions.zInput_Boolean("event_status")#</td>
 				</tr> 
+
+			<tr>
+				<th style="vertical-align:top; width:120px; ">Meta Title</th>
+				<td>
+					<input type="text" name="event_metatitle" style="width:95%;" value="#htmleditformat(form.event_metatitle)#">
+				</td>
+			</tr>
+			<tr>
+				<th style="vertical-align:top; width:120px; ">Meta Keywords</th>
+				<td>
+					<textarea name="event_metakey" style="width:95%; height:60px; ">#htmleditformat(form.event_metakey)#</textarea>
+				</td>
+			</tr>
+			<tr>
+				<th style="vertical-align:top; width:120px; ">Meta Description</th>
+				<td>
+					<textarea name="event_metadesc" style="width:95%; height:60px; ">#htmleditformat(form.event_metadesc)#</textarea>
+				</td>
+			</tr>
 				<tr>
 					<th>Unique URL</th>
-					<td>#application.zcore.functions.zInputUniqueUrl("event_unique_url")#</td>
+					<td>
+						<cfif currentMethod EQ "add">
+							#application.zcore.functions.zInputUniqueUrl("event_unique_url", true)#
+						<cfelse>
+							#application.zcore.functions.zInputUniqueUrl("event_unique_url")#
+						</cfif>
+					</td>
 				</tr> 
 
 				<cfif application.zcore.functions.zso(application.zcore.app.getAppData("event").optionStruct, 'event_config_enable_suggest_event', true) EQ 1>
@@ -1061,7 +1086,7 @@
  	form.event_category_id=application.zcore.functions.zso(form, 'event_category_id');
  	form.event_calendar_id=application.zcore.functions.zso(form, 'event_calendar_id');
 	form.showRecurring=application.zcore.functions.zso(form, 'showRecurring', true, 0);
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Events");
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Events");
 
 	form.event_searchtext=replace(replace(form.event_searchtext, '+', ' ', 'all'), ' ', '%', 'all');
 
@@ -1431,7 +1456,7 @@
 				echo('<a href="#request.eventCom.getNextRecurringEventURL(row)#" target="_blank">View Next</a> | ');
 				echo('<a href="/z/event/admin/manage-events/add?event_id=#row.event_id#">Copy</a> | ');
 				echo('<a href="/z/event/admin/manage-events/edit?event_id=#row.event_id#&return=1">Edit</a>');
-				if(not application.zcore.user.checkServerAccess() and row.event_unique_url NEQ ""){
+				if(not application.zcore.functions.zIsForceDeleteEnabled(row.event_unique_url)){
 					echo(' | Delete disabled');
 				}else{
 					echo(' | <a href="/z/event/admin/manage-events/delete?event_id=#row.event_id#&amp;return=1">Delete</a>');
@@ -1440,7 +1465,7 @@
 				echo('<a href="#request.eventCom.getEventURL(row)#" target="_blank">View</a> | 
 				<a href="/z/event/admin/manage-events/add?event_id=#row.event_id#">Copy</a> | ');
 				echo('<a href="/z/event/admin/manage-events/edit?event_id=#row.event_id#&amp;modalpopforced=1" onclick="zTableRecordEdit(this);  return false;">Edit</a>');
-				if(not application.zcore.user.checkServerAccess() and row.event_unique_url NEQ ""){
+				if(not application.zcore.functions.zIsForceDeleteEnabled(row.event_unique_url)){
 					echo(' | Delete disabled');
 				}else{
 					echo(' | 

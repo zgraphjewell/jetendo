@@ -298,13 +298,13 @@ rs=zGetHashPath(dir, id);
 	<cfargument name="dirName" required="true" type="string">
 	<cfargument name="newDirName" required="true" type="string">
 	<cfscript>
-	var cfcatch=0;
 	if(directoryExists(arguments.dirName)){
 		if(directoryExists(arguments.newDirName) EQ false){
 			try{
 				directoryrename(arguments.dirName, arguments.newDirName);
-			}catch(Any local.e){
-				return "Directory could not be moved from: "&arguments.dirName&" to: " & arguments.newDirName & "<br /><br />Set parent directory permissions to chmod 770"
+			}catch(Any e){
+				request.zLastRenameException=e;
+				return false;//"Directory could not be moved from: "&arguments.dirName&" to: " & arguments.newDirName & "<br /><br />Set parent directory permissions to chmod 770"
 			}
 			return true;
 		}else{
@@ -319,11 +319,7 @@ rs=zGetHashPath(dir, id);
 <!--- FUNCTION: zDeleteDirectory(dirName) --->
 <cffunction name="zDeleteDirectory" localmode="modern" returntype="any" output="false">
 	<cfargument name="dirName" required="true" type="string">
-	<cfscript>
-	var dirContents = "";
-	var result=0;
-	var cfcatch=0;
-	var e=0;
+	<cfscript> 
 	if(directoryExists(arguments.dirName)){
 		directorydelete(arguments.dirName, true);
 	}
@@ -400,6 +396,7 @@ rs=zGetHashPath(dir, id);
 			arrayAppend(rs.arrFile, currentFile);
 		}
 	}
+	arraySort(rs.arrFile, "text", "asc");
 	return rs;
 	</cfscript>
 </cffunction>
@@ -453,8 +450,7 @@ rs=zGetHashPath(dir, id);
 			}catch(Any e){
 				request.zUploadFileErrorCause="cffile upload exception: "&e.message;
 				return false;
-			}
-
+			} 
 		}
 	}else{
 		request.zUploadFileErrorCause="Error: FieldName was not set.";
@@ -666,17 +662,23 @@ notes: optionally delete an existing image that has a field in the specified dat
 		}
 		qImage=db.execute("qImage");
 		if(arguments.delete NEQ "" and structkeyexists(form, arguments.delete)){
-			for(i=1;i LTE listLen(arguments.fieldName);i=i+1){
-				application.zcore.functions.zDeleteFile(arguments.destination & qImage[listGetAt(arguments.fieldName, i)]);
-			}	
+			if(qImage.recordcount NEQ 0){
+				for(i=1;i LTE listLen(arguments.fieldName);i=i+1){
+					application.zcore.functions.zDeleteFile(arguments.destination & qImage[listGetAt(arguments.fieldName, i)]);
+				}	
+			}
 			arrFiles = ArrayNew(1);
 			arrayAppend(arrFiles,"");
 		}else{
 			arrFiles = ArrayNew(1);
-			for(i=1;i LTE listLen(arguments.fieldName);i=i+1){
-				arrFiles[i] = qImage[listGetAt(arguments.fieldName, i)];
+			for(i=1;i LTE listLen(arguments.fieldName);i=i+1){ 
+				if(qImage.recordcount){
+					arrFiles[i] = qImage[listGetAt(arguments.fieldName, i)];
+				}else{
+					arrFiles[i] = "";
+				}
 			}
-		}
+		} 
 		if(arguments.fieldName NEQ "" and structkeyexists(form, listGetAt(arguments.fieldName, 1)) and fileexists(form[listGetAt(arguments.fieldName, 1)])){
 			filePath=application.zcore.functions.zUploadFile(listGetAt(arguments.fieldName, 1), arguments.destination);
 			if(filePath EQ false){ 
@@ -701,8 +703,10 @@ notes: optionally delete an existing image that has a field in the specified dat
 				request.zImageErrorCause="galleryCom.resizeImage exception: #local.excpt.message#";
 				return false;
 			}
-			for(i=1;i LTE listLen(arguments.fieldName);i=i+1){
-				application.zcore.functions.zDeleteFile(arguments.destination & qImage[listGetAt(arguments.fieldName, i)]);
+			if(qImage.recordcount NEQ 0){
+				for(i=1;i LTE listLen(arguments.fieldName);i=i+1){
+					application.zcore.functions.zDeleteFile(arguments.destination & qImage[listGetAt(arguments.fieldName, i)]);
+				}
 			}
 			return arrFiles;
 		}else{
@@ -839,6 +843,8 @@ notes: optionally delete an existing image that has a field in the specified dat
     
     if(right(arguments.source,4) EQ ".png"){
         finalExt=".png";
+	}else if(right(arguments.source,4) EQ ".gif"){
+    	finalExt=".gif";
     }
     
     backupWidth=local.imageSize.width;
@@ -895,11 +901,11 @@ notes: optionally delete an existing image that has a field in the specified dat
         } 
         ratio=newWidth/currentWidth;
         nw=round(currentWidth*ratio);
-        nh=round(currentHeight*ratio);
+        nh=ceiling(currentHeight*ratio);
         if(autocrop EQ false and nh GT newHeight){
             ratio=newHeight/currentHeight;
             nw=round(currentWidth*ratio);
-            nh=round(currentHeight*ratio);
+            nh=ceiling(currentHeight*ratio);
         }
 		if(request.zos.isDeveloper and structkeyexists(form, 'zdebug')){ 
 			writeoutput(backupWidth&"<br />"); 
@@ -931,7 +937,7 @@ notes: optionally delete an existing image that has a field in the specified dat
 			}
 			if(nh-newHeight GTE 0){
 				nw=0;
-				nh=round((nh-newHeight)/2);	 
+				nh=ceiling((nh-newHeight)/2);	 
 				dooffset=true;
 				if(request.zos.isDeveloper and structkeyexists(form, 'zdebug')){ 
 					writeoutput("height crop updated: #nh#<br />"); 
@@ -985,7 +991,7 @@ notes: optionally delete an existing image that has a field in the specified dat
 			writeoutput(resizeCMD&"<br />");
 		}
 		secureCommand="getImageMagickConvertResize"&chr(9)&cs.resizeWidth&chr(9)&cs.resizeHeight&chr(9)&cs.cropWidth&chr(9)&cs.cropHeight&chr(9)&cs.cropXOffset&chr(9)&cs.cropYOffset&chr(9)&cs.sourceFilePath&chr(9)&cs.destinationFilePath;
-		output=application.zcore.functions.zSecureCommand(secureCommand, 10); 
+		output=application.zcore.functions.zSecureCommand(secureCommand, 20); 
 		if(output NEQ "1"){
 			if(request.zos.isDeveloper){
 				throw("Failed to resize image with zSecureCommand: "&secureCommand&" | Output: "&output);
@@ -994,20 +1000,23 @@ notes: optionally delete an existing image that has a field in the specified dat
 		}
 		local.imageSize=application.zcore.functions.zGetImageSize(filePath);        
 		if(not local.imageSize.success){
-			throw(local.imageSize.errorMessage);
+			if(fileExists(filePath)){
+				fileInfo=ImageInfo(filePath);
+				local.imageSize={};
+				local.imageSize.success=true;
+				local.imageSize.width=fileInfo.width;
+				local.imageSize.height=fileInfo.height;
+			}else{
+				throw(local.imageSize.errorMessage);
+			}
 		}
 		arrayAppend(request.arrLastImageWidth,local.imageSize.width);
 		arrayAppend(request.arrLastImageHeight,local.imageSize.height); 
         if(fileexists(filePath) EQ false){
-            return false;
-        }  
-        if(output EQ false){
-            // failed to execute command for resizing image
-            return false;
-        }else{
-            // save filename
-            ArrayAppend(arrFiles, GetFileFromPath(filePath));
-        }
+			throw("File not exists - Failed to resize image with zSecureCommand: "&secureCommand&" | Output: "&output);
+			//return false;
+        }    
+        ArrayAppend(arrFiles, GetFileFromPath(filePath)); 
     }
     return arrFiles;
     </cfscript>

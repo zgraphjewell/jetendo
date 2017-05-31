@@ -14,7 +14,11 @@
 	if(returnCode EQ 1 and fileexists(arguments.pdfFile)){
 		return true;
 	}else{
-		request.zos.htmlToPDFErrorMessage=listgetat(trim(output), 2, "|");
+		if(output CONTAINS "|"){
+			request.zos.htmlToPDFErrorMessage=listgetat(trim(output), 2, "|");
+		}else{
+			request.zos.htmlToPDFErrorMessage="Unknown error: #output#";
+		}
 		return false;
 	}
 	</cfscript>
@@ -199,5 +203,65 @@ result=zHTTPtoFile(source, destinationFile, timeout, throwOnError, useSecureComm
 	</cfscript>
 </cffunction>
 
+
+
+<cffunction name="zGetResponseCookies" access="public" localmode="modern" returntype="struct" output="false" hint="This parses the response of a CFHttp call and puts the cookies into a struct."> 
+	<cfargument name="Response" type="struct" required="true" hint="The response of a CFHttp call." />
+	<cfscript>
+	rs = StructNew(); 
+	if(NOT StructKeyExists(ARGUMENTS.Response.ResponseHeader,"Set-Cookie")){
+		return rs;
+	}
+	arrCookie = ARGUMENTS.Response.ResponseHeader[ "Set-Cookie" ];
+	for(string in arrCookie){ 
+		arrList=listToArray(string, ";");
+		first=true;
+		for(pair in arrList){
+			name=listFirst(pair, "=");
+			if(ListLen( Pair, "=" ) GT 1){
+				value = ListRest( Pair, "=" );
+			}else{
+				value = "";
+			} 
+			if(first){
+				first=false;
+				rs[ Name ] = StructNew();
+				cookieStruct = rs[ Name ];
+				cookieStruct.Value = Value;
+				cookieStruct.Attributes = StructNew();
+			}else{
+				cookieStruct.Attributes[ Name ] = Value;
+			}
+		}
+	}
+	return rs;
+	</cfscript>
+</cffunction>
+
+<!--- 
+
+jsonString=application.zcore.functions.zHttpJsonPost("link", serializeJson(js), 20);
+if(jsonString EQ false or not isJson(jsonString)){
+	throw(jsonString);
+}
+js=deserializeJson(jsonString);
+writedump(js);
+abort;
+ --->
+<cffunction name="zHttpJsonPost" access="public" localmode="modern"> 
+	<cfargument name="link" type="string" required="true" />
+	<cfargument name="jsonString" type="string" required="true" />
+	<cfargument name="timeout" type="numeric" required="true" />
+	<cfscript> 
+	rs = StructNew(); 
+
+	result=application.zcore.functions.zSecureCommand("httpJsonPost"&chr(9)&arguments.link&chr(9)&arguments.jsonString&chr(9)&(arguments.timeout-2), arguments.timeout);
+	if(result EQ 0){
+		return false;
+	}else{
+		return result;
+	}
+	</cfscript>
+</cffunction>
 </cfoutput>
 </cfcomponent>

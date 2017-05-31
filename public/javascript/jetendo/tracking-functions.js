@@ -49,6 +49,26 @@
 			return false;
 		}
 	}
+	function zTrackPageView(link){
+		if(typeof window['GoogleAnalyticsObject'] != "undefined"){
+			var b=window[window['GoogleAnalyticsObject']];
+			b('send', {
+				'hitType' : 'pageview',
+				'page' : link // Virtual page (aka, does not actually exist) that you can now track in GA Goals as a destination page.
+			}); 
+		}else if(typeof pageTracker != "undefined" && typeof pageTracker._trackPageview != "undefined"){
+			pageTracker._trackPageview(link);
+		}else if(typeof _gaq != "undefined" && typeof _gaq.push != "undefined"){ 
+			_gaq.push(['_trackPageview',link]); 
+		}else{
+			console.log('Google Analytics not detected when trying to store this pageview: '+link);
+		}
+
+	}
+
+	
+
+
 
 	function zTrackEvent(eventCategory,eventAction, eventLabel, eventValue, gotoToURLAfterEvent, newWindow){
 		// detect when google analytics is disabled on purpose to avoid running this.
@@ -148,7 +168,17 @@
 	}
 
 	// track all outbound links in google analytics events
-	$(document).on("click", "a", function(e){
+	$(document).on('touchstart', "a", function() {
+	    this.documentClick = true;
+	});
+	$(document).on('touchmove', "a", function() {
+	    this.documentClick = false;
+	});
+	$(document).on('click touchend', "a", function(e) { 
+	    if (e.type == "click") this.documentClick = true;
+	    if (typeof this.documentClick == "undefined" || !this.documentClick){
+	    	return true;
+	    } 
    		var d=window.location.href;
    		var slash=d.indexOf("/", 9); 
    		if(slash==-1){
@@ -175,12 +205,12 @@
 		   		return true;
 		   	}
 	   	}
-   	}); 
-
-   	
+   	});  
 
 	zArrLoadFunctions.push({functionName:zSetupClickTrackDisplay});
 	window.zSetupClickTrackDisplay=zSetupClickTrackDisplay;
+	window.zTrackPageView=zTrackPageView;
+	window.zTrackPageview=zTrackPageView; // to help with typos
 	window.zTrackEvent=zTrackEvent;
 	window.zClickTrackDisplayURL=zClickTrackDisplayURL;
 	window.zClickTrackDisplayValue=zClickTrackDisplayValue;

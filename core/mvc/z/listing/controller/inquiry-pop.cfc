@@ -26,18 +26,22 @@
 	form.inquiries_spam=0;
 	if(application.zcore.functions.zFakeFormFieldsNotEmpty()){
 		form.inquiries_spam=1;
+		form.inquiries_spam_description="Fake form fields not empty"; 
 		//application.zcore.functions.zRedirect("/z/misc/thank-you/index?modalpopforced=#form.modalpopforced#");
 	}
-	if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
-		form.inquiries_spam=1;
+	/*if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
+		form.inquiries_spam=1; 
+		form.inquiries_spam_description="zset9 was wrong";
 		//application.zcore.functions.zredirect('/');
-	}
+	}*/
 	if(application.zcore.functions.zso(form, 'js3811') NEQ "j219"){
-		form.inquiries_spam=1;
+		form.inquiries_spam=1; 
+		form.inquiries_spam_description="js3811 value not set"; 
 		//writeoutput('~n~');application.zcore.functions.zabort();
 	}
 	if(application.zcore.functions.zCheckFormHashValue(application.zcore.functions.zso(form, 'js3812')) EQ false){
-		form.inquiries_spam=1;
+		form.inquiries_spam=1; 
+		form.inquiries_spam_description="Form hash value was wrong"; 
 		//application.zcore.status.setStatus(request.zsid, "Your session has expired.  Please submit the form again.",form,true);
 		//application.zcore.functions.zRedirect("/z/listing/inquiry-pop/index?zsid="&request.zsid);
 	}
@@ -80,10 +84,8 @@
 	if(application.zcore.functions.zso(form, 'timeframe') NEQ ""){	
 		form.inquiries_comments&=chr(10)&" Buying:  "&form.timeframe;
 	}
-	form.inquiries_comments&="#chr(10)#Comments: "&application.zcore.functions.zso(form, 'comments');
-	ts=structnew();
-	ts.table="inquiries";
-	ts.datasource=request.zos.zcoreDatasource;
+	form.inquiries_session_id=application.zcore.session.getSessionId();
+	form.inquiries_comments&="#chr(10)#Comments: "&application.zcore.functions.zso(form, 'comments'); 
 	form.inquiries_type_id = 10;
 	form.inquiries_type_id_siteIdType=4;
 	form.inquiries_status_id = 1;
@@ -96,8 +98,7 @@
 	site_id = #db.param(request.zos.globals.id)# and 
 	inquiries_deleted = #db.param(0)# ";
 	db.execute("q"); 
-	ts.struct=form;
-	form.inquiries_id=application.zcore.functions.zInsert(ts);
+	form.inquiries_id=application.zcore.functions.zInsertLead();
 	
 	ts=structnew();
 	ts.name="zPOPInquiryCompleted";
@@ -111,7 +112,7 @@
 	if(application.zcore.functions.zso(form, 'inquiries_email') EQ "" or application.zcore.functions.zEmailValidate(form.inquiries_email) EQ false){
 		form.inquiries_email=request.fromemail;
 	}
-	if(form.inquiries_spam EQ 0){
+	//if(form.inquiries_spam EQ 0){
 		ts=structnew();
 		ts.inquiries_id=form.inquiries_id;
 		ts.subject="Pop-up lead capture form submitted on #request.zos.currentHostName#";
@@ -121,7 +122,7 @@
 			// failed to assign/email lead
 			//zdump(rs);
 		}
-	}
+	//}
 	form.mail_user_id=application.zcore.user.automaticAddUser(application.zcore.functions.zUserMapFormFields(structnew()));
 	application.zcore.functions.zredirect('/z/misc/thank-you/index?modalpopforced=#form.modalpopforced#');
 	</cfscript>

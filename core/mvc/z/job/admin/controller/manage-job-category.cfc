@@ -5,7 +5,7 @@
 <cffunction name="delete" localmode="modern" access="remote" roles="member">
 	<cfscript>
 	var db=request.zos.queryObject; 
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Job Categories", true);	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Job Categories", true);	
 	db.sql="SELECT * FROM #db.table("job_category", request.zos.zcoreDatasource)# job_category
 	WHERE job_category_id= #db.param(application.zcore.functions.zso(form,'job_category_id'))# and 
 	job_category_deleted = #db.param(0)# and
@@ -66,7 +66,7 @@
 	var ts={};
 	db=request.zos.queryObject;
 	var result=0;
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Job Categories", true);	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Job Categories", true);	
 	form.site_id = request.zos.globals.id;
 	ts.job_category_name.required = true;
 	result = application.zcore.functions.zValidateStruct(form, ts, Request.zsid,true);
@@ -153,7 +153,7 @@
 	var currentMethod=form.method;
 	var htmlEditor=0;
 	application.zcore.functions.zSetPageHelpId("11.4");
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Job Categories");	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Job Categories");	
 	if(application.zcore.functions.zso(form,'job_category_id') EQ ''){
 		form.job_category_id = -1;
 	}
@@ -180,7 +180,7 @@
 			Edit
 		</cfif> Job Category</h2>
 		<p>* denotes required field.</p>
-	<form action="/z/job/admin/manage-job-category/<cfif currentMethod EQ 'add'>insert<cfelse>update</cfif>?job_category_id=#form.job_category_id#" method="post">
+	<form class="zFormCheckDirty" action="/z/job/admin/manage-job-category/<cfif currentMethod EQ 'add'>insert<cfelse>update</cfif>?job_category_id=#form.job_category_id#" method="post">
 		<input type="hidden" name="modalpopforced" value="#form.modalpopforced#" />
 		<table style="width:100%;" class="table-list">
 			<tr>
@@ -214,9 +214,33 @@
 					</cfscript>   
 				</td>
 			</tr>
+				<tr>
+					<th style="vertical-align:top; width:120px; ">Meta Title</th>
+					<td>
+						<input type="text" name="job_category_metatitle" style="width:95%;" value="#htmleditformat(form.job_category_metatitle)#">
+					</td>
+				</tr>
+				<tr>
+					<th style="vertical-align:top; width:120px; ">Meta Keywords</th>
+					<td>
+						<textarea name="job_category_metakey" style="width:95%; height:60px; ">#htmleditformat(form.job_category_metakey)#</textarea>
+					</td>
+				</tr>
+				<tr>
+					<th style="vertical-align:top; width:120px; ">Meta Description</th>
+					<td>
+						<textarea name="job_category_metadesc" style="width:95%; height:60px; ">#htmleditformat(form.job_category_metadesc)#</textarea>
+					</td>
+				</tr>
 			<tr>
 				<th>Unique URL</th>
-				<td><input type="text" name="job_category_unique_url" value="#htmleditformat(form.job_category_unique_url)#" /><br />
+				<td>
+					<cfif form.method EQ "add">
+						#application.zcore.functions.zInputUniqueUrl("job_category_unique_url", true)#
+					<cfelse>
+						#application.zcore.functions.zInputUniqueUrl("job_category_unique_url")#
+					</cfif>
+				<br />
 				It is not recommended to use this feature unless you know what you are doing regarding SEO and broken links.  It is used to change the URL of this record within the site.</td>
 			</tr> 
 			<tr>
@@ -240,7 +264,7 @@
 <cffunction name="index" localmode="modern" access="remote" roles="member">
 	<cfscript>
 	db=request.zos.queryObject;
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Job Categories");	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Job Categories");	
 	application.zcore.functions.zSetPageHelpId("11.3");
 	searchOn=false;
 	db.sql="select * from #db.table("job_category", request.zos.zcoreDatasource)#
@@ -333,10 +357,17 @@
 			<a href="#request.jobCom.getCategoryURL(row)#" target="_blank">View</a> | 
 			<a href="/z/job/admin/manage-jobs/add?job_category_id=#row.job_category_id#">Add Job</a> | 
 			<a href="/z/job/admin/manage-jobs/index?job_category_id=#row.job_category_id#">Manage Jobs</a> | ');
-		echo('
-			<a href="/z/job/admin/manage-job-category/edit?job_category_id=#row.job_category_id#&amp;modalpopforced=1"  onclick="zTableRecordEdit(this);  return false;">Edit</a> | 
-			<a href="##" onclick="zDeleteTableRecordRow(this, ''/z/job/admin/manage-job-category/delete?job_category_id=#row.job_category_id#&amp;returnJson=1&amp;confirm=1''); return false;">Delete</a>
-		</td>');
+		echo('<a href="/z/job/admin/manage-job-category/edit?job_category_id=#row.job_category_id#&amp;modalpopforced=1"  onclick="zTableRecordEdit(this);  return false;">Edit</a>');
+
+		echo(' | ');
+
+		if ( not application.zcore.functions.zIsForceDeleteEnabled(row.job_category_unique_url) ) {
+			echo( 'Locked' );
+		} else {
+			echo( '<a href="##" onclick="zDeleteTableRecordRow(this, ''/z/job/admin/manage-job-category/delete?job_category_id=#row.job_category_id#&amp;returnJson=1&amp;confirm=1''); return false;">Delete</a>');
+		}
+
+		echo( '</td>' );
 
 	</cfscript>
 </cffunction>

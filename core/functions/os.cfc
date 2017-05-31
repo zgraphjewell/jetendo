@@ -237,75 +237,6 @@
 	</cfscript>
 </cffunction>
 
-<cffunction name="zCheckDomainRedirect" localmode="modern" access="public" output="yes">
-	<cfscript>
-	var host=request.zos.cgi.http_host;
-	var ds=0;  
-	if(not structkeyexists(application.zcore.domainRedirectStruct, host)){
-		application.zcore.functions.z404("checkDomainRedirect resulted in 404 because the host name is not mapped to a site on this installation. Please configure the server manager."); 
-		application.zcore.functions.zabort();
-	}
-	ds=application.zcore.domainRedirectStruct[host];
-	var protocol='http://';
-	if(ds.domain_redirect_secure EQ 1){
-		protocol = 'https://';
-	}
-	var theURL=replace(replace(request.zos.originalURL, "https:/" , ""), "http:/" , "");
-	//writedump(ds, true, 'simple');	abort;
-	if(ds.domain_redirect_type EQ '3'){
-		application.zcore.functions.z404("checkDomainRedirect resulted in 404 by intentional configuration by site_id = #ds.site_id#, domain: #ds.site_domain#."); 
-	}else if(ds.domain_redirect_type EQ '2'){ // force to exact url
-		if(ds.domain_redirect_mask EQ '1'){
-			writeoutput('#application.zcore.functions.zHTMLDoctype()#
-			<head><meta charset="utf-8" /><title>#htmleditformat(ds.domain_redirect_title)#</title>
-			<style type="text/css">html{height:100%;}</style>
-			</head><body style="margin:0px; height:100%;">
-			<iframe frameborder="0" scrolling="auto" height="100%" width="100%" src="#protocol&ds.domain_redirect_new_domain#" />
-			</body></html>');
-			application.zcore.functions.zabort();
-		}else{
-			//writeoutput("force to exact url: #protocol&ds.domain_redirect_new_domain#");			abort;
-			application.zcore.functions.z301Redirect("#protocol&ds.domain_redirect_new_domain#");
-		}
-	}else if(ds.domain_redirect_type EQ '1'){ // all to root
-		if(ds.domain_redirect_mask EQ '1'){
-			writeoutput('#application.zcore.functions.zHTMLDoctype()#<head><meta charset="utf-8" /><title>#htmleditformat(ds.domain_redirect_title)#</title>
-			<style type="text/css">html{height:100%;}</style>
-			</head><body style="margin:0px; height:100%;">
-			<iframe frameborder="0" scrolling="auto" height="100%" width="100%" src="#protocol&ds.domain_redirect_new_domain#"/>
-			</body></html>');
-			application.zcore.functions.zabort();
-		}else{
-			//writeoutput('all to root: '&"#protocol&ds.domain_redirect_new_domain#/");			abort;
-			application.zcore.functions.z301Redirect("#protocol&ds.domain_redirect_new_domain#/");
-		}
-	}else if(ds.domain_redirect_type EQ '0'){ // preserve url
-		if(ds.domain_redirect_mask EQ '1'){
-			writeoutput('#application.zcore.functions.zHTMLDoctype()#<head><meta charset="utf-8" /><title>#htmleditformat(ds.domain_redirect_title)#</title>
-			<style type="text/css">html{height:100%;}</style>
-			</head><body style="margin:0px; height:100%;">
-			<iframe frameborder="0" scrolling="auto" height="100%" width="100%" src="#protocol&ds.domain_redirect_new_domain&theURL#"/>
-			</body></html>');
-			application.zcore.functions.zabort();
-		}else{ 
-			var tempUrl=theURL; 
-			var a=[];
-			for(var i in form){
-				if(i NEQ "fieldnames" and i NEQ request.zos.urlRoutingParameter and not isNull(form[i]) and isSimpleValue(form[i])){
-					arrayAppend(a, i&"="&urlencodedformat(form[i]));	
-				}
-			}
-			var q=arrayToList(a, "&");
-			if(len(q) NEQ 0){
-				q="?"&q;
-			}
-			//writeoutput("no mask: #protocol&ds.domain_redirect_new_domain&tempURL&q#");			abort;
-			application.zcore.functions.z301Redirect("#protocol&ds.domain_redirect_new_domain&tempURL&q#"); 
-		}
-	} 
-	</cfscript>
-</cffunction>
-
 <!--- 
 var ts=application.zcore.functions.zGetEditableSiteOptionGroupSetById(["GroupName"], groupStruct.__setId);
 ts.name="New name";
@@ -572,6 +503,20 @@ if(not rs.success){
 	ts.leadRoutingStruct=application.zcore.functions.zGetLeadRoutesStruct();
 
 
+	ts2={
+		enableCache:"everything", // One of these values: disabled, folders, everything |  keeps database record in memory for all operations
+		storageMethod:"localFilesystem", // localFilesystem or cloudFile 
+
+		// localFilesystem options
+		publicRootAbsolutePath:request.zos.globals.privateHomeDir&"zupload/user/", 
+		publicRootRelativePath:"/zupload/user/",
+		internalRootRelativePath:"/zuploadinternal/user/"
+	}; 
+	// duplicate to avoid thread safety issues
+	virtualFileCom = duplicate(application.zcore.componentObjectCache.virtualFile);
+	virtualFileCom.init(ts2);
+	virtualFileCom.reloadCache(ts);
+ 
 	if(fileexists(request.zos.globals.privateHomeDir&"zupload/settings/icon-logo-original.png")){
 		ts.iconLogoExists=true;
 	}
@@ -585,6 +530,29 @@ if(not rs.success){
 
 	ts.getSiteRan=true;
 	request.zos.requestLogEntry('Application.cfc getSite end');
+
+
+	// update the jetendo init configuration
+	query name="qS" datasource="#request.zos.zcoreDatasource#"{
+		writeoutput("SELECT site.site_id, site_short_domain, site_domain,
+		if(app_x_site_id is NULL, 0, 1) hasListingApp FROM `site` 
+		LEFT JOIN app_x_site ON 
+		app_x_site.site_id = site.site_id and  
+		app_x_site_deleted='0' and 
+		app_x_site.app_id='11' 
+		WHERE site_active='1' and 
+		site_deleted='0' and 
+		site.site_id='#request.zos.globals.id#'
+		GROUP BY site.site_id");
+	} 
+	for(row in qS){
+		application.zcoreSiteDataStruct[row.site_id]=row;
+		application.zcoreSitesLoaded[row.site_id]=0;
+		if(row.hasListingApp EQ 1){
+			application.zcoreSitesListingLoaded[row.site_id]=0;
+		}
+	}
+
 	return ts;
 	</cfscript>
 </cffunction>
@@ -719,7 +687,7 @@ if(not rs.success){
 
 
 
-<cffunction name="zImageOutput" localmode="modern" returntype="any" output="yes"><cfargument name="filePath" type="string" required="yes"><cfargument name="type" type="string" required="yes"><!--- image/jpeg or image/gif ---><cfif (arguments.type EQ 'image/jpeg' and right(arguments.filePath,4) EQ '.jpg') or (arguments.type EQ 'image/gif' and right(arguments.filePath,4) EQ '.gif')><cfheader name="Content-Disposition" value="inline; filename=#getfilefrompath(arguments.filePath)#"><cfcontent type="#arguments.type#" deletefile="no" file="#arguments.filePath#"><cfelse><cfscript>application.zcore.template.fail("zImageOutput(): arguments.filePath must be an absolute path to a jpeg or gif with arguments.type equal to image/jpeg or image/gif.");</cfscript></cfif><cfscript>application.zcore.functions.zabort();</cfscript></cffunction>
+<cffunction name="zImageOutput" localmode="modern" returntype="any" output="yes"><cfargument name="filePath" type="string" required="yes"><cfargument name="type" type="string" required="yes"><!--- image/jpeg or image/gif ---><cfif (arguments.type EQ 'image/jpeg' and right(arguments.filePath,4) EQ '.jpg') or (arguments.type EQ 'image/gif' and right(arguments.filePath,4) EQ '.gif')><cfheader name="Content-Disposition" value="inline; filename=#getfilefrompath(replace(arguments.filePath, ",", " ", "all"))#"><cfcontent type="#arguments.type#" deletefile="no" file="#arguments.filePath#"><cfelse><cfscript>application.zcore.template.fail("zImageOutput(): arguments.filePath must be an absolute path to a jpeg or gif with arguments.type equal to image/jpeg or image/gif.");</cfscript></cfif><cfscript>application.zcore.functions.zabort();</cfscript></cffunction>
 <!---  --->
 
 <!--- application.zcore.functions.zModalCancel(); --->
@@ -789,27 +757,18 @@ if(not rs.success){
 			}
 		}
 	}
+	/*
 	// determine if files in package have changed
 	if(structkeyexists(application.sitestruct[request.zos.globals.id],'packageJSCacheStruct') EQ false){
 		application.sitestruct[request.zos.globals.id].packageJSCacheStruct=StructNew();
 		application.sitestruct[request.zos.globals.id].packageCSSCacheStruct=StructNew();
 		// rebuild from disk the packages.
 		for(i in request.zos.includePackageStruct){
-			if(jsLength NEQ 0){
-				if(fileexists(request.zos.globals.homedir&"_z-"&i&".js")){
-					f=application.zcore.skin.getFile("/_z-"&i&".js");
-					application.sitestruct[request.zos.globals.id].packageJSCacheStruct[i]=f.file_modified_datetime;
-				}else{
-					application.sitestruct[request.zos.globals.id].packageJSCacheStruct[i]=false;
-				}
+			if(jsLength NEQ 0){ 
+				application.sitestruct[request.zos.globals.id].packageJSCacheStruct[i]=false; 
 			}
 			if(cssLength NEQ 0){
-				if(fileexists(request.zos.globals.homedir&"_z-"&i&".css")){
-					f=application.zcore.skin.getFile("/_z-"&i&".css");
-					application.sitestruct[request.zos.globals.id].packageCSSCacheStruct[i]=f.file_modified_datetime;
-				}else{
-					application.sitestruct[request.zos.globals.id].packageCSSCacheStruct[i]=false;
-				}
+				application.sitestruct[request.zos.globals.id].packageCSSCacheStruct[i]=false;
 			}
 		}
 	}
@@ -843,7 +802,7 @@ if(not rs.success){
 				application.sitestruct[request.zos.globals.id].packageCSSCacheStruct[p]=false;
 			}
 		}
-	} 
+	} */
 	request.zos.arrJSIncludes=arrayreverse(request.zos.arrJSIncludes);
 	request.zos.arrCSSIncludes=arrayreverse(request.zos.arrCSSIncludes);
 	for(i=1;i LTE jsLength;i++){
@@ -1237,9 +1196,9 @@ application.zcore.functions.zLogError(ts);
 		arrayappend(request.zos.arrCSSIncludes, ts);  
 	}else{
 		if(request.zos.isTestServer){
-			link=request.zos.zcoreTestAdminDomain&"/zupload/layout-global.css";
+			link=request.zos.zcoreTestAdminDomain&application.zcore.skin.getVersionURL("/zupload/layout-global.css");
 		}else{
-			link=request.zos.zcoreAdminDomain&"/zupload/layout-global.css";
+			link=request.zos.zcoreAdminDomain&application.zcore.skin.getVersionURL("/zupload/layout-global.css");
 		}
 		ts={
 			type:"zCSSFramework",
@@ -1334,7 +1293,7 @@ application.zcore.functions.zLogError(ts);
 	application.zcore.functions.zwritefile(tempFile,trim(contents));
 	application.sitestruct[request.zos.globals.id].fileExistsCache[tempFile]=true;
 	if(form[request.zos.urlRoutingParameter] NEQ "/z/server-manager/tasks/publish-system-css/index"){
-		if(structkeyexists(application.zcore,'skin')) application.zcore.skin.verifyCache(application.sitestruct[request.zos.globals.id].skinObj);
+		//if(structkeyexists(application.zcore,'skin')) application.zcore.skin.verifyCache(application.sitestruct[request.zos.globals.id].skinObj);
 		if(structkeyexists(application.zcore,'template')) application.zcore.template.findAndReplacePrependTag("meta", "/zcache/zsystem.css?zversion=", "/zcache/zsystem.css?zversion="&gettickcount());
 	}
 	</cfscript>
@@ -2015,24 +1974,30 @@ User's IP: #request.zos.cgi.remote_addr#
 	user_group_x_group.site_id = user_group.site_id";
 	qGroupX=db.execute("qGroupX");
 	//tempStruct = StructNew();
+	tempStruct.user_group.ids_names = StructNew();
 	tempStruct.user_group.ids = StructNew();
 	tempStruct.user_group.names = StructNew();
 	tempStruct.user_group.access = StructNew();
 	tempStruct.user_group.modify_user = StructNew();
-	tempStruct.user_group.share_user = StructNew();
-	for(i=1;i LTE qGroup.recordcount;i=i+1){
-		if(qGroup["user_group_primary"][i] EQ 1){
-			tempStruct.user_group.primary = qGroup["user_group_id"][i];
+	tempStruct.user_group.share_user = StructNew(); 
+	for(row in qGroup){
+		if(row["user_group_primary"] EQ 1){
+			tempStruct.user_group.primary = row["user_group_id"];
 		}
-		StructInsert(tempStruct.user_group.names, qGroup["user_group_name"][i], qGroup["user_group_id"][i],true);
-		StructInsert(tempStruct.user_group.ids, qGroup["user_group_id"][i], qGroup["user_group_name"][i],true);
+		tempStruct.user_group.names[row["user_group_name"]]=row["user_group_id"];
+		if(row["user_group_friendly_name"] EQ ""){
+			tempStruct.user_group.ids_names[row["user_group_id"]]=replace(row["user_group_name"], "_", " ", "all");
+		}else{
+			tempStruct.user_group.ids_names[row["user_group_id"]]=row["user_group_friendly_name"];
+		}
+		tempStruct.user_group.ids[row["user_group_id"]]=row["user_group_name"];
 		// create the login access struct for each group
-		StructInsert(tempStruct.user_group.access, qGroup["user_group_id"][i], StructNew(), false);
-		StructInsert(tempStruct.user_group.modify_user, qGroup["user_group_id"][i], StructNew(), false);
-		StructInsert(tempStruct.user_group.share_user, qGroup["user_group_id"][i], StructNew(), false);
+		tempStruct.user_group.access[row["user_group_id"]]={};
+		tempStruct.user_group.modify_user[row["user_group_id"]]={};
+		tempStruct.user_group.share_user[row["user_group_id"]]={};
 		// force the parent group to have access to itself
-		StructInsert(tempStruct.user_group.access[qGroup["user_group_id"][i]], qGroup["user_group_name"][i], qGroup["user_group_id"][i], true);
-	}
+		tempStruct.user_group.access[row["user_group_id"]][row["user_group_name"]]=row["user_group_id"]; 
+	} 
 	for(i=1;i LTE qGroupX.recordcount;i=i+1){
 		// add the child user groups to each access struct
 		if(qGroupX.user_group_modify_user[i] EQ 1){
@@ -2073,12 +2038,20 @@ User's IP: #request.zos.cgi.remote_addr#
 	tempStruct=structnew();
 	tempStruct.site_id=arguments.site_id;
 	tempStruct.globals=request.zos.globals;
-	tempStruct=application.zcore.functions.zGetSite(tempStruct);
+	tempStruct=application.zcore.functions.zGetSite(tempStruct); 
 	application.sitestruct[arguments.site_id]=tempStruct;
 	application.zcore.siteGlobals[arguments.site_id]=tempStruct.globals;
 	if(arguments.site_id EQ curSiteId){
 		application.sitestruct[arguments.site_id].globals=request.zos.globals;
 	}
+
+	for(row in qSite){
+		application.zcoreSiteDataStruct[arguments.site_id]=row;
+	}
+	application.zcoreSitePaths=deserializeJson(fileread(request.zos.zcoreRootPrivatePath&"_cache/scripts/sites.json", "utf-8"));
+	application.zcoreSitesLoaded[arguments.site_id]=0;
+	application.zcoreSitesListingLoaded[arguments.site_id]=application.zcoreSitesLoaded[arguments.site_id];
+ 
 	structdelete(application.sitestruct[arguments.site_id],'administratorTemplateMenu');
 	</cfscript>
 </cffunction>
@@ -2334,7 +2307,22 @@ User's IP: #request.zos.cgi.remote_addr#
 	var endString="";
 	var startString="";
 	var theOut="";
-	db.sql="SELECT * FROM #db.table("site", request.zos.zcoreDatasource)# site 
+	query name="qS" datasource="#request.zos.zcoreDatasource#"{
+		writeoutput("SELECT site.site_id, site_short_domain, site_domain,
+		if(app_x_site_id is NULL, 0, 1) hasListingApp FROM `site` 
+		LEFT JOIN app_x_site ON 
+		app_x_site.site_id = site.site_id and  
+		app_x_site_deleted='0' and 
+		app_x_site.app_id='11' 
+		WHERE site_active='1' and 
+		site_deleted='0'  
+		GROUP BY site.site_id");
+	}  
+	for(row in qS){
+		application.zcoreSiteDataStruct[row.site_id]=row; 
+	}
+
+	db.sql="SELECT * FROM #db.table("site", request.zos.zcoreDatasource)# 
 	WHERE site_id <> #db.param(-1)# and 
 	site_deleted = #db.param(0)# and
 	site_active=#db.param(1)#";
@@ -2521,6 +2509,7 @@ User's IP: #request.zos.cgi.remote_addr#
 	| <a href="/z/server-manager/admin/robots/edit?zid=#arguments.zid#&amp;sid=#form.sid#">Robots.txt</a>
 	| <a href="/z/server-manager/admin/ssl/index?zid=#arguments.zid#&amp;sid=#form.sid#">SSL</a>
 	| <a href="/z/server-manager/admin/hardcoded-urls/edit?zid=#arguments.zid#&amp;sid=#form.sid#">Hardcoded URLs</a>
+	| <a href="/z/server-manager/admin/clear-site-data/index?zid=#arguments.zid#&amp;sid=#form.sid#">Clear Data</a>
 	</td>
 	</tr>
 	</table></cfif>
@@ -2699,7 +2688,20 @@ if(linkCount){
 
 </cffunction>
 
- 
+ <!--- application.zcore.functions.zIsForceDeleteEnabled(link) --->
+<cffunction name="zIsForceDeleteEnabled" access="public" localmode="modern">
+	<cfargument name="link" type="string" required="yes">
+	<cfscript>
+	if(arguments.link EQ ""){
+		return true;
+	}else if(application.zcore.user.checkServerAccess()){
+		return true;
+	}else if(application.zcore.user.checkGroupAccess("administrator") and application.zcore.functions.zso(request.zos.globals, 'administratorEnableForceDelete', true, 0) EQ 1){
+		return true;
+	}
+	return false;
+	</cfscript>
+</cffunction>
 
 </cfoutput>
 </cfcomponent>

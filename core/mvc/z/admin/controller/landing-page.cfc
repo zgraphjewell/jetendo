@@ -267,7 +267,13 @@ D:\desktop\layout.ai
 			</tr> --->
 			<tr>
 				<th>Unique URL</th>
-				<td>#application.zcore.functions.zInputUniqueUrl("landing_page_unique_url")#</td>
+				<td>
+					<cfif form.method EQ "tagAdd">
+						#application.zcore.functions.zInputUniqueUrl("landing_page_unique_url", true)#
+					<cfelse>
+						#application.zcore.functions.zInputUniqueUrl("landing_page_unique_url")#
+					</cfif>
+				</td>
 			</tr> 
 			<tr>
 				<th style="width:1%;">&nbsp;</th>
@@ -339,7 +345,7 @@ D:\desktop\layout.ai
 	}else{
 		echo('Type (#row.section_content_type_id#) not implemented | ');
 	}
-	if(not application.zcore.user.checkServerAccess() and row.landing_page_unique_url NEQ ""){
+	if(not application.zcore.functions.zIsForceDeleteEnabled(row.landing_page_unique_url)){
 		echo(' | Delete disabled');
 	}else{
 		echo(' | <a href="##" onclick="zDeleteTableRecordRow(this, ''/z/admin/landing-page/delete?section_id=#row.section_id#&amp;landing_page_id=#row.landing_page_id#&amp;returnJson=1&amp;confirm=1''); return false;">Delete</a>');

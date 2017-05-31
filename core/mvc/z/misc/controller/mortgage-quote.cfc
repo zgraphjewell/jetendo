@@ -193,11 +193,13 @@ application.zcore.template.setTag("pagenav",tempPageNav);
 	form.modalpopforced=application.zcore.functions.zso(form, 'modalpopforced');
     if(form.modalpopforced EQ 1){
 		if(application.zcore.functions.zso(form, 'js3811') NEQ "j219"){
-			form.inquiries_spam=1;
+			form.inquiries_spam=1; 
+			form.inquiries_spam_description="js3811 value not set"; 
 			//writeoutput('~n~');	application.zcore.functions.zabort();
 		}
 		if(application.zcore.functions.zCheckFormHashValue(application.zcore.functions.zso(form, 'js3812')) EQ false){
-			form.inquiries_spam=1;
+			form.inquiries_spam=1; 
+			form.inquiries_spam_description="Form hash value was wrong"; 
 			//application.zcore.status.setStatus(request.zsid, "Your session has expired.  Please submit the form again.",form,true);
 			//application.zcore.functions.zRedirect("/z/misc/mortgage-quote/index?modalpopforced=#form.modalpopforced#&zsid=#Request.zsid#");
 		}
@@ -233,24 +235,30 @@ application.zcore.template.setTag("pagenav",tempPageNav);
 	if(application.zcore.functions.zFakeFormFieldsNotEmpty()){
 		
 		form.inquiries_spam=1;
+		form.inquiries_spam_description="Fake form fields not empty"; 
 		//application.zcore.functions.zRedirect("/z/misc/thank-you/index?modalpopforced=#form.modalpopforced#&zsid="&request.zsid);
 	}
-	if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
-		form.inquiries_spam=1;
+	/*if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
+		form.inquiries_spam=1; 
+		form.inquiries_spam_description="zset9 was wrong";
 		//application.zcore.functions.zredirect('/');
-	}
+	}*/
 	if(Find("@", form.inquiries_first_name) NEQ 0){
 		form.inquiries_spam=1;
+		form.inquiries_spam_description="@ symbol in first name";
 		//application.zcore.status.setStatus(Request.zsid, "Invalid Request",form,true);
 		//application.zcore.functions.zRedirect("/z/misc/mortgage-quote/index?modalpopforced=#form.modalpopforced#&zsid=#Request.zsid#");
 	}
 	if(structkeyexists(form, 'inquiries_comments') and (findnocase("[/url]", form.inquiries_comments) NEQ 0 or findnocase("http://", form.inquiries_comments) NEQ 0)){
 		form.inquiries_spam=1;
+		form.inquiries_spam_description="Comment had a url in it";
 		//application.zcore.status.setStatus(Request.zsid, "Invalid Request",form,true);
 		//application.zcore.functions.zRedirect("/z/misc/mortgage-quote/index?modalpopforced=#form.modalpopforced#&zsid=#Request.zsid#");
 	}
 	form.property_id='';
 	form.inquiries_primary=1;
+	form.inquiries_session_id=application.zcore.session.getSessionId();
+	form.site_id=request.zos.globals.id;
 //	Insert Into Inquiry Database
 	inputStruct = StructNew();
 	if(application.zcore.app.siteHasApp("content")){
@@ -259,8 +267,8 @@ application.zcore.template.setTag("pagenav",tempPageNav);
 		inquiries_updated_datetime=#db.param(request.zos.mysqlnow)#  
 		WHERE inquiries_email=#db.param(form.inquiries_email)# and 
 		site_id = #db.param(request.zos.globals.id)# ";
-		db.execute("q"); 
-		inputStruct.datasource="#request.zos.zcoreDatasource#";
+		db.execute("q");  
+		form.inquiries_id=application.zcore.functions.zInsertLead();
 	}else{
 		db.sql="UPDATE #db.table("inquiries", request.zos.zcoreDatasource)# inquiries 
 		SET inquiries_primary=#db.param(0)#,
@@ -268,11 +276,11 @@ application.zcore.template.setTag("pagenav",tempPageNav);
 		WHERE inquiries_email=#db.param(form.inquiries_email)# and  
 		site_id = #db.param(request.zos.globals.id)#";
 		db.execute("q"); 
+		inputStruct={}; // goes in the site datasource
+		inputStruct.table = "inquiries";
+		inputStruct.struct=form; 
+		form.inquiries_id = application.zcore.functions.zInsert(inputStruct);  
 	}
-	inputStruct.table = "inquiries";
-	form.site_id=request.zos.globals.id;
-	inputStruct.struct=form; 
-	form.inquiries_id = application.zcore.functions.zInsert(inputStruct);  
 	if(form.inquiries_id EQ false){
 		application.zcore.status.setStatus(Request.zsid, "Your inquiry has not been sent due to an error.", false,true);
 		application.zcore.functions.zRedirect("/z/misc/mortgage-quote/index?modalpopforced=#form.modalpopforced#&zsid="&request.zsid);
@@ -285,7 +293,7 @@ application.zcore.template.setTag("pagenav",tempPageNav);
 	if(application.zcore.functions.zso(form, 'inquiries_email') EQ "" or application.zcore.functions.zEmailValidate(form.inquiries_email) EQ false){
 		form.inquiries_email=request.fromemail;
 	}
-	if(form.inquiries_spam EQ 0){
+	//if(form.inquiries_spam EQ 0){
 		ts=structnew();
 		ts.inquiries_id=form.inquiries_id;
 		ts.subject="New Mortgage Quote Inquiry on #request.zos.globals.shortdomain#";
@@ -295,7 +303,7 @@ application.zcore.template.setTag("pagenav",tempPageNav);
 			// failed to assign/email lead
 			//zdump(rs);
 		}
-	}
+	//}
 	form.mail_user_id=application.zcore.user.automaticAddUser(application.zcore.functions.zUserMapFormFields(structnew()));
 	
     if(form.modalpopforced EQ 1){

@@ -16,9 +16,15 @@ function getTasks(){
 	if(function_exists('getCustomTasks')){
 		$arrTask=getCustomTasks($arrTask);
 	}
+	$t=new stdClass();
+	$t->logName="update-exchange-rate.html"; // this also verifies all sites are loaded on init.
+	$t->interval="daily"; 
+	$t->startTimeOffsetSeconds=1000; 
+	$t->url=$adminDomain."/z/server-manager/tasks/update-exchange-rate/index";
+	array_push($arrTask, $t); 
 
 	$t=new stdClass();
-	$t->logName="sync-sessions.html";
+	$t->logName="sync-sessions.html"; // this also verifies all sites are loaded on init.
 	$t->interval=60;
 	$t->startTimeOffsetSeconds=0;
 	$t->url=$adminDomain."/z/server-manager/tasks/sync-sessions/index";
@@ -62,9 +68,9 @@ function getTasks(){
 	array_push($arrTask, $t);
 
 	$t=new stdClass();
-	$t->interval="daily";
+	$t->interval=1800;
 	$t->logName="call-tracking-metrics-import.html";
-	$t->startTimeOffsetSeconds=3000;
+	$t->startTimeOffsetSeconds=0;
 	$t->url=$adminDomain."/z/server-manager/tasks/call-tracking-metrics-import/index";
 	array_push($arrTask, $t);
 
@@ -126,6 +132,14 @@ doesn't work anymore
 	$t->interval="daily";
 	$t->startTimeOffsetSeconds=2000;
 	$t->url=$adminDomain."/z/_com/display/skin?method=deleteOldCache";
+	array_push($arrTask, $t);
+
+
+	$t=new stdClass();
+	$t->logName="clear-old-temp-data.html";
+	$t->interval="daily";
+	$t->startTimeOffsetSeconds=2000;
+	$t->url=$adminDomain."/z/server-manager/tasks/verify-apps/clearOldTempData";
 	array_push($arrTask, $t);
 
 	$t=new stdClass();

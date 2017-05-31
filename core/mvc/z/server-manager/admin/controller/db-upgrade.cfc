@@ -575,6 +575,9 @@
 		"far_feature": {
 			columnList: "far_feature_code,far_feature_type,far_feature_description"
 		},
+		"currency": {
+			columnList: "currency_id,currency_code,currency_name,currency_updated_datetime,currency_deleted"
+		},
 		"country": {
 			columnList: "country_name,country_code"
 		},
@@ -1217,6 +1220,9 @@
 		}
 		// detect columns that have changed
 		for(n in arguments.oldTable[i]){
+			if(not structkeyexists(arguments.newTable[i], n)){
+				arguments.newTable[i][n]="";
+			}
 			if(arguments.oldTable[i][n] NEQ arguments.newTable[i][n]){
 				if(structkeyexists(form, 'zdebug')){
 					writeoutput("Column struct is different: "&i&" for attribute '"&n&"' old:"&arguments.oldTable[i][n]&" new: "&arguments.newTable[i][n]&"<br>");

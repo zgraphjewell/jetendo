@@ -2,7 +2,7 @@
 <cfoutput>
 <cffunction name="init" localmode="modern" access="private" roles="member">
 	<cfscript>
-    application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Leads");
+    application.zcore.adminSecurityFilter.requireFeatureAccess("Leads");
 	form.zPageId=application.zcore.functions.zso(form, 'zPageId');
 	</cfscript>
 </cffunction>
@@ -45,16 +45,25 @@
 		form.inquiries_type_id=local.arrType[1];
 		form.inquiries_type_id_siteIDType=local.arrType[2];
 	}
+	form.inquiries_status_id = application.zcore.functions.zso(form, 'inquiries_status_id', true);
+	if(form.inquiries_status_id EQ 0){
+		form.inquiries_status_id=1;
+	} 
+
+	if(not structkeyexists(request.zos.userSession.groupAccess, "administrator")){
+		form.user_id=request.zsession.user.id;
+		form.user_id_siteIDType=application.zcore.functions.zGetSiteIdType(request.zsession.user.site_id);
+		form.inquiries_status_id=2;
+	}
+
 	result = application.zcore.functions.zValidateStruct(form, myForm,request.zsid,true);
 	if(result){	
 		application.zcore.status.setStatus(Request.zsid, false,form,true);
 		application.zcore.functions.zRedirect("/z/inquiries/admin/inquiry/add?zPageId=#form.zPageId#&zsid=#Request.zsid#");
-	}
-	/*if(structkeyexists(request.zos.userSession.groupAccess, "administrator") EQ false and structkeyexists(request.zos.userSession.groupAccess, "homeowner") eq false and structkeyexists(request.zos.userSession.groupAccess, "manager") eq false){
-		form.user_id = request.zsession.user.id;
-	}*/
+	} 
 	form.site_id = request.zOS.globals.id;
 	
+	form.inquiries_session_id=application.zcore.session.getSessionId();
 	form.inquiries_primary=1;
 	db.sql="UPDATE #db.table("inquiries", request.zos.zcoreDatasource)# inquiries
 	SET inquiries_primary=#db.param(0)#, 
@@ -62,14 +71,11 @@
 	WHERE inquiries_email=#db.param(form.inquiries_email)# and 
 	inquiries_deleted = #db.param(0)# and 
 	site_id = #db.param(request.zos.globals.id)#";
-	r=db.execute("r");
-	inputStruct = StructNew();
-	inputStruct.struct=form;
-	inputStruct.table = "inquiries";
-	inputStruct.datasource=request.zos.zcoreDatasource;
+	r=db.execute("r"); 
 	if(form.method EQ 'insert'){
 		form.inquiries_status_id = 1;
-		form.inquiries_id = application.zcore.functions.zInsert(inputStruct); 
+
+		form.inquiries_id=application.zcore.functions.zInsertLead(); 
 		if(form.inquiries_id EQ false){
 			request.zsid = application.zcore.status.setStatus(Request.zsid, "Lead failed to be added.", false,true);
 			application.zcore.functions.zRedirect("/z/inquiries/admin/inquiry/add?zPageId=#form.zPageId#&zsid="&request.zsid);
@@ -77,7 +83,8 @@
 			request.zsid = application.zcore.status.setStatus(Request.zsid, "Lead Added.");
 		}
 	}else{
-		if(application.zcore.functions.zUpdate(inputStruct) EQ false){
+		result=application.zcore.functions.zUpdateLead();  
+		if(result EQ false){
 			request.zsid = application.zcore.status.setStatus(Request.zsid, "Lead failed to be updated.", false,true);
 			application.zcore.functions.zRedirect("/z/inquiries/admin/inquiry/update?zPageId=#form.zPageId#&inquiries_id=#form.inquiries_id#&zsid="&request.zsid);
 		}else{
@@ -117,7 +124,7 @@
 	from #db.table("inquiries", request.zos.zcoreDatasource)# inquiries
 	WHERE inquiries_id = #db.param(form.inquiries_id)# and site_id = #db.param(request.zos.globals.id)# and 
 	inquiries_deleted = #db.param(0)# 
-	<cfif structkeyexists(request.zos.userSession.groupAccess, "administrator") EQ false and structkeyexists(request.zos.userSession.groupAccess, "homeowner") eq false and structkeyexists(request.zos.userSession.groupAccess, "manager") eq false>
+	<cfif structkeyexists(request.zos.userSession.groupAccess, "administrator") EQ false and structkeyexists(request.zos.userSession.groupAccess, "manager") eq false>
 		and user_id = #db.param(request.zsession.user.id)# and user_id_siteIDType=#db.param(application.zcore.user.getSiteIdTypeFromLoggedOnUser())#
 	</cfif>
 	</cfsavecontent>
@@ -144,8 +151,9 @@
 		Lead</h2>
 	Be sure to always ask the lead what kind of advertising referred them to your office.<br />
 	<br />
+	<form class="zFormCheckDirty" name="myForm" id="myForm" action="/z/inquiries/admin/inquiry/<cfif currentMethod EQ 'add'>insert<cfelse>update</cfif>?zPageId=#form.zPageId#&amp;inquiries_id=#form.inquiries_id#" method="post">
 	<table style="border-spacing:0px;" class="table-list">
-		<form class="zFormCheckDirty" name="myForm" id="myForm" action="/z/inquiries/admin/inquiry/<cfif currentMethod EQ 'add'>insert<cfelse>update</cfif>?zPageId=#form.zPageId#&amp;inquiries_id=#form.inquiries_id#" method="post">
+
 			<tr>
 				<th style="width:70px;">Source:</th>
 				<td>
@@ -257,7 +265,7 @@
 				</tr>
 			<!--- </cfif> --->
 			<cfif structkeyexists(request.zos.userSession.groupAccess, "administrator")>
-				<!--- <tr>
+				<tr>
 					<th>Assign to:</th>
 					<td><cfscript>
 						userGroupCom = application.zcore.functions.zcreateobject("component","zcorerootmapping.com.user.user_group_admin");
@@ -276,17 +284,21 @@
 						application.zcore.functions.zInputSelectBox(selectStruct);
 						</cfscript>
 						(Optional) </td>
-				</tr> --->
+				</tr><!---  --->
 				<tr>
 					<th style="vertical-align:top;" colspan="2">Office Administrative Comments: (Optional)</th>
 				</tr>
 				<tr>
 					<td colspan="2"><textarea name="inquiries_admin_comments" cols="100" rows="6">#form.inquiries_admin_comments#</textarea></td>
 				</tr>
+
 			</cfif>
 			<tr>
 				<th>&nbsp;</th>
-				<td><button type="submit" name="submitForm">
+				<td>
+
+	
+					<button type="submit" name="submitForm">
 					<cfif currentMethod EQ 'add'>
 						Add
 					<cfelse>
@@ -295,8 +307,8 @@
 					Lead</button>
 					<button type="button" name="cancel" onclick="window.location.href = '/z/inquiries/admin/manage-inquiries/index?zPageId=#form.zPageId#';">Cancel</button></td>
 			</tr>
-		</form>
-	</table>
+		</table>
+	</form>
 	</span>
 </cffunction>
 </cfoutput>

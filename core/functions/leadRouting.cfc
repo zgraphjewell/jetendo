@@ -1,7 +1,46 @@
 <cfcomponent>
 <cfoutput>
+
+<!--- application.zcore.functions.zSetOfficeIdForInquiryId(inquiries_id, office_id); --->
+<cffunction name="zSetOfficeIdForInquiryId" localmode="modern" access="public">
+	<cfargument name="inquiries_id" type="string" required="yes">
+	<cfargument name="office_id" type="string" required="yes">
+	<cfscript>
+	db=request.zos.queryObject;
+	if(arguments.office_id EQ "" or arguments.office_id EQ "0"){
+		return;
+	}
+	db.sql="UPDATE #db.table("inquiries", request.zos.zcoreDatasource)# 
+	SET 
+	office_id=#db.param(arguments.office_id)#,
+	inquiries_updated_datetime=#db.param(request.zos.mysqlnow)# 
+	WHERE 
+	site_id=#db.param(request.zos.globals.id)# and 
+	inquiries_deleted=#db.param(0)# and 
+	inquiries_id=#db.param(arguments.inquiries_id)# ";
+	db.execute("qUpdate");
+	</cfscript>
+</cffunction>
+
+<!--- application.zcore.functions.zMarkFinalLead(originalInquiriesId, finalInquiriesId); --->
+<cffunction name="zMarkFinalLead" localmode="modern" access="public">
+	<cfargument name="originalInquiriesId" type="string" required="yes">
+	<cfargument name="finalInquiriesId" type="string" required="yes">
+	<cfscript>
+	var db=request.zos.queryObject;
+	db.sql="UPDATE #db.table("inquiries", request.zos.zcoreDatasource)# inquiries 
+	SET inquiries_final_inquiries_id=#db.param(arguments.finalInquiriesId)#,
+	inquiries_updated_datetime=#db.param(request.zos.mysqlnow)#  
+	WHERE inquiries_id=#db.param(arguments.originalInquiriesId)# and 
+	inquiries_deleted = #db.param(0)# and 
+	site_id = #db.param(request.zos.globals.id)# ";
+	db.execute("q"); 
+	</cfscript>
+</cffunction>
+
 <!--- 
 <cfscript>
+// this is used to record a lead, without redirecting anywhere.
 form.inquiries_type_id=1;
 form.inquiries_type_id_siteIdType=4;
 form.inquiries_email="test@test.com";
@@ -29,13 +68,9 @@ application.zcore.functions.zRecordLead();
 	inquiries_deleted = #db.param(0)# and 
 	site_id = #db.param(request.zos.globals.id)# ";
 	db.execute("q"); 
+	form.inquiries_session_id=application.zcore.session.getSessionId();
 	//	Insert Into Inquiry Database
-	inputStruct = StructNew();
-	inputStruct.table = "inquiries";
-	inputstruct.datasource=request.zos.zcoreDatasource;
-	inputStruct.struct=form;
-	form.inquiries_id = application.zcore.functions.zInsert(inputStruct); 
-	 
+	form.inquiries_id=application.zcore.functions.zInsertLead();
 	if(form.inquiries_id NEQ false){
 		application.zcore.tracking.setUserEmail(form.inquiries_email);
 		application.zcore.tracking.setConversion('inquiry',form.inquiries_id);
@@ -58,6 +93,96 @@ application.zcore.functions.zRecordLead();
 	</cfscript>
 </cffunction>
 
+ <!--- 
+// this function is used to insert correctly formatted data to the inquiries table.  It will run some last reformatting / validation as a consolidated filter.
+application.zcore.functions.zInsertLead();
+  --->
+<cffunction name="zInsertLead" localmode="modern" access="public">
+	<cfscript>
+	form.inquiries_phone1_formatted=application.zcore.functions.zFormatInquiryPhone(application.zcore.functions.zso(form, 'inquiries_phone1'));
+	form.inquiries_phone2_formatted=application.zcore.functions.zFormatInquiryPhone(application.zcore.functions.zso(form, 'inquiries_phone2'));
+	form.inquiries_phone3_formatted=application.zcore.functions.zFormatInquiryPhone(application.zcore.functions.zso(form, 'inquiries_phone3'));
+	form.site_id = request.zOS.globals.id;
+	form.inquiries_primary=1;
+
+	inputStruct = StructNew();
+	inputStruct.table = "inquiries";
+	inputstruct.datasource=request.zos.zcoreDatasource;
+	inputStruct.struct=form;
+	inquiries_id = application.zcore.functions.zInsert(inputStruct); 
+
+	if(request.zos.isTestServer){
+		ds=application.zcore.functions.zGetInquiryById(inquiries_id);
+		if(structcount(ds) GT 0 and ds.inquiries_email NEQ ""){
+			// send autoresponder
+			ts={
+				// required
+				inquiries_type_id:ds.inquiries_type_id,
+				inquiries_type_id_siteidtype:ds.inquiries_type_id_siteidtype,
+				to:ds.inquiries_email,
+				from:request.officeEmail,
+				dataStruct:{
+					firstName:ds.inquiries_first_name,
+					email:ds.inquiries_email,
+					interestedInModel:"", // TODO: need to add a permanent field that tracks the model code/name they were interested in.
+					officeName:"",
+					officeFullInfo:""
+				} 
+			}; 
+			autoResponderCom=createobject("component", "zcorerootmapping.mvc.z.inquiries.admin.controller.autoresponder");
+			rs=autoResponderCom.sendAutoresponder(ts);  
+		} 
+	}
+
+	return inquiries_id;
+	</cfscript>
+</cffunction>
+
+<!--- 
+ts={
+	inquiries_first_name:"",
+	// other fields
+};
+application.zcore.functions.zImportLead(ts); --->
+<cffunction name="zImportLead" localmode="modern" access="public">
+	<cfargument name="ss" type="struct" required="yes">
+	<cfscript>
+	ss=arguments.ss;
+	ss.inquiries_phone1_formatted=application.zcore.functions.zFormatInquiryPhone(application.zcore.functions.zso(ss, 'inquiries_phone1'));
+	ss.inquiries_phone2_formatted=application.zcore.functions.zFormatInquiryPhone(application.zcore.functions.zso(ss, 'inquiries_phone2'));
+	ss.inquiries_phone3_formatted=application.zcore.functions.zFormatInquiryPhone(application.zcore.functions.zso(ss, 'inquiries_phone3'));
+	ss.site_id = request.zOS.globals.id;
+	ss.inquiries_primary=1;
+
+	inputStruct = StructNew();
+	inputStruct.table = "inquiries";
+	inputstruct.datasource=request.zos.zcoreDatasource;
+	inputStruct.struct=ss;
+	inquiries_id = application.zcore.functions.zInsert(inputStruct); 
+
+	return inquiries_id;
+	</cfscript>
+</cffunction>
+
+ <!--- 
+// this function is used to update correctly formatted data to the inquiries table.  It will run some last reformatting / validation as a consolidated filter.
+application.zcore.functions.zUpdateLead();
+  --->
+<cffunction name="zUpdateLead" localmode="modern" access="public">
+	<cfscript>
+	form.inquiries_phone1_formatted=application.zcore.functions.zFormatInquiryPhone(application.zcore.functions.zso(form, 'inquiries_phone1'));
+	form.inquiries_phone2_formatted=application.zcore.functions.zFormatInquiryPhone(application.zcore.functions.zso(form, 'inquiries_phone2'));
+	form.inquiries_phone3_formatted=application.zcore.functions.zFormatInquiryPhone(application.zcore.functions.zso(form, 'inquiries_phone3'));
+	form.site_id = request.zOS.globals.id;
+
+	inputStruct = StructNew();
+	inputStruct.table = "inquiries";
+	inputstruct.datasource=request.zos.zcoreDatasource;
+	inputStruct.struct=form;
+	return application.zcore.functions.zUpdate(inputStruct); 
+	</cfscript>
+</cffunction>
+	
 <cffunction name="zGetInquiryById" localmode="modern" access="public">
 	<cfargument name="inquiries_id" type="string" required="yes">
 	<cfscript>
@@ -65,6 +190,23 @@ application.zcore.functions.zRecordLead();
 	db.sql="select * from #db.table("inquiries", request.zos.zcoreDatasource)# inquiries 
 	WHERE site_id = #db.param(request.zos.globals.id)# and 
 	inquiries_id = #db.param(arguments.inquiries_id)# and 
+	inquiries_deleted=#db.param(0)#";
+	qInquiry=db.execute("qInquiry");
+	for(row in qInquiry){
+		return row;
+	};
+	return {};
+	</cfscript>
+</cffunction>
+
+
+<cffunction name="zGetInquiryByExternalId" localmode="modern" access="public">
+	<cfargument name="inquiries_external_id" type="string" required="yes">
+	<cfscript>
+	db=request.zos.queryObject;
+	db.sql="select * from #db.table("inquiries", request.zos.zcoreDatasource)# inquiries 
+	WHERE site_id = #db.param(request.zos.globals.id)# and 
+	inquiries_external_id = #db.param(arguments.inquiries_external_id)# and 
 	inquiries_deleted=#db.param(0)#";
 	qInquiry=db.execute("qInquiry");
 	for(row in qInquiry){
@@ -95,11 +237,35 @@ application.zcore.functions.zRecordLead();
 	return arguments.defaultValue;
 	</cfscript>
 </cffunction>
+
+
+
+<cffunction name="zSetInquiryCustomJsonFromStruct" localmode="modern" access="public">
+	<cfargument name="ss" type="struct" required="yes">
+	<cfscript>
+	ss=arguments.ss;
+	if(structcount(ss) NEQ 0){
+		ts={ arrCustom:[] };
+		for(i in ss){
+			arrayAppend(ts.arrCustom, { label:i, value:trim(ss[i]) });
+		}
+		return serializeJson(ts);
+	}else{
+		return "";
+	}
+	</cfscript>
+</cffunction> 
+
 <!--- 
 ts=structnew();
 ts.inquiries_id=inquiries_id;
 ts.subject="New Lead";
+// optional
 ts.disableDebugAbort=false;
+ts.assignEmail="";
+ts.user_id=request.zsession.user.id;
+ts.user_id_siteIDType=1; 
+ts.forceAssign=false;
 ts.arrAttachments=[];
 application.zcore.functions.zAssignAndEmailLead(ts);
  --->
@@ -124,11 +290,11 @@ application.zcore.functions.zAssignAndEmailLead(ts);
 		if(structkeyexists(arguments.ss, 'assignEmail')){
 			rs.assignEmail=arguments.ss.assignEmail;
 			rs.user_id=0;
-			rs.user_id_siteIDType=0;
+			rs.user_id_siteIDType=0; 
 		}else{
 			rs.assignEmail="";
 			rs.user_id=arguments.ss.assignUserId;
-			rs.user_id_siteIDType=arguments.ss.assignUserIdSiteIdType;
+			rs.user_id_siteIDType=arguments.ss.assignUserIdSiteIdType; 
 			 db.sql="SELECT * FROM #db.table("user", request.zos.zcoreDatasource)# user 
 			WHERE ";
 			if(rs.user_id_siteIDType EQ 1){
@@ -139,10 +305,13 @@ application.zcore.functions.zAssignAndEmailLead(ts);
 			db.sql&=" user_active= #db.param(1)# and 
 			user_deleted = #db.param(0)# and  
 			user_id =#db.param(rs.user_id)# ";
-			qAssignUser=db.execute("qAssignUser");
+			qAssignUser=db.execute("qAssignUser"); 
 			if(qAssignUser.recordcount EQ 0){
 				// assign to default email
 				rs.assignEmail=application.zcore.functions.zvarso('zofficeemail');
+				if(qAssignUser.office_id CONTAINS ","){
+					rs.office_id=listGetAt(qAssignUser.office_id, 1, ",");
+				}
 				m='process assigned lead to zofficeemail: #rs.assignEmail#<br />';
 				arrayAppend(arrDebug, m);
 				if(structkeyexists(request.zos, 'debugleadrouting')){
@@ -153,7 +322,7 @@ application.zcore.functions.zAssignAndEmailLead(ts);
 					rs.cc=qAssignUser.user_alternate_email;
 				}
 				// assign to default user instead
-				rs.assignEmail=qAssignUser.user_username; 
+				rs.assignEmail=qAssignUser.user_username;  
 				m='process assigned lead to zofficeemail user_id: #qAssignUser.user_id# site_id: #qAssignUser.site_id# | #rs.assignEmail#<br />';
 				arrayAppend(arrDebug, m);
 				if(structkeyexists(request.zos, 'debugleadrouting')){
@@ -179,7 +348,7 @@ application.zcore.functions.zAssignAndEmailLead(ts);
 		if(rs.success EQ false){
 			rs.assignEmail=application.zcore.functions.zvarso('zofficeemail');
 			rs.user_id=0;
-			rs.user_id_siteIDType=0;
+			rs.user_id_siteIDType=0; 
 			if(rs.assignEmail EQ ""){
 				rs.assignEmail=request.zos.developerEmailTo;
 			}
@@ -208,6 +377,7 @@ application.zcore.functions.zAssignAndEmailLead(ts);
 		 db.sql="UPDATE #db.table("inquiries", request.zos.zcoreDatasource)# inquiries 
 		SET inquiries_assign_email=#db.param(rs.assignemail)#,
 		inquiries_status_id=#db.param(2)#,
+		office_id=#db.param(application.zcore.functions.zso(rs, 'office_id', true))#,
 		inquiries_updated_datetime=#db.param(request.zos.mysqlnow)#  
 		WHERE inquiries_id=#db.param(arguments.ss.inquiries_id)# and 
 		inquiries_deleted = #db.param(0)# and 
@@ -217,6 +387,7 @@ application.zcore.functions.zAssignAndEmailLead(ts);
 		db.sql="UPDATE #db.table("inquiries", request.zos.zcoreDatasource)# inquiries 
 		SET user_id=#db.param(rs.user_id)#, 
 		inquiries_status_id=#db.param(2)#,
+		office_id=#db.param(application.zcore.functions.zso(rs, 'office_id', true))#,
 		user_id_siteIDType=#db.param(rs.user_id_siteIDType)#,
 		inquiries_updated_datetime=#db.param(request.zos.mysqlnow)#  
 		WHERE inquiries_id=#db.param(arguments.ss.inquiries_id)# and 

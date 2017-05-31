@@ -250,11 +250,11 @@ this.app_id=12;
 				arguments.linkStruct["Content Manager"].children["Import iCalendar"]=ts;
 			} 
 		}
-		if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Manage Pages") EQ false){
+		if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Pages") EQ false){
 			ts=structnew();
 			ts.featureName="Pages";
 			ts.link='/z/content/admin/content-admin/index';
-			arguments.linkStruct["Content Manager"].children["Manage Pages"]=ts;
+			arguments.linkStruct["Content Manager"].children["Pages"]=ts;
 		} 
 		if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Add Page") EQ false){
 			ts=structnew();
@@ -274,6 +274,13 @@ this.app_id=12;
 			ts.link="/z/_com/app/video-library?method=videoform";  
 			arguments.linkStruct["Content Manager"].children["Video Library"]=ts;
 		} 
+		if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Short Links") EQ false){
+			ts=structnew();
+			ts.featureName="Short Links";
+			ts.link="/z/admin/short-link/index";  
+			arguments.linkStruct["Content Manager"].children["Short Links"]=ts;
+		} 
+
 		if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Advanced Spell/Grammar Check") EQ false){
 			ts=structnew();
 			ts.featureName="Pages";
@@ -287,11 +294,11 @@ this.app_id=12;
 			arguments.linkStruct["Content Manager"].children["Site Options"]=ts;
 		}  
 		if(application.zcore.functions.zso(request.zos.globals, 'enableManageSlideshow', true, 0) EQ 1){
-			if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Manage Slideshows") EQ false){
+			if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Slideshows") EQ false){
 				ts=structnew();
 				ts.featureName="Slideshows";
 				ts.link="/z/admin/slideshow/index";
-				arguments.linkStruct["Content Manager"].children["Manage Slideshows"]=ts;
+				arguments.linkStruct["Content Manager"].children["Slideshows"]=ts;
 			}
 		}   
 		if(request.zos.isdeveloper){
@@ -301,11 +308,11 @@ this.app_id=12;
 				ts.link="/z/admin/settings/index";  
 				arguments.linkStruct["Content Manager"].children["Settings"]=ts;
 			} 
-			if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Manage Custom Groups") EQ false){
+			if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Custom Groups") EQ false){
 				ts=structnew();
 				ts.featureName="Groups";
 				ts.link="/z/admin/site-option-group/index?site_option_app_id=0";
-				arguments.linkStruct["Content Manager"].children["Manage Custom Groups"]=ts;
+				arguments.linkStruct["Content Manager"].children["Custom Groups"]=ts;
 			}    
 		}
 		/*if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Add Slideshow") EQ false){
@@ -315,11 +322,11 @@ this.app_id=12;
 			arguments.linkStruct["Content Manager"].children["Add Slideshow"]=ts;
 		}	*/
 		if(application.zcore.functions.zso(request.zos.globals, 'enableManageMenu', true, 0) EQ 1){
-			if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Manage Menus") EQ false){
+			if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Menus") EQ false){
 				ts=structnew();
 				ts.featureName="Menus";
 				ts.link="/z/admin/menu/index";
-				arguments.linkStruct["Content Manager"].children["Manage Menus"]=ts;
+				arguments.linkStruct["Content Manager"].children["Menus"]=ts;
 			}   
 		}
 		if(application.zcore.functions.zso(request.zos.globals, 'lockTheme', true, 1) EQ 0){
@@ -345,18 +352,18 @@ this.app_id=12;
 			}
 		}
 		if(request.zos.isdeveloper){ 
-			if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Manage Layouts") EQ false){
+			if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Layouts") EQ false){
 				ts=structnew();
-				ts.featureName="Manage Layouts";
+				ts.featureName="Layouts";
 				ts.link="/z/admin/layout-page/index";
-				arguments.linkStruct["Content Manager"].children["Manage Layouts"]=ts;
+				arguments.linkStruct["Content Manager"].children["Layouts"]=ts;
 			}
 			if(request.zos.istestserver){
-				if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Manage Sections") EQ false){
+				if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Sections") EQ false){
 					ts=structnew();
-					ts.featureName="Manage Sections";
+					ts.featureName="Sections";
 					ts.link="/z/admin/section/index";
-					arguments.linkStruct["Content Manager"].children["Manage Sections"]=ts;
+					arguments.linkStruct["Content Manager"].children["Sections"]=ts;
 				}
 				/*
 				if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Theme Options") EQ false){
@@ -365,11 +372,11 @@ this.app_id=12;
 					ts.link="/z/admin/theme-options/index";
 					arguments.linkStruct["Content Manager"].children["Theme Options"]=ts;
 				}*/
-				/*if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Manage Design &amp; Layout") EQ false){
+				/*if(structkeyexists(arguments.linkStruct["Content Manager"].children,"Design &amp; Layout") EQ false){
 					ts=structnew();
-					ts.featureName="Manage Design & Layout";
+					ts.featureName="Design & Layout";
 					ts.link="/z/admin/template/index";
-					arguments.linkStruct["Content Manager"].children["Manage Design &amp; Layout"]=ts;
+					arguments.linkStruct["Content Manager"].children["Design &amp; Layout"]=ts;
 				}*/
 			} 
 		}
@@ -784,6 +791,26 @@ this.app_id=12;
 		ts.listValues="1|0";
 		application.zcore.functions.zInput_Checkbox(ts);
 		echo(' Note: Checking yes will disable the built-in listing stylesheet.</td>
+		</tr>
+		<tr>
+		<th>Viewable By Default Group:</th>
+		<td>');
+		form.content_config_viewable_by_default_group=application.zcore.functions.zso(form, 'content_config_viewable_by_default_group',true);
+		db.sql="SELECT * FROM #db.table("user_group", request.zos.zcoreDatasource)# user_group WHERE 
+		user_group_deleted = #db.param(0)# and 
+		site_id = #db.param(request.zos.globals.id)#";
+		if(not application.zcore.app.siteHasApp("listing")){ 
+			db.sql&=" and user_group_name NOT IN (#db.param('broker')#, #db.param('agent')#)";
+		}
+		db.sql&=" ORDER BY user_group_name ASC";
+		qUserGroups=db.execute("qUserGroups");
+		selectStruct = StructNew();
+		selectStruct.name = "content_config_viewable_by_default_group";
+		selectStruct.query = qUserGroups; 
+		selectStruct.queryLabelField = "user_group_friendly_name";
+		selectStruct.queryValueField = "user_group_id";
+		application.zcore.functions.zInputSelectBox(selectStruct); 
+		echo(' Note: selecting a user group here will force new pages to have "Viewable by" set to this group.</td>
 		</tr>
 		
 		<tr>
@@ -1581,6 +1608,52 @@ configCom.includeContentByName(ts);
 </cffunction>
 
 
+<!--- getUserGroupIdForContentId(content_id, site_id); --->
+<cffunction name="getUserGroupIdForContentId" localmode="modern" returntype="numeric" hint="This is used to find the user group required to view the content id provided.">
+	<cfargument name="content_id" type="numeric" required="yes">
+	<cfargument name="site_id" type="numeric" required="yes">
+	<cfscript>
+	db=request.zos.queryObject;
+	if(not structkeyexists(request.zos, 'contentParentIdGroupIdLookup')){
+		request.zos.contentParentIdGroupIdLookup={};
+	}
+	count=0;
+	parentId=arguments.content_id;
+	while(true){
+		if(structkeyexists(request.zos.contentParentIdGroupIdLookup, parentId)){
+			if(request.zos.contentParentIdGroupIdLookup[parentId].groupId NEQ 0){
+				return request.zos.contentParentIdGroupIdLookup[parentId].groupId;
+			}
+			parentId=request.zos.contentParentIdGroupIdLookup[parentId].parentId;
+		}else{
+			db.sql="SELECT content_id, content_parent_id, content_user_group_id 
+			FROM #db.table("content", request.zos.zcoreDatasource)# 
+			WHERE  
+			content.site_id = #db.param(arguments.site_id)# and 
+			content_id = #db.param(parentId)# and 
+			content_deleted=#db.param(0)#";
+			qC=db.execute("qC"); 
+			writedump(qC);
+			if(qC.content_user_group_id NEQ 0){
+				return qC.content_user_group_id;
+			}
+			request.zos.contentParentIdGroupIdLookup[qC.content_id]={
+				groupId:qC.content_user_group_id,
+				parentId:qC.content_parent_id
+			};
+			parentId=qC.content_parent_id;
+		}
+		if(parentId EQ 0){
+			return 0;
+		}
+		count++;
+		if(count GT 255){
+			throw("Infinite loop detected when searching for the topmost content_parent_id for content_id=#arguments.content_id#.");
+		}
+	}
+	return 0;
+	</cfscript>
+</cffunction>
 	
 <!--- application.zcore.app.getAppCFC("content").searchReindexContent(false, true); --->
 <cffunction name="searchReindexContent" localmode="modern" output="no" returntype="any">
@@ -1593,6 +1666,8 @@ configCom.includeContentByName(ts);
 	
 	offset=0;
 	limit=30;
+ 
+
 	while(true){
 		db.sql="SELECT content.*, content_config_url_article_id FROM #db.table("content", request.zos.zcoreDatasource)# content,
 		#db.table("content_config", request.zos.zcoreDatasource)# content_config
@@ -1634,12 +1709,16 @@ configCom.includeContentByName(ts);
 					ds.search_url=row.content_unique_name;
 				}else{
 					ds.search_url="/#application.zcore.functions.zURLEncode(row.content_name,'-')#-#row.content_config_url_article_id#-#row.content_id#.html";
+				} 
+				if(row.content_user_group_id NEQ 0){
+					ds.user_group_id=row.content_user_group_id;
+				}else{
+					ds.user_group_id=getUserGroupIdForContentId(row.content_id, row.site_id);
 				}
 				ds.search_table_id=row.content_id;
 				ds.app_id=this.app_id;
 				ds.search_content_datetime=dateformat(row.content_updated_datetime, "yyyy-mm-dd")&" "&timeformat(row.content_updated_datetime, "HH:mm:ss");
-				ds.site_id=row.site_id;
-				
+				ds.site_id=row.site_id;  
 				searchCom.saveSearchIndex(ds); 
 				if(arguments.id NEQ false){
 					return;
@@ -2942,6 +3021,7 @@ configCom.includeContentByName(ts);
 				application.zcore.imageLibraryCom.displayImages(ts);
 		}
 		savecontent variable="theContentHTMLSection"{
+			beginEditLink(contentConfig, ts994824713.content_id, true);
 			if(not application.zcore.imageLibraryCom.isBottomLayoutType(ts994824713.content_image_library_layout) or application.zcore.imageLibraryCom.isAlwaysDisplayedLayoutType(ts994824713.content_image_library_layout)){
 				echo(theImageOutputHTML);
 			}
@@ -2953,21 +3033,10 @@ configCom.includeContentByName(ts);
 			application.zcore.app.getAppCFC("content").excludeContentId(ts994824713.content_id);
 			rs=hasAccessToContentId(ts994824713.content_id); 
 			request.zos.requestLogEntry('content.cfc viewPage 3');
-			if(not rs.hasAccess or rs.forceLogin){
-				returnStruct9 = application.zcore.functions.zGetRepostStruct();
-				if(structkeyexists(form,  request.zos.urlRoutingParameter)){
-					actionVar=form[request.zos.urlRoutingParameter];
-				}else{
-					actionVar=request.cgi_script_name;
-				}
-				if(returnStruct9.urlString NEQ "" or returnStruct9.cgiFormString NEQ ""){
-					actionVar&="?";
-				}
-				if(returnStruct9.urlString NEQ ""){
-					actionVar&=returnStruct9.urlString&"&";
-				}
-				if(returnStruct9.urlString NEQ ""){
-					actionVar&=returnStruct9.urlString;
+			if(not rs.hasAccess or rs.forceLogin){ 
+				actionVar=request.zos.originalURL;
+				if(request.zos.cgi.query_string NEQ ""){
+					actionVar&="?"&request.zos.cgi.query_string;
 				}
 				application.zcore.functions.zredirect("/z/user/preference/index?returnURL=#urlencodedformat(actionVar)#");
 			}
@@ -3073,27 +3142,27 @@ configCom.includeContentByName(ts);
 				application.zcore.listingStruct.functions.zListingDisplaySavedSearchMapSummary(ts994824713.content_saved_search_id);
 			}   
 			if(ts994824713.content_text_position EQ 0){
-				beginEditLink(contentConfig, ts994824713.content_id, true);
 				echo(ct1948);
-				endEditLink(contentConfig);
 				if(ct1948 NEQ ""){
 					echo('<br style="clear:both;" />');
 				}
 			}
-			
-			if(ts994824713.content_image_library_layout EQ 7 or ts994824713.content_image_library_layout EQ 9){
-				savecontent variable="theImageOutputHTML"{
+			endEditLink(contentConfig);
+			 
+			if(application.zcore.imageLibraryCom.isBottomLayoutType(ts994824713.content_image_library_layout) or application.zcore.imageLibraryCom.isAlwaysDisplayedLayoutType(ts994824713.content_image_library_layout)){
+				echo('<div style="clear:both; width:100%; float:left;">');
+				if(ts994824713.content_image_library_layout EQ 7 or ts994824713.content_image_library_layout EQ 9){ 
 					ts =structnew();
 					ts.image_library_id=ts994824713.content_image_library_id;
 					ts.size="#request.zos.globals.maximagewidth#x2000";
 					ts.crop=0;  
 					ts.offset=1;
 					ts.layoutType=application.zcore.imageLibraryCom.getLayoutType(ts994824713.content_image_library_layout);
-					application.zcore.imageLibraryCom.displayImages(ts);
+					application.zcore.imageLibraryCom.displayImages(ts); 
+				}else{
+					echo(theImageOutputHTML);
 				}
-			}
-			if(application.zcore.imageLibraryCom.isBottomLayoutType(ts994824713.content_image_library_layout) or application.zcore.imageLibraryCom.isAlwaysDisplayedLayoutType(ts994824713.content_image_library_layout)){
-				echo(theImageOutputHTML);
+				echo('</div>');
 			}
 			if(ts994824713.content_html_text_bottom EQ 1 and ts994824713.content_html_text NEQ ""){
 				writeoutput('<div style="width:100%; float:left;">'&ts994824713.content_html_text&'</div>');

@@ -18,20 +18,7 @@
 	resourceStruct["property"].resource="property";
 	resourceStruct["property"].id="157";
 	this.emptyStruct=structnew();
-	</cfscript>
-    
-    <cffunction name="deleteListings" localmode="modern" output="no" returntype="any">
-    	<cfargument name="idlist" type="string" required="yes">
-    	<cfscript>
-		var db=request.zos.queryObject;
-		var arrId=listtoarray(mid(replace(arguments.idlist," ","","ALL"),2,len(arguments.idlist)-2),"','");
-		super.deleteListings(arguments.idlist);
-		db.sql="DELETE FROM #db.table("rets19_property", request.zos.zcoreDatasource)#  
-		WHERE rets#this.mls_id#_157 LIKE #db.param('#this.mls_id#-%')# and 
-		rets#this.mls_id#_157 IN (#db.trustedSQL(arguments.idlist)#)";
-		db.execute("q"); 
-		</cfscript>
-    </cffunction>
+	</cfscript> 
     
     <cffunction name="initImport" localmode="modern" output="no" returntype="any">
     	<cfargument name="resource" type="string" required="yes">
@@ -85,8 +72,7 @@
 DELETE FROM `#request.zos.zcoreDatasource#`.listing_track WHERE listing_id LIKE '11-%';
 DELETE FROM `#request.zos.zcoreDatasource#`.listing WHERE listing_id LIKE '11-%';
 DELETE FROM `#request.zos.zcoreDatasource#`.listing_data WHERE listing_id LIKE '11-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.`listing_memory` WHERE listing_id LIKE '11-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.rets19_property where rets19_157 LIKE '11-%';
+DELETE FROM `#request.zos.zcoreDatasource#`.`listing_memory` WHERE listing_id LIKE '11-%'; 
 		*/
 		if(arraylen(arguments.ss.arrData) NEQ arraylen(request.zos.listing.mlsStruct[this.mls_id].sharedStruct.lookupStruct.arrColumns)){
 			application.zcore.functions.zdump(request.zos.listing.mlsStruct[this.mls_id].sharedStruct.lookupStruct.arrColumns);
@@ -385,44 +371,22 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets19_property where rets19_157 LIK
 		rs.listing_data_detailcache1=listing_data_detailcache1;
 		rs.listing_data_detailcache2=listing_data_detailcache2;
 		rs.listing_data_detailcache3=listing_data_detailcache3;
+
+		rs.listing_track_sysid="";
 		return {
 			listingData:rs,
 			columnIndex:columnIndex,
 			arrData:arguments.ss.arrData
 		};
 		</cfscript>
-    </cffunction>
-    
-    <cffunction name="getJoinSQL" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="joinType" type="string" required="no" default="INNER">
-		<cfscript>
-		var db=request.zos.queryObject;
-		</cfscript>
-    	<cfreturn "#arguments.joinType# JOIN #db.table("rets19_property", request.zos.zcoreDatasource)# rets19_property ON rets19_property.rets19_157 = listing.listing_id">
-    </cffunction>
-    <cffunction name="getPropertyListingIdSQL" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets19_property.rets19_157">
-    </cffunction>
-    <cffunction name="getListingIdField" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets19_157">
-    </cffunction>
+    </cffunction> 
     
     <cffunction name="getDetails" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="query" type="query" required="yes">
+    	<cfargument name="ss" type="struct" required="yes">
         <cfargument name="row" type="numeric" required="no" default="#1#">
         <cfargument name="fulldetails" type="boolean" required="no" default="#false#">
-    	<cfscript>
-		var q1=0;
-		var t1=0;
-		var t3=0;
-		var t2=0;
-		var i10=0;
-		var value=0;
-		var n=0;
-		var column=0;
-		var arrV=0;
-		var arrV2=0;
-		var idx=this.baseGetDetails(arguments.query, arguments.row, arguments.fulldetails);
+    	<cfscript> 
+		var idx=this.baseGetDetails(arguments.ss, arguments.row, arguments.fulldetails);
 		t99=gettickcount();
 		idx["features"]="";
 		idx.listingSource=request.zos.listing.mlsStruct[listgetat(idx.listing_id,1,'-')].mls_disclaimer_name;
@@ -442,10 +406,10 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets19_property where rets19_157 LIK
 				idx["photo"&i]=request.zos.retsPhotoPath&'19/'&left(local.fNameTempMd51,2)&"/"&mid(local.fNameTempMd51,3,1)&"/"&local.fNameTemp1;
 			}
 		}
-		idx["agentName"]=idx.rets19_144;
+		idx["agentName"]=application.zcore.functions.zso(idx, "rets19_144");
 		idx["agentPhone"]="";
 		idx["agentEmail"]="";
-		idx["officeName"]=idx.rets19_165;
+		idx["officeName"]=application.zcore.functions.zso(idx, "rets19_165");
 		idx["officePhone"]="";
 		idx["officeCity"]="";
 		idx["officeAddress"]="";
@@ -453,10 +417,10 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets19_property where rets19_157 LIK
 		idx["officeState"]="";
 		idx["officeEmail"]="";
 			
-		idx["virtualtoururl"]=idx.rets19_1223;
-		idx["zipcode"]=idx.rets19_10;
+		idx["virtualtoururl"]=application.zcore.functions.zso(idx, "rets19_1223");
+		idx["zipcode"]=application.zcore.functions.zso(idx, "rets19_10");
 		idx["maintfees"]="";
-		if(idx.rets19_93 NEQ ""){
+		if(application.zcore.functions.zso(idx, "rets19_93") NEQ ""){
 			idx["maintfees"]=idx.rets19_93;
 		}
 		
@@ -488,37 +452,7 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets19_property where rets19_157 LIK
 		}else{
 			request.lastPhotoId="";
 			return "";
-		}
-		/*
-		var qId=0;
-		var db=request.zos.queryObject;
-		var local=structnew();
-		if(arguments.sysid EQ 0){
-			db.sql="select SQL_NO_CACHE rets19_sysid 
-			from #db.table("rets19_property", request.zos.zcoreDatasource)# rets19_property 
-			where rets19_157=#db.param('19-#arguments.mls_pid#')#";
-			qId=db.execute("qId"); 
-			if(qId.recordcount NEQ 0){
-				arguments.sysid=qId.rets19_sysid;
-			}
-		}
-		request.lastPhotoId="";
-		if(arguments.sysid NEQ 0){
-			request.lastPhotoId=this.mls_id&"-"&arguments.sysid;
-			local.fNameTemp1=arguments.sysid&"-"&arguments.num&".jpeg";
-			local.fNameTempMd51=lcase(hash(local.fNameTemp1, 'MD5'));
-			return request.zos.retsPhotoPath&'19/'&left(local.fNameTempMd51,2)&"/"&mid(local.fNameTempMd51,3,1)&"/"&local.fNameTemp1;
-		}else{
-			return "";
-		}
-		*/
-		/*
-		request.lastPhotoId="";
-		if(qId.recordcount NEQ 0){
-			request.lastPhotoId=this.mls_id&"-"&qId.rets19_sysid;
-			photo=request.zos.retsPhotoPath&'19/'&qId.rets19_sysid&"-"&arguments.num&".jpeg";
-		}
-		return photo;*/
+		} 
 		</cfscript>
     </cffunction>
 	

@@ -185,22 +185,22 @@ this.app_id=18;
 				arguments.linkStruct['Jobs'].children['Add Job Category'] = ts;
 			}
 
-			if ( structKeyExists( arguments.linkStruct['Jobs'].children, 'Manage Jobs' ) EQ false ) {
+			if ( structKeyExists( arguments.linkStruct['Jobs'].children, 'Jobs' ) EQ false ) {
 				ts = structNew();
 
-				ts.featureName = 'Manage Jobs';
+				ts.featureName = 'Jobs';
 				ts.link        = '/z/job/admin/manage-jobs/index';
 
-				arguments.linkStruct['Jobs'].children['Manage Jobs'] = ts;
+				arguments.linkStruct['Jobs'].children['Jobs'] = ts;
 			}
 
-			if ( structKeyExists( arguments.linkStruct['Jobs'].children, 'Manage Job Categories' ) EQ false ) {
+			if ( structKeyExists( arguments.linkStruct['Jobs'].children, 'Job Categories' ) EQ false ) {
 				ts = structNew();
 
-				ts.featureName = 'Manage Job Categories';
+				ts.featureName = 'Job Categories';
 				ts.link        = '/z/job/admin/manage-job-category/index';
 
-				arguments.linkStruct['Jobs'].children['Manage Job Categories'] = ts;
+				arguments.linkStruct['Jobs'].children['Job Categories'] = ts;
 			}
 
 			if(application.zcore.user.checkServerAccess()){
@@ -778,6 +778,33 @@ this.app_id=18;
 		echo('</td>
 		</tr>
 		<tr>
+		<th>Job Home Page Meta Title:</th>
+		<td>');
+		ts = StructNew();
+		ts.name = "job_config_home_metatitle";
+		ts.required = true; 
+		application.zcore.functions.zInput_Text(ts);
+		echo('</td>
+		</tr>
+		<tr>
+		<th>Job Home Page Meta Keywords:</th>
+		<td>');
+		ts = StructNew();
+		ts.name = "job_config_home_metakey";
+		ts.required = true; 
+		application.zcore.functions.zInput_Text(ts);
+		echo('</td>
+		</tr>
+		<tr>
+		<th>Job Home Page Meta Description:</th>
+		<td>');
+		ts = StructNew();
+		ts.name = "job_config_home_metadesc";
+		ts.required = true; 
+		application.zcore.functions.zInput_Text(ts);
+		echo('</td>
+		</tr>
+		<tr>
 		<th>Job Home Page URL:</th>
 		<td>');
 		ts = StructNew();
@@ -1053,7 +1080,16 @@ this.app_id=18;
 			}
 		}
 
-		application.zcore.template.setTag( "title", jobHomePageTitle );
+		optionStruct=application.zcore.app.getAppData( 'job' ).optionStruct;
+		job_config_home_metatitle=application.zcore.functions.zso(optionStruct, 'job_config_home_metatitle');
+		job_config_home_metakey=application.zcore.functions.zso(optionStruct, 'job_config_home_metakey');
+		job_config_home_metadesc=application.zcore.functions.zso(optionStruct, 'job_config_home_metadesc');
+		application.zcore.template.setTag( "title", jobHomePageTitle ); 
+		if (job_config_home_metatitle NEQ "") {
+			application.zcore.template.setTag( "title", job_config_home_metatitle );
+		}
+		application.zcore.template.setTag("meta", '<meta name="keywords" content="#htmleditformat(job_config_home_metakey)#" />
+			<meta name="description" content="#htmlEditFormat(job_config_home_metadesc)#" />');
 		application.zcore.template.setTag( "pagetitle", jobHomePageTitle );
 
 		// TODO: Get all the job categories and show as a list in a sidebar.
@@ -1092,6 +1128,9 @@ ts={
 	categories:"",
 	keyword:"",
 	company:"",
+	offset:"0",
+	perpage:"10", 
+	showInactive:false
 };
 searchJobs(ts);
  --->
@@ -1407,7 +1446,7 @@ searchJobs(ts);
 		}
 	</cfscript>
 
-	<div class="z-column z-job-row z-center-children-at-992">
+	<div class="z-column z-job-row <cfif job.job_featured EQ 1>z-job-featured</cfif> z-center-children-at-992">
 		<cfif jobImage NEQ ''>
 			<div class="z-1of4 z-m-0 z-p-0 z-job-row-image">
 				<a href="#job.__url#"><img src="#jobImage#" alt="#htmlEditFormat( job.job_title )#" class="z-fluid" /></a>
@@ -1485,6 +1524,9 @@ searchJobs(ts);
 				ORDER BY job_category_name ASC ";
 		} else {
 			categoryIdArray = listToArray( categoryIdList, ',' );
+			for(i=1;i<=arrayLen(categoryIdArray);i++){
+				categoryIdArray[i]="'"&application.zcore.functions.zEscape(categoryIdArray[i])&"'";
+			}
 
 			db.sql = "SELECT *
 				FROM #db.table( 'job_category', request.zos.zcoreDatasource )#
@@ -1519,19 +1561,20 @@ searchJobs(ts);
 		jobId = arguments.jobId;
 
 		jobSearch = {
-			job_id: jobId
+			job_id: jobId,
+			perpage:1
 		};
 
 		jobs = this.searchJobs( jobSearch );
 
+		job = {};
 		if ( structKeyExists( jobs, 'count' ) ) {
 			if ( jobs.count GT 0 ) {
 				job = jobs.arrData[ 1 ];
-			} else {
-				job = {};
+				if(job.job_id NEQ jobId){
+					return {};
+				}
 			}
-		} else {
-			job = {};
 		}
 
 		return job;

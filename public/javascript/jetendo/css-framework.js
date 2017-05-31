@@ -264,7 +264,7 @@
 		var lastHeight=0; 
 		$(children).height("auto");
 		$(children).each(function(){  
-			var height=$(this).height(); 
+			var height=$(this).outerHeight(false); 
 			if(height>lastHeight){
 				lastHeight=height;
 			}
@@ -274,6 +274,7 @@
 		} 
 		$(children).height(lastHeight); 
 	} 
+
 	function zForceChildEqualHeights(){  
 		var containers=$(".z-equal-heights");
 		// if data-column-count is not specified, then we force all children to have the same height
@@ -286,6 +287,8 @@
 			var singleColumnWidth=$(this).attr("data-single-column-width");
 			if(singleColumnWidth==null || singleColumnWidth == ""){
 				singleColumnWidth=479;
+			}else{
+				parseInt(singleColumnWidth);
 			}
 			var columnCount=$(this).attr("data-column-count");
 			if(columnCount==null || columnCount == ""){
@@ -303,6 +306,12 @@
 			}else{
 				$(children).height("auto");
 			}
+			/*
+			$(children).each(function(){
+				console.log($(this).height()+":"+$(this).outerHeight(false));
+			});
+			return;
+			*/
 			var columnChildren=[];
 			var columnChildrenImages=[];
 			if(columnCount==0){
@@ -442,6 +451,41 @@
 	zArrDeferredFunctions.push(setupMobileMenu);
  
 	zArrDeferredFunctions.push(function(){
+		
+		function resizeRatioElements(){
+			var hasChanged=false;
+			$(".z-preserve-ratio").each(function(){
+				var width=$(this).width();
+				var ratio=$(this).attr("data-ratio");
+				if(ratio==null){
+					throw("data-ratio is missing on an element with z-preverve-ratio class.");
+				}
+				var arrRatio=ratio.split(":");
+				if(arrRatio.length != 2){
+					throw("data-ratio attribute format must be width:height with both numbers as integers, i.e. 4:3");
+				}
+				var ratioWidth=parseInt(arrRatio[0]);
+				var ratioHeight=parseInt(arrRatio[1]);
+				var height=Math.round((ratioHeight/ratioWidth)*width); 
+				if(width < 600){
+					if($(this).height() != height){
+						$(this).height(height);
+						hasChanged=true;
+					}
+				}
+			});
+			if(hasChanged){
+				zForceChildEqualHeights();
+			}
+
+		} 
+		zArrResizeFunctions.push({functionName:resizeRatioElements}); 
+		resizeRatioElements();
+		window.resizeRatioElements=resizeRatioElements;
+
+		setTimeout(function(){ 
+			resizeRatioElements();
+		},110); 
 
 		$(".z-show-on-dom-ready").each(function(){
 			$(this).removeClass("z-show-on-dom-ready");
@@ -614,16 +658,13 @@
 				curWidth=(curWidth/currentMenu.containerWidth);
 	 			newWidth=(Math.round(newWidth*100000)/1000)-0.001;
 	 			curWidth=(Math.round(curWidth*100000)/1000)-0.001; 
-				if(false && sLen-1 == i){
+				/*if(false && sLen-1 == i){
 					// this doesn't work
 
 					newWidth=(currentMenu.containerWidth-totalWidth2);
 		 			addWidth=newWidth;
 		 			newWidth=newWidth/currentMenu.containerWidth;
-		 			newWidth=(Math.round(newWidth*100000)/1000)-0.001;
-		 			if(newWidth<curWidth){
-		 			//	newWidth=curWidth;
-		 			}
+		 			newWidth=(Math.round(newWidth*100000)/1000)-0.001; 
 		 			curWidth=newWidth;
 
 
@@ -635,7 +676,7 @@
 						"width": (100)+"%",
 						"min-width":(100)+"%" 
 					});
-				}else{
+				}else{*/
 					$(currentMenu.arrItem[i]).parent().css({
 						"width": (newWidth)+"%",
 						"min-width":(curWidth)+"%", 
@@ -646,7 +687,7 @@
 						"min-width":(100)+"%" 
 					});
 						
-				}
+				//}
 				//console.log('newWidth:'+newWidth+" | curWidth:"+curWidth);
 				totalWidth2+=Math.round(addWidth+marginSize);
 				totalWidth3+=newWidth;

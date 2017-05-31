@@ -374,7 +374,18 @@
 	application.zcore.siteOptionCom.activateOptionAppId(application.zcore.functions.zso(form, 'content_site_option_app_id'));
 	application.zcore.imageLibraryCom.activateLibraryId(application.zcore.functions.zso(form, 'content_image_library_id'));
 	
+ 
 	application.zcore.app.getAppCFC("content").searchReindexContent(form.content_id, false);
+	//writedump(childStruct);abort;
+	if(form.method EQ "update"){
+		childStruct=application.zcore.app.getAppCFC("content").getAllContent(qCheck,0, 0); 
+		if(qCheck.content_user_group_id NEQ form.content_user_group_id){
+			// get all child content_id
+			for(contentId in childStruct.arrContentId){
+				application.zcore.app.getAppCFC("content").searchReindexContent(contentId, false); 
+			}
+		}
+	} 
 	if(uniqueChanged){
 		res=application.zcore.app.getAppCFC("content").updateRewriteRuleContent(form.content_id, oldURL);	
 		if(res EQ false){
@@ -419,45 +430,7 @@
 </cffunction>
 
 <cffunction name="edit" localmode="modern" access="remote" roles="member">
-	<cfscript>
-	var ts=0;
-	var qContent=0;
-	var tabCom=0;
-	var htmlEditor=0;
-	var featuredListingParentId=0;
-	var qFeaturedListingCheck=0;
-	var qMLS=0;
-	var arrLabel=0;
-	var arrValue=0;
-	var rs2=0;
-	var cityUnd=0;
-	var preLabels=0;
-	var preValues=0;
-	var qType=0;
-	var qPType=0;
-	var qCity=0;
-	var arrK3=0;
-	var qCity10=0;
-	var arrK2=0;
-	var sOut=0;
-	var i=0;
-	var arrKeys=0;
-	var qslide=0;
-	var qPType=0;
-	var qTemplate=0;
-	var qUserGroups=0;
-	var cancelURL=0;
-	var qAgents=0;
-	var qParent=0;
-	var childStruct=0;
-	var qAll=0;
-	var qcountry=0;
-	var newAction=0;
-	var qState=0;
-	var cityUnq=0;
-	var userGroupCom=0;
-	var usergid=0;
-	var selectStruct=0;
+	<cfscript> 
 	var currentMethod=form.method;
 	var db=request.zos.queryObject;
 	application.zcore.functions.zSetPageHelpId("2.2");
@@ -625,6 +598,25 @@
 				</cfscript>
 			</td>
 		</tr>
+		<tr> 
+			<th style="vertical-align:top; ">
+				#application.zcore.functions.zOutputHelpToolTip("META Title","member.content.edit content_metatitle")#</th>
+			<td style="vertical-align:top; ">
+				<input type="text" name="content_metatitle" value="#HTMLEditFormat(form.content_metatitle)#" maxlength="150" size="100" /><br /> (Meta title is optional and overrides the &lt;TITLE&gt; HTML element to be different from the visible page title.)
+			</td>
+		</tr>
+		<tr> 
+			<th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("Meta Keywords","member.content.edit content_metakey")#</th>
+			<td style="vertical-align:top; "> 
+				<textarea name="content_metakey" rows="5" cols="60">#form.content_metakey#</textarea>
+			</td>
+		</tr>
+		<tr> 
+			<th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("Meta Description","member.content.edit content_metadesc")#</th>
+			<td style="vertical-align:top; "> 
+				<textarea name="content_metadesc" cols="60" rows="5">#form.content_metadesc#</textarea>
+			</td>
+		</tr>		
 		<tr> 
 			<th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("Status","member.content.edit content_for_sale")#</th>
 			<td style="vertical-align:top; ">
@@ -1406,8 +1398,13 @@
 	<table style="width:100%; border-spacing:0px;" class="table-list">
 	<tr> 
 		<th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("Unique URL","member.content.edit content_unique_name")#</th>
-		<td style="vertical-align:top; "> 
-			#application.zcore.functions.zInputUniqueUrl("content_unique_name")#</td>
+		<td style="vertical-align:top; "> 	
+			<cfif currentMethod EQ "add">
+				#application.zcore.functions.zInputUniqueUrl("content_unique_name", true)#
+			<cfelse>
+				#application.zcore.functions.zInputUniqueUrl("content_unique_name")#
+			</cfif>
+		</td>
 	</tr>
 	<tr> 
 		<th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("URL Rewriting","member.content.edit content_system_url")#</th>
@@ -1416,25 +1413,6 @@
 			<input type="radio" name="content_system_url" value="1" <cfif application.zcore.functions.zso(form, 'content_system_url') EQ 1>checked="checked"</cfif> style="border:none; background:none;" /> Off (Turn off to allow system urls to continue functioning).
 		</td>
 	</tr>
-	<tr> 
-		<th style="vertical-align:top; ">
-			#application.zcore.functions.zOutputHelpToolTip("META Title","member.content.edit content_metatitle")#</th>
-		<td style="vertical-align:top; ">
-			<input type="text" name="content_metatitle" value="#HTMLEditFormat(form.content_metatitle)#" maxlength="150" size="100" /><br /> (Meta title is optional and overrides the &lt;TITLE&gt; HTML element to be different from the visible page title.)
-		</td>
-	</tr>
-	<tr> 
-		<th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("Meta Keywords","member.content.edit content_metakey")#</th>
-		<td style="vertical-align:top; "> 
-			<textarea name="content_metakey" rows="5" cols="60">#form.content_metakey#</textarea>
-		</td>
-	</tr>
-	<tr> 
-		<th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("Meta Description","member.content.edit content_metadesc")#</th>
-		<td style="vertical-align:top; "> 
-			<textarea name="content_metadesc" cols="60" rows="5">#form.content_metadesc#</textarea>
-		</td>
-	</tr>		
 	<tr> 
 		<th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("Meta Code","member.content.edit content_metacode")#</th>
 		<td style="vertical-align:top; "> 
@@ -1508,21 +1486,75 @@
 		<tr> 
 			<th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("Viewable by","member.content.edit content_user_group_id")#</th>
 			<td style="vertical-align:top; ">
+				
 				<cfscript>
-				db.sql="SELECT * FROM #db.table("user_group", request.zos.zcoreDatasource)# user_group 
-				WHERE site_id = #db.param(request.zos.globals.id)# and 
-				user_group_deleted = #db.param(0)#
-				ORDER BY user_group_name ASC";
+				// find the parent pages...
+				qUserGroups 
+				tempParentId=form.content_parent_id;
+				count=0;
+				db.sql="SELECT * FROM #db.table("user_group", request.zos.zcoreDatasource)# user_group WHERE 
+				user_group_deleted = #db.param(0)# and 
+				site_id = #db.param(request.zos.globals.id)#";
+				if(not application.zcore.app.siteHasApp("listing")){ 
+					db.sql&=" and user_group_name NOT IN (#db.param('broker')#, #db.param('agent')#)";
+				}
+				db.sql&=" ORDER BY user_group_name ASC";
 				qUserGroups=db.execute("qUserGroups");
+				groupStruct={};
+				for(row in qUserGroups){
+					groupStruct[row.user_group_id]=row.user_group_name;
+				}
+				hasGroupId=false;
+				groupName="Anyone";
+				while(true){
+					count++;
+					if(form.content_parent_id EQ 0){
+						break;
+					}else{
+						if(count GT 200){
+							throw("Infinite loop detected for content_id: #form.content_id# - This must be manually fixed by the developer.");
+						}
+						db.sql="SELECT * FROM #db.table("content", request.zos.zcoreDatasource)# 
+						WHERE content_id=#db.param(tempParentId)# and 
+						site_id = #db.param(request.zos.globals.id)# and 
+						content_deleted = #db.param(0)#";
+						qParent=db.execute("qParent");
+						if(qParent.recordcount EQ 0){
+							break;
+						}else{
+							tempParentId=qParent.content_parent_id;
+							if(qParent.content_user_group_id NEQ 0){
+								if(structkeyexists(groupStruct, qParent.content_user_group_id)){
+									echo("<h3>A parent page has set ""Viewable by"" to: "&groupStruct[qParent.content_user_group_id]&'</h3>');
+									echo('<p>You can override the group below or leave it blank to inherit the setting from the parent page.</p>');
+									groupName=groupStruct[qParent.content_user_group_id];
+									hasGroupId=true;
+								}
+								break;
+							}
+						}
+					}
+				} 
+				if(not hasGroupId){
+					if(form.method EQ "add" and (form.content_user_group_id EQ "" or form.content_user_group_id EQ "0")){
+						form.content_user_group_id=application.zcore.functions.zso(application.zcore.app.getAppData("content").optionStruct, 'content_config_viewable_by_default_group');
+					}
+				}
+				echo('<p>User group:');
 				selectStruct = StructNew();
 				selectStruct.name = "content_user_group_id";
 				selectStruct.selectedValues=form.content_user_group_id;
 				selectStruct.query = qUserGroups;
-				selectStruct.selectLabel="-- Anyone --";
-				selectStruct.queryLabelField = "user_group_name";
+				if(groupName NEQ "Anyone"){
+					selectStruct.selectLabel="Inherit: #groupName#";
+				}else{
+					selectStruct.selectLabel="-- #groupName# --";
+				}
+				selectStruct.queryLabelField = "user_group_friendly_name";
 				selectStruct.queryValueField = "user_group_id";
 				application.zcore.functions.zInputSelectBox(selectStruct);
-				</cfscript> Select a user group to allow viewing of this page and all pages associated with it.
+				</cfscript> </p>
+				<p>Note: Only users with access to this group will be able to view this page and its children.</p>
 			</td>
 		</tr>
 	</cfif>
@@ -1546,13 +1578,19 @@
 	</cfif>
 
 	<cfscript>
+	db.sql="select * from #db.table("site_option", request.zos.zcoreDatasource)# 
+	WHERE site_option_appidlist like #db.param('%,12,%')# and 
+	site_id = #db.param(request.zos.globals.id)# and 
+	site_option_deleted=#db.param(0)#";
+	qOptionCheck=db.execute("qOptionCheck");
+
 	db.sql="select * from #db.table("site_option_group", request.zos.zcoreDatasource)# 
 	WHERE site_option_group_appidlist like #db.param('%,12,%')# and 
 	site_id = #db.param(request.zos.globals.id)# and 
 	site_option_group_deleted=#db.param(0)#";
 	qGroupCheck=db.execute("qGroupCheck");
 	</cfscript>
-	<cfif qGroupCheck.recordcount>
+	<cfif qOptionCheck.recordcount or qGroupCheck.recordcount>
 	
 		<tr>
 			<th style="width:1%; white-space:nowrap;">#application.zcore.functions.zOutputHelpToolTip("Custom Fields","member.content.edit content_site_option_app_id")#</th>
@@ -1836,7 +1874,7 @@
 	<cfscript>
 	var db=request.zos.queryObject; 
 
-	application.zcore.template.setTag("title", "Manage Pages");
+	application.zcore.template.setTag("title", "Pages");
 
 	savecontent variable="navOut"{
 		linkStruct=application.zcore.app.getAppCFC("content").getAdminLinks({});
@@ -2461,21 +2499,21 @@
 		<cfif application.zcore.adminSecurityFilter.checkFeatureAccess("Site Options")>
 		 
 			<cfif qGroup.recordcount>
-				<h2 id="pages_custom">Manage Custom Landing Pages</h2>
+				<h2 id="pages_custom">Custom Landing Pages</h2>
 				<p>Your web site has additional custom made landing pages that can be edited at the following locations:</p>
 				<ul>
 				<cfloop query="qGroup">
-					<li><a href="/z/admin/site-options/manageGroup?site_option_group_id=#qGroup.site_option_group_id#">Manage #qGroup.site_option_group_display_name#<cfif qGroup.site_option_group_limit NEQ 1 and right(qGroup.site_option_group_display_name, 1) NEQ "s">(s)</cfif></a></li>
+					<li><a href="/z/admin/site-options/manageGroup?site_option_group_id=#qGroup.site_option_group_id#">#qGroup.site_option_group_display_name#<cfif qGroup.site_option_group_limit NEQ 1 and right(qGroup.site_option_group_display_name, 1) NEQ "s">(s)</cfif></a></li>
 				</cfloop>
 				</ul>
 			</cfif>
  
 			<cfif qGroupCustom.recordcount>
-				<h2 id="pages_customtypes">Manage Custom Content Types</h2>
+				<h2 id="pages_customtypes">Custom Content Types</h2>
 				<p>Your web site has additional custom content types that can be edited at the following locations:</p>
 				<ul>
 				<cfloop query="qGroupCustom">
-					<li><a href="/z/admin/site-options/manageGroup?site_option_group_id=#qGroupCustom.site_option_group_id#">Manage #qGroupCustom.site_option_group_display_name#<cfif qGroupCustom.site_option_group_limit NEQ 1 and right(qGroupCustom.site_option_group_display_name, 1) NEQ "s">(s)</cfif></a></li>
+					<li><a href="/z/admin/site-options/manageGroup?site_option_group_id=#qGroupCustom.site_option_group_id#">#qGroupCustom.site_option_group_display_name#<cfif qGroupCustom.site_option_group_limit NEQ 1 and right(qGroupCustom.site_option_group_display_name, 1) NEQ "s">(s)</cfif></a></li>
 				</cfloop>
 				</ul>
 			</cfif>
@@ -2500,7 +2538,7 @@
 		<li><a href="/z/misc/mailing-list/index" target="_blank">Mailing List Signup Form</a></li>
 		<li><a href="/z/misc/loan-calculator/index" target="_blank">Loan Calculator Form</a></li>
 		<li><a href="/z/misc/mortgage-quote/index" target="_blank">Mortgage Quote Form</a></li>');
-		if(request.zos.globals.sendConfirmOptIn EQ 1){
+		if(request.zos.globals.enableSendToFriend EQ 1){
 			echo('<li><a href="/z/misc/share-with-friend/index?link=#request.zos.globals.domain#" target="_blank">Share With Friend Form</a></li>');
 		}
 		if(application.zcore.app.siteHasApp("rental")){

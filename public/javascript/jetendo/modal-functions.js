@@ -49,8 +49,9 @@
 			padding=10;
 		}
 		window.zCurrentModalIframeId="zModalIframe"+modalIndexId;
+
 		modalIndexId++;
-		var modalContent1='<iframe id="'+window.zCurrentModalIframeId+'" src="'+url+'ztv='+Math.random()+'" frameborder="0"  style=" margin:0px; border:none; overflow:auto;" seamless="seamless" width="100%" height="98%" />';		
+		var modalContent1='<iframe id="'+window.zCurrentModalIframeId+'" src="'+url+'ztv='+Math.random()+'" frameborder="0"  style=" margin:0px; border:none; overflow:auto; position:relative; " seamless="seamless" width="100%" height="98%" />';		
 		zShowModal(modalContent1,{
 			'width':Math.min(maxWidth, windowSize.width-zModalSideReduce),
 			'height':Math.min(maxHeight, windowSize.height),
@@ -174,7 +175,13 @@
 		if(!disableClose){
 			b='<div class="zCloseModalButton'+zModalIndex+'" style="width:80px; text-align:right; left:0px; top:0px; position:relative; float:left;  font-weight:bold;"><a href="javascript:void(0);" onclick="zCloseModal();" style="color:#CCC;">X Close</a></div>';  
 		}
-		var h='<div id="zModalOverlayDivContainer'+zModalIndex+'" class="zModalOverlayDiv">'+b+'<div id="zModalOverlayDivInner'+zModalIndex+'" class="zModalOverlayDiv2"></div></div>';
+		var h='<div id="zModalOverlayDivContainer'+zModalIndex+'" class="zModalOverlayDiv">'+b+'<div id="zModalOverlayDivInner'+zModalIndex+'" class="zModalOverlayDiv2" style="-webkit-overflow-scrolling: touch !important; overflow:auto !important;"></div></div>';
+
+
+		
+
+
+
 		$(d).append(h);
 		if(!zArrModal[zModalIndex].disableResize){
 			d.style.overflow="hidden";
@@ -265,6 +272,7 @@
 		if($(".zModalOverlayDiv2 iframe").length){
 			$(".zModalOverlayDiv2").css("overflow", "hidden");
 			$(".zModalOverlayDiv2 iframe").height("100%");
+			$(".zModalOverlayDiv2 iframe").css("position", "relative");
 		}else{
 			$(".zModalOverlayDiv2").css("overflow", "auto");
 		}
@@ -289,7 +297,11 @@
 		});
 		zModalPosIntervalId=setInterval(zFixModalPos,500);
 	}
+	function zSetModalSideReduce(r){
+		zModalSideReduce=r;
+	}
 	function zCloseModal(){
+		zModalSideReduce=50;
 		var el = document.getElementById("zModalOverlayDivContainer"+zModalIndex);
 		if(!el){
 			return;
@@ -360,4 +372,5 @@
 	window.zCloseModal=zCloseModal;
 	window.zShowImageUploadWindow=zShowImageUploadWindow;
 	window.zCloseThisWindow=zCloseThisWindow;
+	window.zSetModalSideReduce=zSetModalSideReduce;
 })(jQuery, window, document, "undefined"); 

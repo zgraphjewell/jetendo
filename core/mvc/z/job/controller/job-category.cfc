@@ -43,7 +43,12 @@
 		jobCom     = application.zcore.app.getAppCFC("job");
 		jobComData = application.zcore.app.getAppData("job");
 
-		application.zcore.template.setTag( "title", qCategory.job_category_name & ' - ' & jobComData.optionStruct.job_config_title );
+		application.zcore.template.setTag("meta", '<meta name="Keywords" content="#htmleditformat(qCategory.job_category_metakey)#" /><meta name="Description" content="#htmleditformat(qCategory.job_category_metadesc)#" />');
+		if(qCategory.job_category_metatitle NEQ ""){
+			application.zcore.template.setTag( "title", qCategory.job_category_metatitle);
+		}else{
+			application.zcore.template.setTag( "title", qCategory.job_category_name & ' - ' & jobComData.optionStruct.job_config_title );
+		}
 		application.zcore.template.setTag( "pagetitle", jobComData.optionStruct.job_config_title );
 
 		if ( structkeyexists( form, 'zUrlName' ) ) {
@@ -66,21 +71,21 @@
 		}
 	</cfscript>
 
-	<div class="z-container z-job-category-title">
+	<div class="z-float z-job-category-title">
 		<div class="z-column">
 			<h1>#htmlEditFormat( categoryStruct.job_category_name )#</h1>
 		</div>
 	</div>
 
 	<cfif categoryStruct.job_category_description NEQ ''>
-		<div class="z-container z-job-category-description">
+		<div class="z-float z-job-category-description">
 			<div class="z-column">
 				#categoryStruct.job_category_description#
 			</div>
 		</div>
 	</cfif>
 
-	<div class="z-container z-job-category-jobs">
+	<div class="z-float z-job-category-jobs">
 		<cfscript>
 			countLimit = 5;
 

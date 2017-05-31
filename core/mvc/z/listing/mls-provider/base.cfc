@@ -119,47 +119,34 @@
 </cffunction>
 
 <cffunction name="baseGetDetails" localmode="modern" output="no" returntype="any">
-	<cfargument name="query" type="query" required="yes">
+	<cfargument name="ss" type="struct" required="yes">
 	<cfargument name="row" type="numeric" required="no" default="#1#">
 	<cfargument name="fulldetails" type="boolean" required="no" default="#false#">
 	<cfscript>
-	var arrI=0;
-	var arrA=0;
-	var arrB=0;
-	var tmp=0;
-	var i=0;
-	var arrNewList=0;
-	var argType=0;
-	var argList=0;
-	var argDelimiter=0;
-	var i4=0;
-	var idx=structnew();
-	loop query="arguments.query" startrow="#arguments.row#" endrow="#arguments.row#"{
-		structappend(idx, arguments.query, true);
-	}
+	idx=arguments.ss;
 	idx["listingHasMap"]=0;
-	if(arguments.query.listing_latitude[arguments.row] NEQ '' and arguments.query.listing_longitude[arguments.row] NEQ '' and arguments.query.listing_latitude[arguments.row] NEQ '0' and arguments.query.listing_longitude[arguments.row] NEQ '0' and abs(arguments.query.listing_latitude[arguments.row]) LTE 180 and abs(arguments.query.listing_longitude[arguments.row]) LTE 180){
+	if(idx.listing_latitude NEQ '' and idx.listing_longitude NEQ '' and idx.listing_latitude NEQ '0' and idx.listing_longitude NEQ '0' and abs(idx.listing_latitude) LTE 180 and abs(idx.listing_longitude) LTE 180){
 		idx["listingHasMap"]=1;
 	}
-	if(structkeyexists(request.zos.listing.cityNameStruct,arguments.query.listing_city[arguments.row])){
-		idx["cityName"]=request.zos.listing.cityNameStruct[arguments.query.listing_city[arguments.row]];
+	if(structkeyexists(request.zos.listing.cityNameStruct,idx.listing_city)){
+		idx["cityName"]=request.zos.listing.cityNameStruct[idx.listing_city];
 	}else{
 		idx["cityName"]="";
 	}
-	if(arguments.query.listing_square_feet[arguments.row] NEQ 0 and arguments.query.listing_price[arguments.row] GTE 999){
-		idx["pricepersqft"]=round(arguments.query.listing_price[arguments.row]/arguments.query.listing_square_feet[arguments.row]);
-	}else if(arguments.query.listing_lot_square_feet[arguments.row] NEQ 0 and arguments.query.listing_price[arguments.row] GTE 999){
-		idx["pricepersqft"]=round(arguments.query.listing_price[arguments.row]/arguments.query.listing_lot_square_feet[arguments.row]);
+	if(idx.listing_square_feet NEQ 0 and idx.listing_price GTE 999){
+		idx["pricepersqft"]=round(idx.listing_price/idx.listing_square_feet);
+	}else if(idx.listing_lot_square_feet NEQ 0 and idx.listing_price GTE 999){
+		idx["pricepersqft"]=round(idx.listing_price/idx.listing_lot_square_feet);
 	}else{
 		idx["pricepersqft"]="";	
 	}
-	if(structkeyexists(this,'sysidfield')){
-		idx["sysidfield"]=arguments.query[this.sysidfield][arguments.row];
+	if(structkeyexists(this,'sysidfield') and structkeyexists(idx, this.sysidfield)){
+		idx["sysidfield"]=idx[this.sysidfield];
 	}else{
 		idx["sysidfield"]="";
 	}
-	if(structkeyexists(this,'sysidfield2')){
-		idx["sysidfield2"]=arguments.query[this.sysidfield2][arguments.row];
+	if(structkeyexists(this,'sysidfield2') and structkeyexists(idx, this.sysidfield2)){
+		idx["sysidfield2"]=idx[this.sysidfield2];
 	}else{
 		idx["sysidfield2"]="";
 	}
@@ -168,9 +155,9 @@
 	for(i4=1;i4 LTE arraylen(arrNewList);i4++){
 		argtype=arrNewList[i4];
 		if(argtype EQ "status"){
-			arglist=arguments.query["listing_status"][arguments.row];
+			arglist=idx["listing_status"];
 		}else{
-			arglist=arguments.query["listing_"&argtype][arguments.row];
+			arglist=idx["listing_"&argtype];
 		}
 		argdelimiter=",";
 		arrA=listtoarray(arglist, argdelimiter);
@@ -178,7 +165,7 @@
 		tmp="";
 		i=0;
 		for(i=1;i LTE arraylen(arrA);i++){
-			if(structkeyexists(request.zos.listing.listingLookupStruct[argtype].value, arrA[i])){
+			if(structkeyexists(request.zos.listing.listingLookupStruct, argtype) and structkeyexists(request.zos.listing.listingLookupStruct[argtype].value, arrA[i])){
 				tmp=request.zos.listing.listingLookupStruct[argtype].value[arrA[i]];
 				if(tmp NEQ ""){
 					arrayappend(arrB, tmp);	
@@ -190,10 +177,10 @@
 	
 	
 	idx["listingPropertyType"]="Real Estate";
-	if(arguments.query.listing_type_id[arguments.row] NEQ 0){
-		idx["listingPropertyType"]=application.zcore.functions.zFirstLetterCaps(application.zcore.listingCom.listingLookupValue("listing_type",arguments.query.listing_type_id[arguments.row]));
-	}
-	arrI=listtoarray(arguments.query.listing_id[arguments.row],"-");
+	if(idx.listing_type_id NEQ 0){
+		idx["listingPropertyType"]=application.zcore.functions.zFirstLetterCaps(application.zcore.listingCom.listingLookupValue("listing_type",idx.listing_type_id));
+	} 
+	arrI=listtoarray(idx.listing_id,"-");
 	idx.urlMlsId=application.zcore.listingCom.getURLIdForMLS(arrI[1]);
 	if(arraylen(arrI) EQ 2){
 		idx.urlMLSPId=arrI[2];
@@ -329,10 +316,7 @@
 		ts.lookupStruct.propertyTypeCode[qP.listing_type_code]=qP.listing_type_id;
 	}
 	ts.listingLookupStruct=structnew();
-	orsql="";
-	if(this.mls_provider EQ "rets7"){
-		orsql=" or listing_lookup_mls_provider = 'far' ";	
-	}
+	orsql=""; 
 	db.sql="SELECT listing_lookup_value,listing_lookup_id,listing_lookup_type,listing_lookup_oldid  
 	FROM #db.table("listing_lookup", request.zos.zcoreDatasource)# listing_lookup 
 	WHERE (listing_lookup_mls_provider = #db.param(this.mls_provider)# and 
@@ -445,14 +429,7 @@
 	}
 	return statusStruct;
         </cfscript>
-</cffunction>
-
-<cffunction name="deleteListings" localmode="modern" output="no" returntype="any">
-	<cfargument name="idlist" type="string" required="yes">
-	<cfscript>
-	//var db=request.zos.queryObject;
-	</cfscript>
-</cffunction>
+</cffunction> 
 
 
 <cffunction name="makeListingImportDataReady" localmode="modern" access="remote">

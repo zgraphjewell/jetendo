@@ -22,16 +22,21 @@
 	var testserverflagged=0;
 	var zallrequestvars=0;
 	var supportedformats=0; 
-
+	/*
+	// this may be causing the startup crash problem
 	if(structkeyexists(request.zos, 'applicationLoading')){
 		structdelete(request.zos, 'applicationLoading');
 		application.onstartcount=0;
 		application.zcoreLoadAgain=true;
-	}
-	if(not structkeyexists(application, 'zcoreIsInit')){
+	}*/
+	if(not structkeyexists(application, 'zcoreIsInit') or not structkeyexists(application, 'zcore')){
+		if(request.zos.isDeveloperIpMatch and request.zos.cgi.HTTP_USER_AGENT CONTAINS 'Mozilla/' and request.zos.cgi.HTTP_USER_AGENT DOES NOT CONTAIN 'Jetendo'){ 
+			writedump(arguments);
+			abort;
+		}
 		header statuscode="503" statustext="Service Temporarily Unavailable";
     	header name="retry-after" value="60";
-		echo('<h1>Service Temporarily Unavailable');abort;
+		echo('<h1>Service Temporarily Unavailable</h1>');abort;
 	}
 	currentMinute=timeformat(now(), "m");
 	if(not structkeyexists(application, 'zErrorMinuteTime')){
@@ -71,10 +76,11 @@
 			<!-- Begin Error -->
 			<hr style="clear:both;" />
 			<!--- <table  style="border-spacing:0px; width:100%; "><tr><td style="padding:10px; background-color:##FFF !important;"><h1>Error in Application.cfc event: #arguments.eventName#</h1> --->
-			<cfif structkeyexists(form, request.zos.urlRoutingParameter) EQ false>
-				#cferror.message#
+
+			<!--- <cfif structkeyexists(form, request.zos.urlRoutingParameter) EQ false>
+				#cferror.message# 
 				<cfdump var="#cferror#" format="simple">
-			<cfelse>
+			<cfelse>  --->
 			<cftry>
 				<!--- to force an error to be logged even for a developer set: 
 				request.zForceErrorEmail=true;
@@ -149,7 +155,7 @@
 					<cfabort>
 				</cfcatch>
 			</cftry>
-		</cfif>
+		<!--- </cfif> --->
 		<cfcatch type="any">
 			<cfheader statuscode="500" statustext="Internal Server Error">
 			<cfdump var="#cfcatch#" format="simple">

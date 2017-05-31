@@ -13,19 +13,43 @@ $timeout=60; // seconds
 $host=`hostname`;
 
 
-if((int)date("i") % 2 == 0){
+if((int)date("i") % 4 == 0){
 	$avgLoad=explode(" ", `cat /proc/loadavg`);
 	$cpuLimit=3;
 	if($avgLoad[1] >$cpuLimit){ 
-		$to      = get_cfg_var('jetendo_developer_email_to');
+		$to      = get_cfg_var('jetendo_developer_email_to'); 
 		$subject = 'CPU load is very high on '.$host;
 			
 		$headers = 'From: '.get_cfg_var('jetendo_developer_email_from')."\r\n" .
 			'Reply-To: '.get_cfg_var('jetendo_developer_email_from')."\r\n" .
 			'X-Mailer: PHP/' . phpversion();
-		$topProcesses=`ps aux | sort -rk 3,3 | head -n 6`;
-		$message = "Average load exceeded ".$cpuLimit.".\nCurrent load averages (minute, 5 minute, 15 minutes): \n".implode(", ", $avgLoad)."\nThe following processes are consuming a large amount of CPU on the system.\n\n".$topProcesses;
+		$topProcesses=`ps ax -o pid,%cpu,command | sort -rk 2 | head -n 6 | cut -c1-70`;
+
+		$iostatLog=`/usr/sbin/iotop -abPo -n 3 | cut -c1-100`;
+
+		$message = "Average load exceeded ".$cpuLimit.".\nCurrent load averages (minute, 5 minute, 15 minutes): \n".implode(", ", $avgLoad)."\nThe 6 processes with highest CPU usage:\n\n".$topProcesses."\n\nThe highest I/O processes over 3 seconds:\n\n".$iostatLog;
+
+		// force file_get_contents to fail after 5 seconds
+		ini_set('default_socket_timeout', 5);
+
+		if(zIsTestServer()){
+			$adminDomain=get_cfg_var("jetendo_test_admin_domain");
+		}else{
+			$adminDomain=get_cfg_var("jetendo_admin_domain");
+		}
+		// make request to server to log error of the current running requests and their runTimes.
+		$contents=file_get_contents($adminDomain."/z/server-manager/tasks/memory-dump/logRecentRequestsError?returnResults=1");
+		if($contents === FALSE){
+			$message.="\n\nFailed to log recent requests";
+		}else{
+			$contents=trim($contents);
+			if($contents!="Running Requests"){
+				$message.="\n\n".$contents;
+			}
+		}
+
 		mail($to, $subject, $message, $headers);
+
 	}
 }
 
@@ -106,7 +130,7 @@ for($i4=0;$i4 < 62;$i4++){
 		$isCompiled=compileAllPackages();
 		if(!$isCompiled){
 			$handle=fopen($sharePath."__zdeploy-core-failed.txt", "w");
-			fwrite($handle, "1");
+			fwrite($handle, "Javascript compileAllPackages compilation error.  See log: ".get_cfg_var("jetendo_log_path")."deploy/compile-js-css-log.txt");
 			fclose($handle); 
 		}else{
 			$sql2="select * from deploy_server where deploy_server_deploy_enabled='1' and 
@@ -175,7 +199,7 @@ for($i4=0;$i4 < 62;$i4++){
 					$appendString=" 2>&1";
 				}
 				//-avz --chmod=Do=,Fo=,Du=rwx,Dg=rwx,Fu=rw,Fg=rw
-				$cmd='rsync -rtLvz '.$sourceOnlyList.' --exclude=\'share/database/backup/\' --exclude=\'share/database/jetendo-schema-current.json\' --include=\'share/database/\'  --exclude=\'.git*\' --exclude=\'settings.xml\' --exclude=\'.project\' --exclude=\'*.sublime-*\' --exclude=\'lost+found/\' --exclude=\'sites-writable/\' --exclude=\'sites/\' --exclude=\'share/*\' --exclude=\'logs/\' --exclude=\'execute/\' --exclude=\'phptemp/\' --exclude=\'luceevhosts/\' --exclude=\'railovhosts/\' --exclude=\'compile/\' --exclude=\'.git/\' --exclude=_notes --exclude=\'*/_notes\' --delay-updates --delete -e "'.$sshCommand.'" '.$rootPath.' '.$remoteUsername.'@'.$remoteHost.':'.$rootPath.$appendString; 
+				$cmd='rsync -rtLvz '.$sourceOnlyList.' --exclude=\'share/database/backup/\' --exclude=\'share/database/jetendo-schema-current.json\' --include=\'share/database/\' --exclude=\'.DS_Store\' --exclude=\'.git*\' --exclude=\'settings.xml\' --exclude=\'.project\' --exclude=\'*.sublime-*\' --exclude=\'lost+found/\' --exclude=\'sites-writable/\' --exclude=\'sites/\' --exclude=\'share/*\' --exclude=\'logs/\' --exclude=\'execute/\' --exclude=\'phptemp/\' --exclude=\'luceevhosts/\' --exclude=\'railovhosts/\' --exclude=\'compile/\' --exclude=\'.git/\' --exclude=_notes --exclude=\'*/_notes\' --delay-updates --delete -e "'.$sshCommand.'" '.$rootPath.' '.$remoteUsername.'@'.$remoteHost.':'.$rootPath.$appendString; 
 				echo $cmd."\n";
 				$result=$cmd."\n".`$cmd`;
 
@@ -215,113 +239,121 @@ for($i4=0;$i4 < 62;$i4++){
 					unlink($siteWritableInstallPath."__zdeploy-preview.txt"); 
 				}
 				$siteId=$row["site_id"];
-				//$siteId=4000; 
-				$sql2="select * from site_x_deploy_server, deploy_server 
-				WHERE deploy_server.deploy_server_id = site_x_deploy_server.deploy_server_id and 
-				deploy_server_deploy_enabled='1'  and 
-				site_x_deploy_server.site_id = '".$siteId."' and 
-				deploy_server_deleted = 0 and 
-				site_x_deploy_server_deleted = 0 "; 
-				$mysqlResult1=$cmysql->query($sql2, MYSQLI_STORE_RESULT); 
-				while($row2=$mysqlResult1->fetch_assoc()){ 
-					$privateKeyPath=$row2["deploy_server_private_key_path"];
-					$remoteUsername=$row2["deploy_server_ssh_username"];
-					$remoteHost=$row2["deploy_server_ssh_host"];
-					$remotePath=$row2["site_x_deploy_server_remote_path"];
-					$remoteSourceOnly=$row2["site_x_deploy_server_source_only"];
-					
-					$sshCommand=zGetSSHConnectCommand($remoteHost, $privateKeyPath);
-					if($sshCommand===FALSE){
-						$handle=fopen($siteWritableInstallPath."__zdeploy-error.txt", "w");
-						fwrite($handle, "zGetSSHConnectCommand failed.  The remote host and private key may not be defined yet.");
-						fclose($handle); 
-						$failed=true;
-						break;
-					}
-					$fail=false;
-					if(strpos($remotePath, " ") !== FALSE){
-						$fail=true;
-					}
-					if($fail){
-						echo "Deploy server remote path, \"$remotePath\", is configured incorrectly. 
-						It must be an absolute path to the sites/* folder of a site on that server. 
-						I.e. ".get_cfg_var("jetendo_sites_path")."host_com/";
-						break;
-					} 
-					$arrExclude=explode("\n", $row["site_deploy_excluded_paths"]);
-					$arrExcludeNew=array();
-					for($n=0;$n < count($arrExclude);$n++){
-						$arrExclude[$n]=trim($arrExclude[$n]);
-						if($arrExclude[$n] != ""){
-							array_push($arrExcludeNew, escapeshellarg($arrExclude[$n]));
+				$arrDebugCompile=array();
+				$isCompiled=compileSiteFiles($row, $arrDebugCompile);
+				if(!$isCompiled){
+					$handle=fopen($siteWritableInstallPath."__zdeploy-error.txt", "w"); 
+					fwrite($handle, "Javascript compileSiteFiles compilation error.  See log: ".get_cfg_var("jetendo_log_path")."deploy/compile-md5-site-".$row["site_short_domain"].".txt"); 
+					fclose($handle); 
+				}else{
+					//$siteId=4000; 
+					$sql2="select * from site_x_deploy_server, deploy_server 
+					WHERE deploy_server.deploy_server_id = site_x_deploy_server.deploy_server_id and 
+					deploy_server_deploy_enabled='1'  and 
+					site_x_deploy_server.site_id = '".$siteId."' and 
+					deploy_server_deleted = 0 and 
+					site_x_deploy_server_deleted = 0 "; 
+					$mysqlResult1=$cmysql->query($sql2, MYSQLI_STORE_RESULT); 
+					while($row2=$mysqlResult1->fetch_assoc()){ 
+						$privateKeyPath=$row2["deploy_server_private_key_path"];
+						$remoteUsername=$row2["deploy_server_ssh_username"];
+						$remoteHost=$row2["deploy_server_ssh_host"];
+						$remotePath=$row2["site_x_deploy_server_remote_path"];
+						$remoteSourceOnly=$row2["site_x_deploy_server_source_only"];
+						
+						$sshCommand=zGetSSHConnectCommand($remoteHost, $privateKeyPath);
+						if($sshCommand===FALSE){
+							$handle=fopen($siteWritableInstallPath."__zdeploy-error.txt", "w");
+							fwrite($handle, "zGetSSHConnectCommand failed.  The remote host and private key may not be defined yet.");
+							fclose($handle); 
+							$failed=true;
+							break;
 						}
-					}
-					$excludeString="";
-					if(count($arrExcludeNew)){
-						$excludeString=" --exclude=".implode(" --exclude=", $arrExcludeNew);
-					}
-					$sourceOnlyList='';
-					if($remoteSourceOnly == '1'){
-						$arrAllowed=array(
-							"cfc",
-							"js",
-							"cfm",
-							"css"
-						);
-						$sourceOnlyList=" --include='*/' --include=*.".implode(" --include=*.", $arrAllowed)." --exclude='*' ";
-					}
-					$appendString="";
-					if($preview=="1"){
-						$sourceOnlyList.=" --itemize-changes --dry-run ";
-						$appendString=" 2>&1";
-					} 
-
-					if(is_dir($siteInstallPath.".git")){
-						/*
-						// not important yet
-						// git status -uno to get status on local and remote server - output is nothing if they match.
-						$cmd="/usr/bin/git -C ".escapeshellarg($siteInstallPath)." status -uno";
-						$r=`$cmd`;
-						if($r!=""){
-
+						$fail=false;
+						if(strpos($remotePath, " ") !== FALSE){
+							$fail=true;
 						}
-						*/
-						// git check if there is * master
-						$cmd="/usr/bin/git -C ".escapeshellarg($siteInstallPath)." branch";
-						$r=`$cmd`; 
-						if($r!=""){
-							$isMasterBranch=false;
-							$arrBranch=explode("\n", $r);
-							for($i=0;$i<=count($arrBranch);$i++){
-								$c=$arrBranch[$i];
-								if($c=="* master"){
-									$isMasterBranch=true;
+						if($fail){
+							echo "Deploy server remote path, \"$remotePath\", is configured incorrectly. 
+							It must be an absolute path to the sites/* folder of a site on that server. 
+							I.e. ".get_cfg_var("jetendo_sites_path")."host_com/";
+							break;
+						} 
+						$arrExclude=explode("\n", $row["site_deploy_excluded_paths"]);
+						$arrExcludeNew=array();
+						for($n=0;$n < count($arrExclude);$n++){
+							$arrExclude[$n]=trim($arrExclude[$n]);
+							if($arrExclude[$n] != ""){
+								array_push($arrExcludeNew, escapeshellarg($arrExclude[$n]));
+							}
+						}
+						$excludeString="";
+						if(count($arrExcludeNew)){
+							$excludeString=" --exclude=".implode(" --exclude=", $arrExcludeNew);
+						}
+						$sourceOnlyList='';
+						if($remoteSourceOnly == '1'){
+							$arrAllowed=array(
+								"cfc",
+								"js",
+								"cfm",
+								"css"
+							);
+							$sourceOnlyList=" --include='*/' --include=*.".implode(" --include=*.", $arrAllowed)." --exclude='*' ";
+						}
+						$appendString="";
+						if($preview=="1"){
+							$sourceOnlyList.=" --itemize-changes --dry-run ";
+							$appendString=" 2>&1";
+						} 
+
+						if(is_dir($siteInstallPath.".git")){
+							/*
+							// not important yet
+							// git status -uno to get status on local and remote server - output is nothing if they match.
+							$cmd="/usr/bin/git -C ".escapeshellarg($siteInstallPath)." status -uno";
+							$r=`$cmd`;
+							if($r!=""){
+
+							}
+							*/
+							// git check if there is * master
+							$cmd="/usr/bin/git -C ".escapeshellarg($siteInstallPath)." branch";
+							$r=`$cmd`; 
+							if($r!=""){
+								$isMasterBranch=false;
+								$arrBranch=explode("\n", $r);
+								for($i=0;$i<=count($arrBranch);$i++){
+									$c=$arrBranch[$i];
+									if($c=="* master"){
+										$isMasterBranch=true;
+										break;
+									}
+								}
+								if(!$isMasterBranch){
+									$handle=fopen($siteWritableInstallPath."__zdeploy-error.txt", "w");
+									fwrite($handle, "The current git branch is not master.  You can only deploy to production when git is on the master branch.");
+									fclose($handle);
 									break;
 								}
 							}
-							if(!$isMasterBranch){
-								$handle=fopen($siteWritableInstallPath."__zdeploy-error.txt", "w");
-								fwrite($handle, "The current git branch is not master.  You can only deploy to production when git is on the master branch.");
-								fclose($handle);
-								break;
-							}
 						}
+						// --chmod=Do=,Fo=,Du=rwx,Dg=rwx,Fu=rw,Fg=rw
+						$cmd='rsync -rtLvz '.$sourceOnlyList.$excludeString.' --exclude=\'.git\' --exclude=\'.DS_Store\' --exclude=\'*/.git\' --exclude=\'.git*\' --exclude=\'*/.git*\' --exclude=\'WEB-INF\' --exclude=\'_notes\' --exclude=\'*/_notes\' --delay-updates --delete -e "'.$sshCommand.'" '.$siteInstallPath.' '.$remoteUsername.'@'.$remoteHost.':'.$remotePath.$appendString; 
+						echo $cmd."\n";
+						$result=`$cmd`;
+						$handle=fopen($siteWritableInstallPath."__zdeploy-changes.txt", "w");
+						fwrite($handle, $result);
+						fclose($handle);
+						$handle=fopen($siteWritableInstallPath."__zdeploy-complete.txt.temp", "w");
+						fwrite($handle, "1");
+						fclose($handle); 
+						echo "wrote file: ".$siteWritableInstallPath."__zdeploy-complete.txt.temp\n";
+						$cmd='rsync -e "'.$sshCommand.'" '.$siteWritableInstallPath.'__zdeploy-complete.txt.temp '.$remoteUsername.'@'.$remoteHost.':'.$remotePath.'__zdeploy-complete.txt';
+						echo $cmd."\n";
+						`$cmd`; 
+						rename($siteWritableInstallPath."__zdeploy-complete.txt.temp", $siteWritableInstallPath."__zdeploy-complete.txt");
 					}
-					// --chmod=Do=,Fo=,Du=rwx,Dg=rwx,Fu=rw,Fg=rw
-					$cmd='rsync -rtLvz '.$sourceOnlyList.$excludeString.' --exclude=\'.git\' --exclude=\'*/.git\' --exclude=\'.git*\' --exclude=\'*/.git*\' --exclude=\'WEB-INF\' --exclude=\'_notes\' --exclude=\'*/_notes\' --delay-updates --delete -e "'.$sshCommand.'" '.$siteInstallPath.' '.$remoteUsername.'@'.$remoteHost.':'.$remotePath.$appendString; 
-					echo $cmd."\n";
-					$result=`$cmd`;
-					$handle=fopen($siteWritableInstallPath."__zdeploy-changes.txt", "w");
-					fwrite($handle, $result);
-					fclose($handle);
-					$handle=fopen($siteWritableInstallPath."__zdeploy-complete.txt.temp", "w");
-					fwrite($handle, "1");
-					fclose($handle); 
-					echo "wrote file: ".$siteWritableInstallPath."__zdeploy-complete.txt.temp\n";
-					$cmd='rsync -e "'.$sshCommand.'" '.$siteWritableInstallPath.'__zdeploy-complete.txt.temp '.$remoteUsername.'@'.$remoteHost.':'.$remotePath.'__zdeploy-complete.txt';
-					echo $cmd."\n";
-					`$cmd`; 
-					rename($siteWritableInstallPath."__zdeploy-complete.txt.temp", $siteWritableInstallPath."__zdeploy-complete.txt");
 				}
 			}
 		}else{

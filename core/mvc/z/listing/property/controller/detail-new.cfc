@@ -74,7 +74,7 @@ if(structkeyexists(form, 'showInactive')){
 
 returnStruct = propertyDataCom.getProperties(ts);
 
-if(returnStruct.count EQ 0 or returnStruct.query.recordcount EQ 0 or arraylen(returnStruct.arrQuery) EQ 0 or returnStruct.arrQuery[1].recordcount EQ 0){
+if(arrayLen(returnStruct.arrData) EQ 0){
 	if(request.zos.isDeveloper){
 		writeoutput("<h1>listing record is missing. (non-developers see 404 Not Found or 301 redirect)</h1>");
 		writedump(returnStruct);
@@ -86,7 +86,7 @@ if(returnStruct.count EQ 0 or returnStruct.query.recordcount EQ 0 or arraylen(re
 		application.zcore.functions.z301Redirect('/');
 	}
 }else{
-	application.zcore.functions.zQueryToStruct(returnStruct.arrQuery[1], form);
+	structappend(form, returnStruct.arrData[1], true);
 }
 isOfficeListing=false;
 try{
@@ -94,7 +94,7 @@ try{
 		isOfficeListing=true;
 	}
 }catch(Any excpt){}
-idx=request.zos.listingMlsComObjects[form.mls_id].getDetails(returnStruct.arrQuery[1],1,true);
+idx=request.zos.listingMlsComObjects[form.mls_id].getDetails(returnStruct.arrData[1],1,true);
 idx.listing_id=form.listing_id;
 structappend(form, idx,true);
  
@@ -297,7 +297,7 @@ infobar_opacity: 1<!--- 				//FLOAT - transparency for info bar --->
 <cfif form.virtualtoururl neq '' and findnocase("http://", form.virtualtoururl) NEQ 0><a href="#application.zcore.functions.zBlockURL(form.virtualtoururl)#" rel="nofollow" onclick="window.open(this.href); return false;">Virtual Tour</a></cfif>
 <a href="##" class="zls-saveListingButton" data-listing-id="#form.listing_id#" rel="nofollow" class="zNoContentTransition">Save Listing</a>
 
-<cfif application.zcore.functions.zvar('sendConfirmOptIn', request.zos.globals.id) EQ 1>
+<cfif application.zcore.functions.zvar('enableSendToFriend', request.zos.globals.id) EQ 1>
 	
 	<a href="##" onclick="zShowModalStandard('/z/misc/share-with-friend/index?title=#htmleditformat(urlencodedformat(application.zcore.template.getTagContent('pagetitle')))#&amp;link=#htmleditformat(urlencodedformat(request.zos.currenthostname&propertyLink))#', 540, 630);return false;" rel="nofollow">Share With Friend</a>
 </cfif>

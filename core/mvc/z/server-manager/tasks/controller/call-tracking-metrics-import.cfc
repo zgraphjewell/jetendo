@@ -78,9 +78,9 @@
 <cffunction name="callImport" localmode="modern" access="remote">
 	<cfscript>
 	debug=false;// set to true to debug this script
-	if(request.zos.istestserver){
+	/*if(request.zos.istestserver){
 		debug=true;
-	}
+	}*/
 	if(not request.zos.isDeveloper and not request.zos.isServer and not request.zos.isTestServer){
 		application.zcore.functions.z404("Can't be executed except on test server or by server/developer ips.");
 	} 
@@ -88,7 +88,7 @@
 	setting requesttimeout="10000";
 	db=request.zos.queryobject; 
 	if(application.zcore.functions.zso(request.zos.globals, 'calltrackingmetricsEnableImport', true, 0) EQ 0){
-		throw("Call Tracking Metrics import is not enabled for this domain.");
+		throw("Call Tracking Metrics import is not enabled for this domain: #request.zos.globals.domain#.");
 	}
 	db.sql="select * from #db.table("site", request.zos.zcoreDatasource)# WHERE 
 	site_calltrackingmetrics_enable_import = #db.param(1)# and 
@@ -96,7 +96,7 @@
 	site_deleted = #db.param(0)# and 
 	site_active = #db.param(1)#";
 	qSite=db.execute("qSite");
-	accountId=request.zos.globals.calltrackingMetricsAccountId;// 7988; // monterey's account id on calltrackingmetrics.com
+	accountId=request.zos.globals.calltrackingMetricsAccountId;
 	startDate='2010-01-01';
 	d=qSite.site_calltrackingmetrics_import_datetime;
 	if(d NEQ "" and isdate(d)){
@@ -155,6 +155,7 @@
 	if(application.zcore.functions.zso(request.zos.globals, 'calltrackingmetricsCfcPath') NEQ ""){
 		importCom=createobject("component", replace(request.zos.globals.calltrackingmetricsCfcPath, "root.", request.zRootCFCPath));
 	}
+	formBackup=duplicate(form);
 	lastTotal="Unknown";
 	while(true){
 		u="https://api.calltrackingmetrics.com/api/v1/accounts/#accountId#/calls.json?";
@@ -169,7 +170,7 @@
 					name: "firstname lastname",
 					caller_number: "(ddd) ddd-dddd",
 					search: "keywords searched",
-					referrer: null,
+					referrer: "",
 					location: "http://example.com/",
 					source: "Direct",
 					likelihood: 82.0381,
@@ -193,7 +194,7 @@
 			application.callTrackingMetricsImportProgress="Downloading #u# | insertCount: #insertCount# | updateCount: #updateCount# | total: #lastTotal#"; 
 			http url="#u#" timeout="30" throwonerror="no" method="get"{ 
 				httpparam type="header" name="Authorization" value='Basic #ToBase64("#accessKey#:#secretKey#")#';
-			}
+			} 
 			if(not structkeyexists(cfhttp, 'statuscode') or left(cfhttp.statuscode,3) NEQ '200'){
 				savecontent variable="out"{
 					writedump(cfhttp);
@@ -206,11 +207,15 @@
 		qs.page+=1;
 		lastTotal=js.total_entries;
 
+
+		excludeCallTrackingMetrics=application.zcore.functions.zso(request.zos, 'excludeCallTrackingMetrics', false, {});
+
 		for(i=1;i LTE arraylen(js.calls);i++){
 			if(structkeyexists(application, 'callTrackingMetricsImportCancel')){
 				echo('Import was cancelled');
 				abort;
 			}
+			structclear(form);
 			call=js.calls[i]; 
 			t9={};
 			t9.inquiries_external_id="ctm-#call.id#";
@@ -235,7 +240,16 @@
 					writedump(call[i2]);*/
 				}
 			}
-			t9.inquiries_phone1=call.caller_number;
+			t9.inquiries_phone1=call.caller_number; 
+			t9.inquiries_email=application.zcore.functions.zso(call, 'email'); 
+
+			if(structkeyexists(excludeCallTrackingMetrics, t9.inquiries_phone1)){
+				continue;
+			}
+			if(request.zos.isdeveloper){
+				echo(t9.inquiries_phone1&'<br>');
+			}
+
 			t9.inquiries_first_name=application.zcore.functions.zso(call, 'name');
 
 			t9.inquiries_status_id=1;
@@ -244,6 +258,7 @@
 			if(application.zcore.functions.zso(request.zos.globals, 'calltrackingmetricsCfcPath') NEQ ""){
 				importCom[request.zos.globals.calltrackingmetricsCfcMethod](call, t9, t99);
 			} 
+			structdelete(t99, 'email');
 			structdelete(t99, 'billed_amount');
 			structdelete(t99, 'billed_at');
 			structdelete(t99, 'excluded');
@@ -278,27 +293,20 @@
 			db.sql="select inquiries_id from #db.table("inquiries", request.zos.zcoreDatasource)# 
 			WHERE inquiries_deleted=#db.param(0)# and 
 			inquiries_external_id = #db.param(t9.inquiries_external_id)# and 
+			inquiries_type_id = #db.param(15)# and 
+			inquiries_type_id_siteIDType=#db.param(4)# and 
 			site_id = #db.param(request.zos.globals.id)# ";
 			qId=db.execute("qId");
 
+			structappend(form, t9 , true);
 			if(qId.recordcount){
-				t9.inquiries_id=qId.inquiries_id;
-				structdelete(t9, 'inquiries_status_id');
-				ts={
-					table:"inquiries",
-					datasource:request.zos.zcoreDatasource,
-					struct:t9
-				};
+				form.inquiries_id=qId.inquiries_id;
+				structdelete(form, 'inquiries_status_id'); 
 				updateCount++;
-				application.zcore.functions.zUpdate(ts);
-			}else{
-				ts={
-					table:"inquiries",
-					datasource:request.zos.zcoreDatasource,
-					struct:t9
-				};
+				application.zcore.functions.zUpdateLead();
+			}else{ 
 				insertCount++;
-				application.zcore.functions.zInsert(ts);
+				application.zcore.functions.zInsertLead();
 			}
 			application.callTrackingMetricsImportProgress="Importing | insertCount: #insertCount# | updateCount: #updateCount# | total: #js.total_entries#";
 		}  
@@ -306,11 +314,13 @@
 			echo('All calls have been downloaded<br />last download url was: #u#<br />'); 
 			break;
 		}
-		if(debug or request.zos.istestserver){
+		if(debug){
 			// in debug mode, we only have 1 loop possible
 			break;
 		} 
 	}
+
+	form=formBackup;
 
 	if(not debug){
 		db.sql="update #db.table("site", request.zos.zcoreDatasource)# set 

@@ -16,6 +16,7 @@ getSystemIpList
 getNewerCoreMVCFiles
 gzipFilePath#chr(9)#absoluteFilePath
 httpDownload#chr(9)#link#chr(9)#timeout
+httpJsonPost#chr(9)#link#chr(9)#jsonData#chr(9)#timeout
 httpDownloadToFile#chr(9)#link##chr(9)#timeout#chr(9)#absoluteFilePath
 importSite#chr(9)#siteDomain#chr(9)#importDirName#chr(9)#tarFileName#chr(9)#tarUploadFileName
 installThemeToSite#chr(9)#themeName#chr(9)#absoluteSiteHomedir
@@ -52,6 +53,8 @@ function processContents($contents){
 		return getDiskUsage($a);
 	}else if($contents =="httpDownload"){
 		return httpDownload($a);
+	}else if($contents =="httpJsonPost"){
+		return httpJsonPost($a);
 	}else if($contents =="httpDownloadToFile"){
 		return httpDownloadToFile($a);
 	}else if($contents =="tarZipFilePath"){
@@ -1162,7 +1165,7 @@ function getImageMagickConvertApplyMask($a){
 		echo "absImageMaskPath must be in the jetendo install or backup paths. Path:".$absImageMaskPath."\n";
 		return "0";
 	}
-	$compressQuality=85;
+	$compressQuality=93;
 	$ext=strtolower(substr($absImageOutputPath, -4));
 	if($ext == '.jpg' || $ext == '.jpeg'){
 		$cmd2="/usr/bin/identify -format '%Q' ".escapeshellarg($sourceFilePath)." 2>&1";
@@ -1175,6 +1178,8 @@ function getImageMagickConvertApplyMask($a){
 	$pngColorFix='';
 	if($ext == '.png'){
 		$pngColorFix="PNG32:"; 
+	}else if($ext == '.gif'){
+		// do nothing
 	}else{
 		$compress=' -strip -interlace Plane -sampling-factor 4:2:0 -quality '.$compressQuality.'% ';
 	}
@@ -1297,7 +1302,7 @@ function getImageMagickConvertResize($a){
 	$pngColorFix="";
 	$compress='';
 	$ext=strtolower(substr($destinationFilePath, -4));
-	$compressQuality=85;
+	$compressQuality=93;
 
 	if($ext == '.jpg' || $ext == '.jpeg'){
 		$cmd2="/usr/bin/identify -format '%w,%h,%Q,%[exif:orientation]' ".escapeshellarg($sourceFilePath)." 2>&1";
@@ -1345,13 +1350,33 @@ function getImageMagickConvertResize($a){
 	}
 	if($ext == '.png'){
 		$pngColorFix="PNG32:"; 
+	}else if($ext == '.gif'){
+		// do nothing.
 	}else{
 		$compress=' -strip -interlace Plane -sampling-factor 4:2:0 -quality '.$compressQuality.'% ';
 	}
 	// TODO - auto-orient or manual rotations to fix -auto-orient
 	$cmd.=' '.escapeshellarg($sourceFilePath).' '.$compress.' '.$pngColorFix.escapeshellarg($destinationFilePath); 
-	$r=`$cmd`; 
-	if(file_exists($destinationFilePath)){
+
+	$tempDestination=$destinationFilePath.".".microtime(true);
+	$renamed=false;
+	$r=`$cmd`;
+	$found=true; 
+	for($n=0;$n<=2;$n++){
+		if(!file_exists($destinationFilePath)){
+			if($sourceFilePath != $destinationFilePath && file_exists($destinationFilePath)){
+				rename($destinationFilePath, $tempDestination);
+				$renamed=true;
+			}
+			$r=`$cmd`; // try up to three more times before giving up
+		}else{
+			$found=true;
+		}
+	}
+	if($found){
+		if(file_exists($tempDestination)){
+			unlink($tempDestination);
+		}
 
 		if(!zIsTestServer()){
 			$cmd='/bin/chown '.get_cfg_var("jetendo_www_user").":".get_cfg_var("jetendo_www_user")." ".escapeshellarg($sourceFilePath);
@@ -1368,6 +1393,11 @@ function getImageMagickConvertResize($a){
 			`$cmd`;
 		}
 		return "1";
+	}else{ 
+		if($renamed){
+			// restore original file on failure
+			rename($tempDestination, $destinationFilePath);
+		}
 	}
 	return "0";
 }
@@ -1792,6 +1822,37 @@ function getDiskUsage($a){
 		}
 	}
 	return "";
+}
+function httpJsonPost($a){
+	if(count($a) != 3){
+		echo "incorrect number of arguments: ".implode(", ", $a)."\n";
+		return "0";
+	}
+	$link=$a[0];
+	$jsonData=$a[1];
+	$timeout=$a[2];
+	set_time_limit($timeout+1);
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $link);
+	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST"); 
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);                                                                  
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);   
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);                                                                   
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
+		'Content-Type: application/json',                                                                                
+		'Content-Length: ' . strlen($jsonData))                                                                       
+	);  
+	curl_setopt($ch, CURLOPT_HEADER, 0);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+	curl_setopt($ch, CURLOPT_TIMEOUT, $timeout); 
+	$result=curl_exec($ch);
+	curl_close($ch);
+	if($result===FALSE){
+		return "0";
+	}else{
+		return $result;
+	}
 }
 function httpDownload($a){
 	if(count($a) != 2){

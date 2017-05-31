@@ -3,7 +3,7 @@
 <cffunction name="init" localmode="modern" access="private" roles="member">
 	<cfscript>
 	var db=request.zos.queryObject;
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Users");	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Users");	
 	var userGroupCom = application.zcore.functions.zcreateobject("component","zcorerootmapping.com.user.user_group_admin");
 	form.zIndex=application.zcore.functions.zso(form,'zIndex',true,1);
 	form.ugid=application.zcore.functions.zso(form, 'ugid');
@@ -54,7 +54,9 @@ site_id = #db.param(request.zos.globals.id)# ";
 	variables.queueSortStruct.sortFieldName = "member_sort";
 	variables.queueSortStruct.primaryKeyName = "user_id";
 	variables.queueSortStruct.where="user.site_id = '#request.zos.globals.id#'  and 
-	member_public_profile='1' and user_deleted='0' ";
+	member_public_profile='1' and user_deleted='0' and 
+	user.user_group_id <> #variables.userUserGroupId# and 
+	user_server_administrator = 0 "; 
 
 	variables.queueSortStruct.ajaxTableId='sortRowTable';
 	variables.queueSortStruct.ajaxURL='/z/admin/member/index';
@@ -94,9 +96,9 @@ site_id = #db.param(request.zos.globals.id)# ";
 	
 	agentid="";
 	mlsproviderid="";
-	if(returnStruct.query.recordcount NEQ 0){
-		agentid=jsstringformat(returnStruct.arrquery[1].listing_agent);
-		mlsproviderid=jsstringformat(listgetat(returnStruct.arrquery[1].listing_id,1,"-"));
+	if(arrayLen(returnStruct.arrData) NEQ 0){
+		agentid=jsstringformat(returnStruct.arrdata[1].listing_agent);
+		mlsproviderid=jsstringformat(listgetat(returnStruct.arrdata[1].listing_id,1,"-"));
 		writeoutput('{success:true,message:"Listing found, agent id has been set.",agentid:"#agentid#",mlsproviderid:"#mlsproviderid#"}');
 	}else{
 		writeoutput('{success:false,message:"No listing found.",agentid:"",mlsproviderid:""}');
@@ -109,7 +111,7 @@ site_id = #db.param(request.zos.globals.id)# ";
 	<cfscript>
 	var db=request.zos.queryObject;
 	init();
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Users", true);	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Users", true);	
 	db.sql="UPDATE #db.table("user", request.zos.zcoreDatasource)# user 
 	SET user_active = #db.param('1')#,
 	user_updated_datetime=#db.param(request.zos.mysqlnow)#  
@@ -125,7 +127,7 @@ site_id = #db.param(request.zos.globals.id)# ";
 <cffunction name="disable" localmode="modern" access="remote" roles="member">
 	<cfscript>
 	var db=request.zos.queryObject;
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Users", true);	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Users", true);	
 	db.sql="UPDATE #db.table("user", request.zos.zcoreDatasource)# user 
 	SET user_active = #db.param('0')#,
 	user_updated_datetime=#db.param(request.zos.mysqlnow)#  
@@ -156,8 +158,9 @@ site_id = #db.param(request.zos.globals.id)# ";
 	</cfscript>
 	<cfif structkeyexists(form,'confirm')>
 		<cfscript>
-		
-		application.zcore.functions.zDeleteFile(application.zcore.functions.zVar('privatehomedir',qCheck.userSiteId)&removechars(request.zos.memberImagePath,1,1)&qCheck.member_photo);
+		if(qCheck.member_photo NEQ ""){
+			application.zcore.functions.zDeleteFile(application.zcore.functions.zVar('privatehomedir',qCheck.userSiteId)&removechars(request.zos.memberImagePath,1,1)&qCheck.member_photo);
+		}
 		db.sql="DELETE FROM #db.table("user", request.zos.zcoreDatasource)#  WHERE 
 		user_id = #db.param(qCheck.user_id)# and 
 		user_deleted = #db.param(0)# and 
@@ -190,33 +193,15 @@ site_id = #db.param(request.zos.globals.id)# ";
 
 <cffunction name="update" localmode="modern" access="remote" roles="member">
 	<cfscript>
-	var db=request.zos.queryObject;
-	var result=0;
-	var arrM=0;
-	var arrM2=0;
-	var m1=0;
-	var qS=0;
-	var i=0;
-	var ts=0;
-	var qu99=0;
-	var qu2=0;
-	var arrList=0;
-	var userAdminCom=0;
-	var arrGroup=0;
-	var arrGroup2=0;
-	var curGroupId=0;
-	var qG=0;
-	var qCheck99=0;
-	var siteStruct=0;
-	var arrSite=0;
-	var arrSite2=0;
+	var db=request.zos.queryObject; 
 	init();
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Users", true);	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Users", true);	
     arrSite2=arraynew(1);
 	form.user_sync_site_id_list=application.zcore.functions.zso(form,'user_sync_site_id_list');
 	if(form.member_website EQ "/"){
 		form.member_website=request.zos.currentHostName&"/";	
 	}
+	form.office_id=application.zcore.functions.zso(form, 'office_id');
 
 	form.user_invited=application.zcore.functions.zso(form, 'user_invited', true, 0);
 	if(form.method EQ "insert" and form.user_invited EQ 1){
@@ -571,6 +556,40 @@ site_id = #db.param(request.zos.globals.id)# ";
 		#tabCom.beginTabMenu()# 
 		#tabCom.beginFieldSet("Basic")#
 		<table  class="table-list">
+			<cfif structkeyexists(request.zos.userSession.groupAccess, "administrator") and (request.zsession.user.id NEQ form.user_id or request.zsession.user.site_id NEQ request.zos.globals.id)>
+				<cfscript>
+				db.sql="SELECT * FROM #db.table("user_group", request.zos.zcoreDatasource)# user_group WHERE 
+				user_group_deleted = #db.param(0)# and 
+				site_id = #db.param(request.zos.globals.id)#";
+				if(not application.zcore.app.siteHasApp("listing")){ 
+					db.sql&=" and user_group_name NOT IN (#db.param('broker')#)";// always allow agent: , #db.param('agent')#
+				}
+				db.sql&=" ORDER BY user_group_name ASC";
+				qUserGroups=db.execute("qUserGroups");
+				</cfscript>
+				<tr>
+					<th style="vertical-align:top; ">#application.zcore.functions.zOutputToolTip("Access Rights","<ul>
+					<li>Administrator has access to everything, unless set to be limited.</li>
+					<li>Agent can only update their own leads and profile.</li>
+					<li>Member can login to the manager, but has access to nothing by default unless the developer provides them additional access.</li>
+					<li>User doesn't have access to the manager, but can manage their account on the front of the web site.</li>
+					<li>Other groups may have custom behavior, ask your web developer.</li>
+					</ul>")#</th> 
+					<td style="vertical-align:top; "><cfscript>
+					if(form.user_group_id EQ "" or form.user_group_id EQ "0"){
+						form.user_group_id=form.user_group_id2;
+					}
+					selectStruct = StructNew();
+					selectStruct.name = "user_group_id";
+					selectStruct.query = qUserGroups;
+					selectStruct.hideSelect=true;
+					selectStruct.queryLabelField = "user_group_friendly_name";
+					selectStruct.queryValueField = "user_group_id";
+					application.zcore.functions.zInputSelectBox(selectStruct);
+					</cfscript>  
+					</td>
+				</tr>
+			</cfif>
 			<tr>
 				<th>#application.zcore.functions.zOutputHelpToolTip("Office","member.member.edit office_id")#</th>
 				<td><cfscript>
@@ -583,8 +602,10 @@ site_id = #db.param(request.zos.globals.id)# ";
 					selectStruct.name = "office_id";
 					selectStruct.query = qOffice;
 					selectStruct.queryParseLabelVars=true;
-					selectStruct.queryLabelField = "##office_name## (##office_address##)";
+					selectStruct.queryLabelField = "##office_name##, ##office_address##";
 					selectStruct.queryValueField = "office_id";
+					selectStruct.multiple=true;
+					application.zcore.functions.zSetupMultipleSelect(selectStruct.name, application.zcore.functions.zso(form, 'office_id'));
 					application.zcore.functions.zInputSelectBox(selectStruct);
 					</cfscript></td>
 			</tr>
@@ -608,7 +629,7 @@ site_id = #db.param(request.zos.globals.id)# ";
 				<th>#application.zcore.functions.zOutputHelpToolTip("Email","member.member.edit member_email")#</th>
 				<td><input type="text" name="member_email" value="<cfif form.member_email EQ ''>#form.user_username#<cfelse>#form.member_email#</cfif>" size="30" /> *</td>
 			</tr>
-			<cfif form.method EQ "add">
+			<cfif currentMethod EQ "add">
 				<tr>
 					<th>&nbsp;</th>
 					<td>
@@ -617,11 +638,10 @@ site_id = #db.param(request.zos.globals.id)# ";
 						<input type="radio" name="user_invited" id="user_invited2" value="0" onclick="$('##inviteUserDiv1').hide();$('##setPasswordTable1').show();"> <label for="user_invited2">Set Password</label>
 						</div>
 						<div id="inviteUserDiv1" class="z-float">
-						<p>For security, it is recommended to invite users instead of setting the password for them.</p>
-						<h2>Invite Info</h2>
-						<p>This also helps to confirm their email address is correct and reduces the amount of password sharing.</p>
+						<p>For better security, it is recommended to invite users instead of setting the password for them.</p>
+						<h2>Invite Info</h2> 
 						<p>The user will receive a welcome email instructing them to finish creating their account.</p>
-						<p>Invitations last 7 days, and then you'll have to re-invite the user.  You can reinvite them from the manage users page.</p>
+						<p>Invitations expire after 7 days.  You can reinvite them from the manage users page.</p>
 						<p>You can add your own welcome message to this email below:</p>
 						<p><strong>Welcome message</strong></p>
 						<textarea name="user_welcome_message" cols="10" rows="5" style="width:96%;">#application.zcore.functions.zso(form, 'user_welcome_message', false, 'You have been invited to create an account on this web site.')#</textarea>
@@ -700,33 +720,6 @@ site_id = #db.param(request.zos.globals.id)# ";
 				htmlEditor.create();
 				</cfscript></td>
 			</tr>
-			<cfif structkeyexists(request.zos.userSession.groupAccess, "administrator") and (request.zsession.user.id NEQ form.user_id or request.zsession.user.site_id NEQ request.zos.globals.id)>
-				<cfscript>
-				db.sql="SELECT * FROM #db.table("user_group", request.zos.zcoreDatasource)# user_group WHERE 
-				user_group_deleted = #db.param(0)# and 
-				site_id = #db.param(request.zos.globals.id)#";
-				if(not application.zcore.app.siteHasApp("listing")){ 
-					db.sql&=" and user_group_name NOT IN (#db.param('broker')#, #db.param('agent')#)";
-				}
-				db.sql&=" ORDER BY user_group_name ASC";
-				qUserGroups=db.execute("qUserGroups");
-				</cfscript>
-				<tr>
-					<th style="vertical-align:top; ">#application.zcore.functions.zOutputHelpToolTip("Access Rights","member.member.edit user_group_id")#</th>
-					<td style="vertical-align:top; "><cfscript>
-					if(form.user_group_id EQ "" or form.user_group_id EQ "0"){
-						form.user_group_id=form.user_group_id2;
-					}
-					selectStruct = StructNew();
-					selectStruct.name = "user_group_id";
-					selectStruct.query = qUserGroups;
-					selectStruct.hideSelect=true;
-					selectStruct.queryLabelField = "user_group_name";
-					selectStruct.queryValueField = "user_group_id";
-					application.zcore.functions.zInputSelectBox(selectStruct);
-					</cfscript></td>
-				</tr>
-			</cfif>
 		</table>
 		#tabCom.endFieldSet()# 
 		#tabCom.beginFieldSet("Advanced")#
@@ -1075,6 +1068,7 @@ site_id = #db.param(request.zos.globals.id)# ";
 	var searchNav=0;
 	var qCount=0;  
 	init();
+	form.showall=application.zcore.functions.zso(form, 'showall', true, 0);
 	application.zcore.functions.zSetPageHelpId("5.1");
 	application.zcore.functions.zStatusHandler(request.zsid);
 	db.sql="SELECT count(user.user_id) count FROM #db.table("user", request.zos.zcoreDatasource)#, 
@@ -1097,7 +1091,7 @@ site_id = #db.param(request.zos.globals.id)# ";
 		db.sql&=" and concat(user.user_id,#db.param(' ')#, #db.param(' ')#, member_company, #db.param(' ')#,
 		user_first_name,#db.param(' ')#,user_last_name,#db.param(' ')#,user_username) like #db.param("%#form.searchtext#%")#";
 	} 
-	qCount=db.execute("qCount");
+	qCount=db.execute("qCount"); 
 	db.sql="SELECT *, user.site_id usersiteid, user.site_id membersiteid 
 	FROM #db.table("user", request.zos.zcoreDatasource)# user , 
 	#db.table("user_group", request.zos.zcoreDatasource)# user_group 
@@ -1118,15 +1112,33 @@ site_id = #db.param(request.zos.globals.id)# ";
 		db.sql&=" and concat(user.user_id,#db.param(' ')#, #db.param(' ')#, member_company, #db.param(' ')#,
 		user_first_name,#db.param(' ')#,user_last_name,#db.param(' ')#,user_username) like #db.param("%#form.searchtext#%")#";
 	}
-	db.sql&=" ORDER BY member_sort asc, user_first_name, user_last_name 
-	LIMIT #db.param((form.zIndex-1)*30)#,#db.param(30)# ";
+	db.sql&=" ORDER BY member_sort asc, user_first_name, user_last_name ";
+	if(form.showall EQ 0){
+		db.sql&=" LIMIT #db.param((form.zIndex-1)*30)#,#db.param(30)# ";
+	}
 	qMember=db.execute("qMember");
+
+	/* todo: finish last login
+	arrUsername=[];
+	for(row in qMember){
+		arrayAppend(arrUsername, row.user_email);
+	}
+	db.sql="select login_log_username, max(login_log_datetime) lastDate from #db.table("login_log", request.zos.zcoreDatasource)# WHERE 
+	login_log_username in (#db.trustedSQL("'"&arrayToList(arrUsername, "','")&"'")#) and 
+	site_id=#db.param(request.zos.globals.id)# and 
+	login_log_deleted=#db.param(0)# ";
+	qLoginLog=db.execute("qLoginLog");
+*/
 
 	db.sql="SELECT * FROM #db.table("user_group", request.zos.zcoreDatasource)# user_group 
 	WHERE site_id = #db.param(request.zos.globals.id)# and 
-	user_group_deleted = #db.param(0)#
-	ORDER BY user_group_name";
+	user_group_deleted = #db.param(0)# ";
+	if(not application.zcore.app.siteHasApp("listing")){ 
+		db.sql&=" and user_group_name NOT IN (#db.param('broker')#)";// always allow agent: , #db.param('agent')#
+	}
+	db.sql&=" ORDER BY user_group_name";
 	qUserGroup=db.execute("qUserGroup");
+
     </cfscript>
 	<h2 style="display:inline; ">Users | </h2>
 	<cfif not request.zos.globals.enableDemoMode>
@@ -1146,6 +1158,9 @@ site_id = #db.param(request.zos.globals.id)# ";
 	<br />
 	Users are other logins that have access to the system.  They can be assigned leads and you can choose whether they are able to do everything you can or just view their own leads. Users with a public profile can be sorted using the up and down arrows.<br />
 	<br />
+	<cfif qCount.count GT 30 and form.showall EQ 0>
+		You must click show all to sort the public profile users.<br><br>
+	</cfif>
 	<form action="/z/admin/member/index" method="post" enctype="multipart/form-data">
 		<table style="width:100%;" class="table-list">
 			<tr>
@@ -1157,15 +1172,16 @@ site_id = #db.param(request.zos.globals.id)# ";
 					<cfscript>
 					selectStruct = StructNew();
 					selectStruct.name = "ugid";
-					selectStruct.query = qUserGroup;
-					selectStruct.queryLabelField = "user_group_name";
+					selectStruct.query = qUserGroup; 
+					selectStruct.queryLabelField = "user_group_friendly_name";
 					selectStruct.queryValueField = "user_group_id";
 					application.zcore.functions.zInputSelectBox(selectStruct);
 					</cfscript>
 				</th>
 				<th>
 					<input type="submit" name="submitForm" value="Search" />
-					<input type="button" name="cancel" value="Clear Search" onclick="window.location.href='/z/admin/member/index';" /></th>
+					<input type="button" name="cancel" value="Clear Search" onclick="window.location.href='/z/admin/member/index';" />
+					<input type="button" onclick="window.location.href='/z/admin/member/index?showall=1'; " value="Show All" /></th>
 			</tr>
 		</table>
 	</form>
@@ -1173,22 +1189,25 @@ site_id = #db.param(request.zos.globals.id)# ";
 	if(qmember.recordcount EQ 0 and form.zIndex NEQ 1){
 		application.zcore.functions.zredirect('/z/admin/member/index?zindex='&max(1, form.zIndex-1));
 	}
-	searchStruct = StructNew();
-	searchStruct.count = qcount.count;
-	searchStruct.index = form.zIndex;
-	searchStruct.showString = "Results ";
-	searchStruct.url ="/z/admin/member/index";
-	searchStruct.indexName = "zIndex";
-	searchStruct.buttons = 5;	
-		searchStruct.perpage = 30;
-	if(searchStruct.count LTE searchStruct.perpage){
-		searchNav="";
-	}else{
-		searchNav = '<table class="table-list" style="width:100%; border-spacing:0px;" >		
-	<tr><td style="padding:0px;">'&application.zcore.functions.zSearchResultsNav(searchStruct)&'</td></tr></table>';
+	searchNav="";
+	if(form.showall EQ 0){
+		searchStruct = StructNew();
+		searchStruct.count = qcount.count;
+		searchStruct.index = form.zIndex;
+		searchStruct.showString = "Results ";
+		searchStruct.url ="/z/admin/member/index";
+		searchStruct.indexName = "zIndex";
+		searchStruct.buttons = 5;	
+			searchStruct.perpage = 30;
+		if(searchStruct.count LTE searchStruct.perpage){
+			searchNav="";
+		}else{
+			searchNav = '<table class="table-list" style="width:100%; border-spacing:0px;" >		
+		<tr><td style="padding:0px;">'&application.zcore.functions.zSearchResultsNav(searchStruct)&'</td></tr></table>';
+		}
 	}
 	</cfscript>
-	#searchNav#
+	#searchNav# 
 	<table id="sortRowTable" style="width:100%;"  class="table-list">
 		<thead>
 		<tr>
@@ -1199,6 +1218,7 @@ site_id = #db.param(request.zos.globals.id)# ";
 			<th>Email</th>
 			<th>Phone</th>
 			<th>Access Rights</th>
+			<th>Last Login</th>
 			<th>Sort</th>
 			<th>Admin</th>
 		</tr>
@@ -1215,7 +1235,7 @@ site_id = #db.param(request.zos.globals.id)# ";
 						<img src="#application.zcore.functions.zvar('domain',qMember.userSiteId)##request.zos.memberImagePath##qMember.member_photo#" width="90" />
 					<cfelse>
 						&nbsp;
-					</cfif></td>
+					</cfif></td> 
 				<td>#qMember.member_company#&nbsp;</td>
 				<td><cfif qMember.member_first_name EQ ''>
 						#qMember.user_first_name# #qMember.user_last_name#
@@ -1230,8 +1250,9 @@ site_id = #db.param(request.zos.globals.id)# ";
 					</cfif>
 					&nbsp;</td>
 				<td>#qMember.member_phone#&nbsp;</td>
-				<td>#qMember.user_group_name#</td>
-				<td><cfif qMember.member_public_profile EQ 1>#variables.queueSortCom.getAjaxHandleButton(qMember.user_id)#</cfif></td> 
+				<td>#qMember.user_group_friendly_name#</td>
+				<td>#dateformat(qMember.user_last_login_datetime, "m/d/yyyy")&" "&timeformat(qMember.user_last_login_datetime, "h:mm tt")#</td> 
+				<td><cfif (qCount.count LTE 30 or form.showall EQ 1) and qMember.member_public_profile EQ 1 and qMember.user_group_id NEQ variables.userUserGroupId>#variables.queueSortCom.getAjaxHandleButton(qMember.user_id)#</cfif></td>  
 				<td><!--- <cfif qMember.member_public_profile EQ 1>
 						#variables.queueSortCom.getLinks(qMember.recordcount, qMember.currentrow, '/z/admin/member/index?user_id=#qMember.user_id#', "vertical-arrows")#
 					</cfif> --->
@@ -1260,7 +1281,7 @@ site_id = #db.param(request.zos.globals.id)# ";
 
 
 							<a href="/z/admin/member/edit?user_id=#qMember.user_id#&amp;zIndex=#form.zIndex#&amp;ugid=#form.ugid#&amp;searchtext=#URLEncodedFormat(form.searchtext)#">Edit</a>  
-							<cfif application.zcore.functions.zso(application.zcore.app.getAppData("blog").optionStruct, 'blog_config_url_author_id', true) NEQ 0> 
+							<cfif application.zcore.app.siteHasApp("blog") and application.zcore.functions.zso(application.zcore.app.getAppData("blog").optionStruct, 'blog_config_url_author_id', true) NEQ 0> 
 								 | <a href="#application.zcore.app.getAppCFC("blog").getAuthorLink(row)#" target="_blank">Articles</a>
 							</cfif>
 
@@ -1282,7 +1303,7 @@ site_id = #db.param(request.zos.globals.id)# ";
 
 <cffunction name="getImportUserFields" localmode="modern" access="remote" roles="administrator">
 	<cfscript>
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Users");	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Users");	
 	rs={
 		arrRequired:listToArray("user_email	user_password", chr(9)),
 		arrOptional:listToArray("user_first_name	user_last_name	user_phone	user_fax	user_street	user_street2	user_city	user_state	user_country	user_zip	user_pref_html	user_pref_phone	user_pref_fax	user_pref_list	user_pref_mail	user_pref_email	user_pref_new	user_pref_sharing	user_googleplus_url	user_twitter_url	user_facebook_url	user_openid_id	user_openid_provider	user_openid_email	user_openid_required	user_birthday	user_gender	user_alternate_email	user_alternate_contact_name", chr(9))
@@ -1297,7 +1318,7 @@ site_id = #db.param(request.zos.globals.id)# ";
 	var qOption=0;
 	var db=request.zos.queryObject;  
 	application.zcore.functions.zSetPageHelpId("5.3");
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Users");	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Users");	
 	rs=this.getImportUserFields();
 	application.zcore.functions.zStatusHandler(request.zsid);
 	</cfscript>
@@ -1354,7 +1375,7 @@ site_id = #db.param(request.zos.globals.id)# ";
 <cffunction name="processImport" localmode="modern" access="remote" roles="administrator">
 	<cfscript>
 	var db=request.zos.queryObject;  
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Users", true);	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Users", true);	
 	setting requesttimeout="30000";
 	defaultStruct={}; 
 	defaultStruct.user_group_id=application.zcore.functions.zso(form, 'user_group_id');

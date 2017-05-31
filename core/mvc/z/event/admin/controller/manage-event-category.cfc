@@ -5,7 +5,7 @@
 <cffunction name="delete" localmode="modern" access="remote" roles="member">
 	<cfscript>
 	var db=request.zos.queryObject; 
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Event Categories", true);	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Event Categories", true);	
 	db.sql="SELECT * FROM #db.table("event_category", request.zos.zcoreDatasource)# event_category
 	WHERE event_category_id= #db.param(application.zcore.functions.zso(form,'event_category_id'))# and 
 	event_category_deleted = #db.param(0)# and
@@ -69,7 +69,7 @@
 	var ts={};
 	db=request.zos.queryObject;
 	var result=0;
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Event Categories", true);	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Event Categories", true);	
 	form.site_id = request.zos.globals.id;
 	ts.event_calendar_id.required=true;
 	ts.event_category_name.required = true;
@@ -161,7 +161,7 @@
 	var currentMethod=form.method;
 	var htmlEditor=0;
 	application.zcore.functions.zSetPageHelpId("10.6");
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Event Categories");	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Event Categories");	
 	if(application.zcore.functions.zso(form,'event_category_id') EQ ''){
 		form.event_category_id = -1;
 	}
@@ -307,8 +307,32 @@
 				<td>#application.zcore.functions.zInput_Boolean("event_category_searchable")#</td>
 			</tr> 
 			<tr>
+				<th style="vertical-align:top; width:120px; ">Meta Title</th>
+				<td>
+					<input type="text" name="event_category_metatitle" style="width:95%;" value="#htmleditformat(form.event_category_metatitle)#">
+				</td>
+			</tr>
+			<tr>
+				<th style="vertical-align:top; width:120px; ">Meta Keywords</th>
+				<td>
+					<textarea name="event_category_metakey" style="width:95%; height:60px; ">#htmleditformat(form.event_category_metakey)#</textarea>
+				</td>
+			</tr>
+			<tr>
+				<th style="vertical-align:top; width:120px; ">Meta Description</th>
+				<td>
+					<textarea name="event_category_metadesc" style="width:95%; height:60px; ">#htmleditformat(form.event_category_metadesc)#</textarea>
+				</td>
+			</tr>
+			<tr>
 				<th>Unique URL</th>
-				<td>#application.zcore.functions.zInputUniqueUrl("event_category_unique_url")#</td>
+				<td>
+					<cfif currentmethod EQ "add">
+						#application.zcore.functions.zInputUniqueUrl("event_category_unique_url", true)#
+					<cfelse>
+						#application.zcore.functions.zInputUniqueUrl("event_category_unique_url")#
+					</cfif>
+				</td>
 			</tr> 
 			<tr>
 				<th style="width:1%;">&nbsp;</th>
@@ -331,7 +355,7 @@
 <cffunction name="index" localmode="modern" access="remote" roles="member">
 	<cfscript>
 	db=request.zos.queryObject;
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Event Categories");	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Event Categories");	
 	application.zcore.functions.zSetPageHelpId("10.5");
 	searchOn=false;
 	form.event_calendar_id=application.zcore.functions.zso(form, 'event_calendar_id');
@@ -472,7 +496,7 @@
 		}
 		echo('
 			<a href="/z/event/admin/manage-event-category/edit?event_category_id=#row.event_category_id#&amp;modalpopforced=1"  onclick="zTableRecordEdit(this);  return false;">Edit</a> | ');
-		if(not application.zcore.user.checkServerAccess() and row.event_category_unique_url NEQ ""){
+		if(not application.zcore.functions.zIsForceDeleteEnabled(row.event_category_unique_url)){
 			echo(' Delete disabled');
 		}else{
 			echo('<a href="##" onclick="zDeleteTableRecordRow(this, ''/z/event/admin/manage-event-category/delete?event_category_id=#row.event_category_id#&amp;returnJson=1&amp;confirm=1''); return false;">Delete</a>');

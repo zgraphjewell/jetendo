@@ -568,18 +568,14 @@ displayGroupCom.add();
 		tempObj.cache=false;
 		tempObj.method="post";
 		tempObj.postObj=postObj;
-		tempObj.callback=function(d){ 
-			try{
-				var r=eval("("+d+")");
-				if(!r.success){ 
-					alert(r.errorMessage);
-					return;
-				}
-			}catch(e){
-				alert("Failed to register.");
-				throw e;
+		tempObj.callback=function(r){ 
+			var r=JSON.parse(r);
+			if(r.success){ 
+				// success
+			}else{
+				alert(r.errorMessage);
 				return;
-			} 
+			}
 			window.location.href="#groupStruct.site_option_group_public_thankyou_url#";
 		};
 		tempObj.ignoreOldRequests=true;
@@ -775,7 +771,7 @@ displayGroupCom.ajaxInsert();
 		arrayAppend(arrOption, row.site_option_name);
 		v=replace(replace(replace(replace(replace(row.site_option_name, chr(10), ' ', 'all'), chr(13), '', 'all'), chr(9), ' ', 'all'), '\', '\\', 'all'), '"', '\"', "all");
 		if(not first){
-			echo(", ");
+			echo(",");
 		}
 		if(row.site_option_type_id EQ 16){
 			hasUser=true;
@@ -887,7 +883,7 @@ displayGroupCom.ajaxInsert();
 			}
 			for(i2=1;i2 LTE arraylen(arrRow);i2++){
 				if(i2 NEQ 1){
-					echo(', ');
+					echo(',');
 				} 
 				v=rereplace(replace(replace(replace(replace(arrRow[i2], chr(10), ' ', 'all'), chr(13), '', 'all'), chr(9), ' ', 'all'), '"', '""', "all"), '<.*?>', '', 'all');
 				echo('"'&v&'"');  
@@ -1541,6 +1537,9 @@ displayGroupCom.ajaxInsert();
 	}
 	</cfscript>
 	<p><a href="/z/admin/site-option-group/add?site_option_group_parent_id=<cfif isquery(qgroup)>#qgroup.site_option_group_id#</cfif>">Add Group</a> 
+
+	 | <a href="/z/admin/site-option-group-import/importGroup">Import Group</a> 
+	 
 	<cfif isquery(qgroup) and qgroup.site_option_group_id NEQ 0>
 		| <a href="/z/admin/site-option-group/displayGroupCode?site_option_group_id=<cfif isquery(qgroup)>#qgroup.site_option_group_id#</cfif>" target="_blank">Display Group Code</a>
 	</cfif>
@@ -1893,13 +1892,10 @@ displayGroupCom.ajaxInsert();
 			<tr>
 				<th style="vertical-align:top; white-space:nowrap;">#application.zcore.functions.zOutputHelpToolTip("Code Name","member.site-option-group.edit site_option_group_name")#</th>
 				<td>
-				<cfif currentMethod EQ "add">
 					<input name="site_option_group_name" id="site_option_group_name" size="50" type="text" value="#htmleditformat(form.site_option_group_name)#"  onkeyup="var d1=document.getElementById('site_option_group_display_name');d1.value=this.value;" onblur="var d1=document.getElementById('site_option_group_display_name');d1.value=this.value;" maxlength="100" />
 					<input type="hidden" name="site_option_group_type" value="1" />
-				<cfelse>
-					#form.site_option_group_name#<br />
-					<input name="site_option_group_name" id="site_option_group_name" type="hidden" value="#htmleditformat(form.site_option_group_name)#"  />
-					Note: Code Name can't be changed after initial creation to allow for simple syncing between sites &amp; servers.
+				<cfif currentMethod NEQ "add">
+					<br><br><strong>WARNING:</strong> You should not change the "Name" on a live site unless you are ready to deploy the corrections to the source code immediately.  Editing the "Name" will also prevent the Sync feature from working.  Make sure to communicate with the other developers if you change the "Name".  Any code that refers to this name will start throwing undefined errors immediately after changing this.
 				</cfif></td>
 			</tr>
 			<tr>
@@ -2124,7 +2120,7 @@ displayGroupCom.ajaxInsert();
 					// options for query data
 					ts.multiple=true;
 					ts.query = qGroup2;
-					ts.queryLabelField = "user_group_name";
+					ts.queryLabelField = "user_group_friendly_name";
 					ts.queryValueField = "user_group_id";
 					application.zcore.functions.zSetupMultipleSelect(ts.name, application.zcore.functions.zso(form, 'site_option_group_user_group_id_list'));
 					application.zcore.functions.zInputSelectBox(ts);
@@ -2140,7 +2136,7 @@ displayGroupCom.ajaxInsert();
 					// options for query data
 					ts.multiple=true;
 					ts.query = qGroup2;
-					ts.queryLabelField = "user_group_name";
+					ts.queryLabelField = "user_group_friendly_name";
 					ts.queryValueField = "user_group_id";
 					application.zcore.functions.zSetupMultipleSelect(ts.name, application.zcore.functions.zso(form, 'site_option_group_allow_delete_usergrouplist'));
 					application.zcore.functions.zInputSelectBox(ts);
@@ -2363,10 +2359,12 @@ displayGroupCom.ajaxInsert();
 				</tr>
 				<tr>
 					<th>Custom Email<br />Options</th>
-					<td><p>If the custom email cfc path/method feature is used, the regular lead email will be disabled.</p>
+					<td>
+						<p>If you need to have custom routing that can't be handled by the CMS, you should answer No and Yes below and define the Email CFC above.  The Email CFC must send the email itself.</p>
+						<p>If the custom email cfc path/method feature is used, the regular lead email will be disabled.</p>
 					<p>Do you want to force the regular email to be sent as well?</p>
 					<p>#application.zcore.functions.zInput_Boolean("site_option_group_force_send_default_email")#</p>
-					<p>Disable routing for the custom email?</p>
+					<p>Disable routing for the custom email? (You will need to call application.zcore.email.send yourself if you want to send an email)</p>
 					<p>#application.zcore.functions.zInput_Boolean("site_option_group_disable_custom_routing")#</p></td>
 				</tr>
 		</table>

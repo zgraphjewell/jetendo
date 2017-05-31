@@ -20,21 +20,7 @@
 	this.emptyStruct=structnew();
 	
 	
-	</cfscript>
-    
-    <cffunction name="deleteListings" localmode="modern" output="no" returntype="any">
-    	<cfargument name="idlist" type="string" required="yes">
-    	<cfscript>
-		var db=request.zos.queryObject;
-		var arrId=listtoarray(mid(replace(arguments.idlist," ","","ALL"),2,len(arguments.idlist)-2),"','");
-		super.deleteListings(arguments.idlist);
-		
-		db.sql="DELETE FROM #db.table("rets12_property", request.zos.zcoreDatasource)#  
-		WHERE rets12_157 LIKE #db.param('#this.mls_id#-%')# and 
-		rets12_157 IN (#db.trustedSQL(arguments.idlist)#)";
-		db.execute("q"); 
-		</cfscript>
-    </cffunction>
+	</cfscript> 
     
     <cffunction name="initImport" localmode="modern" output="no" returntype="any">
     	<cfargument name="resource" type="string" required="yes">
@@ -85,11 +71,10 @@
 		/*
 		
 		wipe out the listings to reimport them again...
-DELETE FROM `#request.zos.zcoreDatasource#`.listing_track WHERE listing_id LIKE '11-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.listing WHERE listing_id LIKE '11-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.listing_data WHERE listing_id LIKE '11-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.`listing_memory` WHERE listing_id LIKE '11-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.rets12_property where rets12_157 LIKE '11-%';
+DELETE FROM `#request.zos.zcoreDatasource#`.listing_track WHERE listing_id LIKE '12-%';
+DELETE FROM `#request.zos.zcoreDatasource#`.listing WHERE listing_id LIKE '12-%';
+DELETE FROM `#request.zos.zcoreDatasource#`.listing_data WHERE listing_id LIKE '12-%';
+DELETE FROM `#request.zos.zcoreDatasource#`.`listing_memory` WHERE listing_id LIKE '12-%'; 
 		*/
 		if(arraylen(arguments.ss.arrData) NEQ arraylen(request.zos.listing.mlsStruct[this.mls_id].sharedStruct.lookupStruct.arrColumns)){
 			application.zcore.functions.zdump(request.zos.listing.mlsStruct[this.mls_id].sharedStruct.lookupStruct.arrColumns);
@@ -374,6 +359,8 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets12_property where rets12_157 LIK
 		rs.listing_data_detailcache1=local.listing_data_detailcache1;
 		rs.listing_data_detailcache2=local.listing_data_detailcache2;
 		rs.listing_data_detailcache3=local.listing_data_detailcache3;
+
+		rs.listing_track_sysid=ts["rets12_sysid"];
 		return {
 			listingData:rs,
 			columnIndex:columnIndex,
@@ -381,22 +368,9 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets12_property where rets12_157 LIK
 		};
 		</cfscript>
     </cffunction>
-    
-    <cffunction name="getJoinSQL" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="joinType" type="string" required="no" default="INNER">
-		<cfscript>
-		var db=request.zos.queryObject;
-		</cfscript>
-    	<cfreturn "#arguments.joinType# JOIN #db.table("rets12_property", request.zos.zcoreDatasource)# rets12_property ON rets12_property.rets12_157 = listing.listing_id">
-    </cffunction>
-    <cffunction name="getPropertyListingIdSQL" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets12_property.rets12_157">
-    </cffunction>
-    <cffunction name="getListingIdField" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets12_157">
-    </cffunction>
+
     <cffunction name="getDetails" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="query" type="query" required="yes">
+    	<cfargument name="ss" type="struct" required="yes">
         <cfargument name="row" type="numeric" required="no" default="#1#">
         <cfargument name="fulldetails" type="boolean" required="no" default="#false#">
     	<cfscript>
@@ -410,7 +384,7 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets12_property where rets12_157 LIK
 		var column=0;
 		var arrV=0;
 		var arrV2=0;
-		var idx=this.baseGetDetails(arguments.query, arguments.row, arguments.fulldetails);
+		var idx=this.baseGetDetails(arguments.ss, arguments.row, arguments.fulldetails);
 		
 		t99=gettickcount();
 		idx["features"]="";
@@ -419,17 +393,17 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets12_property where rets12_157 LIK
 		
 		t44444=0;
 		request.lastPhotoId="";
-		if(arguments.query.listing_photocount EQ 0){
+		if(arguments.ss.listing_photocount EQ 0){
 			idx["photo1"]='/z/a/listing/images/image-not-available.gif';
 		}else{
 			i=1;
 			for(i=1;i LTE idx.listing_photocount;i++){
-				local.fNameTemp1=arguments.query.listing_id&"-"&i&".jpeg";
+				local.fNameTemp1=arguments.ss.listing_id&"-"&i&".jpeg";
 				local.fNameTempMd51=lcase(hash(local.fNameTemp1, 'MD5'));
 				local.absPath='#request.zos.sharedPath#mls-images/12/'&left(local.fNameTempMd51,2)&"/"&mid(local.fNameTempMd51,3,1)&"/"&local.fNameTemp1;
 				//if(fileexists(local.absPath)){
 					if(i EQ 1){
-						request.lastPhotoId=arguments.query.listing_id;
+						request.lastPhotoId=arguments.ss.listing_id;
 					}
 					idx["photo"&i]=request.zos.retsPhotoPath&'12/'&left(local.fNameTempMd51,2)&"/"&mid(local.fNameTempMd51,3,1)&"/"&local.fNameTemp1;
 				/*}else{
@@ -440,10 +414,10 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets12_property where rets12_157 LIK
 				}*/
 			}
 		}
-			idx["agentName"]=query["rets12_144"];
+			idx["agentName"]=application.zcore.functions.zso(arguments.ss, "rets12_144");
 			idx["agentPhone"]="";
 			idx["agentEmail"]="";
-			idx["officeName"]=query.rets12_165;
+			idx["officeName"]=application.zcore.functions.zso(arguments.ss, "rets12_165");
 			idx["officePhone"]="";
 			idx["officeCity"]="";
 			idx["officeAddress"]="";
@@ -451,11 +425,11 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets12_property where rets12_157 LIK
 			idx["officeState"]="";
 			idx["officeEmail"]="";
 			
-		idx["virtualtoururl"]=query["rets12_1223"][arguments.row];
-		idx["zipcode"]=arguments.query["rets#this.mls_id#_10"][arguments.row];
+		idx["virtualtoururl"]=application.zcore.functions.zso(arguments.ss, "rets12_1223");
+		idx["zipcode"]=application.zcore.functions.zso(arguments.ss, "rets#this.mls_id#_10");
 		idx["maintfees"]="";
-		if(arguments.query["rets#this.mls_id#_93"][arguments.row] NEQ ""){
-			idx["maintfees"]=arguments.query["rets#this.mls_id#_93"][arguments.row];
+		if(application.zcore.functions.zso(arguments.ss, "rets#this.mls_id#_93") NEQ ""){
+			idx["maintfees"]=application.zcore.functions.zso(arguments.ss, "rets#this.mls_id#_93");
 		}
 		</cfscript>
         <cfsavecontent variable="details"><table class="ztablepropertyinfo">

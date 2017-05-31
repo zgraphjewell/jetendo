@@ -11,15 +11,15 @@
 	<h2>Manage Leads</h2>
 	<a href="/z/inquiries/admin/inquiry/add">Add Lead</a>
 	<cfif structkeyexists(request.zos.userSession.groupAccess, "administrator")>
-|		<a href="/z/inquiries/admin/manage-inquiries/showAllFeedback">All Feedback</a>| 
-		
-		Export <a href="/z/inquiries/admin/export" target="_blank">CSV</a> |
-		<a href="/z/inquiries/admin/export?format=html" target="_blank">HTML</a>
+		| <a href="/z/inquiries/admin/manage-inquiries/showAllFeedback">All Feedback</a> | 
 	</cfif>
-	| <a href="/z/inquiries/admin/lead-source-report/index">Source Report</a> | 
+	
+	<a href="/z/inquiries/admin/manage-inquiries/index##exportLeadDiv">Export Leads</a> | 
+	<a href="/z/inquiries/admin/lead-source-report/index">Source Report</a> | 
 		<a href="/z/inquiries/admin/search-engine-keyword-report/index">Keyword Report</a>
 	<cfif structkeyexists(request.zos.userSession.groupAccess, "administrator")>
 		|		
+		<a href="/z/inquiries/admin/autoresponder/index">Autoresponders</a> | 
 		<a href="/z/inquiries/admin/routing/index">Routing</a> | 
 		<a href="/z/inquiries/admin/types/index">Types</a> | 
 		<a href="/z/inquiries/admin/lead-template/index">Templates</a>
@@ -104,8 +104,20 @@
 				</cfif>
 			</cfif>
 			<cfif isDefined('request.noleadsystemlinks') EQ false>
+				<cfscript>
+				assignDomain=request.zos.currentHostName;
+				loginURL="#assignDomain#/z/inquiries/admin/feedback/view";
+				if(form.user_id NEQ 0 and form.user_id_siteIDType EQ 1){ 
+					if(structkeyexists(request, 'manageLeadNonManagerAssignDomain')){
+						assignDomain=request.manageLeadNonManagerAssignDomain;
+					}
+					if(not application.zcore.user.groupIdHasAccessToGroup(form.user_group_id, "member")){ 
+						loginURL="#assignDomain#/z/inquiries/admin/manage-inquiries/userView";
+					}
+				}
+				</cfscript>
 				You should leave feedback on the lead's status: <br />
-				<a href="#request.zos.currentHostName#/z/inquiries/admin/feedback/view?inquiries_id=<cfif structkeyexists(form, 'groupemail') and form.groupEmail>#form.inquiries_parent_id#<cfelse>#form.inquiries_id#</cfif>"><strong>Click here to login and leave feedback</strong></a> <br />
+				<a href="#loginURL#?inquiries_id=<cfif structkeyexists(form, 'groupemail') and form.groupEmail>#form.inquiries_parent_id#<cfelse>#form.inquiries_id#</cfif>"><strong>Click here to login and leave feedback</strong></a> <br />
 				<br />
 			</cfif>
 			<cfscript>
@@ -178,43 +190,15 @@
         Nextel: phonenumber@messaging.nextel.com  --->
 </cffunction>
 
+
+
 <cffunction name="getViewInclude" localmode="modern" access="public">
 	<cfargument name="qinquiry" type="query" required="yes">
-	<cfscript>
-	var isReservationSystem=false;
-	var tablestyle=0;
-	var tdstyle="";
-	var thstyle="";
-	var qtrack=0;
-	var qPage=0;
-	var arrU=0;
-	var i894=0;
-	var formattedDate=0;
-	var firstDate=0;
-	var formattedDate2=0;
-	var seconds=0;
-	var minutes=0;
-	var lastDate=0;
-	var qTrack2=0;
-	var qMem2=0;
-	var propInfo222=0;
-	var qSearch=0;
-	var i=0;
-	var searchStr=0;
-	var ts4=0;
-	var contentIdList=0;
-	var propertyDataCom=0;
-	var propDisplayCom=0;
-	var qC39821n=0;
-	var ts=0;
-	var tempMlsId=0;
-	var tempMlsPid=0;
-	var tempMLSStruct=0;
-	var returnStruct=0;
-	var res=0;
- 	var db=request.zos.queryObject;
-	var arrP=0;
+	<cfscript> 
+ 	var db=request.zos.queryObject; 
 	var t=structnew();
+	thstyle="";
+	tdstyle="";
 	application.zcore.functions.zquerytostruct(arguments.qinquiry, t);
 	tablestyle=' style="border-spacing:0px; width:100%;" ';
 	if(isDefined('request.usestyleonly')){
@@ -266,13 +250,13 @@ Link 2 disabled since this may cause a duplicate google adwords PPC click						<
 					<td style="#tdstyle#">
 						
 					<cfif dateformat(qTrack.track_user_datetime,'yyyymmdd') GT 20111121>
-						<cfif qTrack.track_user_ppc EQ 1>
+						<cfif qTrack.track_user_ppc EQ 1 or qTrack.track_user_first_page CONTAINS "gclid=">
 							<strong>Google Adwords Pay Per Click Lead</strong><br />
 						</cfif>
 						<cfif qTrack.track_user_source NEQ "">
 						<strong>Source: #qTrack.track_user_source#</strong><br />
 						</cfif>
-						<cfelse>
+					<cfelse>
 						<cfscript>
 						db.sql="SELECT count(track_page_id) count 
 						FROM #db.table("track_page", request.zos.zcoreDatasource)# track_page 
@@ -315,15 +299,36 @@ Link 2 disabled since this may cause a duplicate google adwords PPC click						<
 							lastDate=firstDate;	
 						}
 						seconds=DateDiff("s", formattedDate, formattedDate2);
-						minutes=fix(seconds/60)&'mins ';
-						if(fix(seconds/60) EQ 0){
-							minutes="";
+
+						if(qTrack.track_user_session_length NEQ 0){
+							seconds=qTrack.track_user_session_length;
+							if(seconds GT 86400){
+								minutes=fix(seconds/60/60/24)&' days ';
+							}else{
+								minutes=fix(seconds/60)&' minutes ';
+								if(fix(seconds/60) EQ 0){
+									minutes="";
+								}
+								if(seconds MOD 60 NEQ 0){
+									minutes=minutes&(seconds MOD 60)&' seconds';
+								}
+							}
+							echo('Length of visit: #minutes#<br />');
 						}
-						if(seconds MOD 60 NEQ 0){
-							minutes=minutes&(seconds MOD 60)&'secs';
-						}
-						if(qTrack.track_user_datetime NEQ qTrack.track_user_recent_datetime){
-							echo('Length of Visit: #minutes#<br />');
+						if(qTrack.track_user_seconds_since_first_visit NEQ 0){
+							seconds=qTrack.track_user_seconds_since_first_visit;
+							if(seconds GT 86400){
+								minutes=fix(seconds/60/60/24)&' days ';
+							}else{
+								minutes=fix(seconds/60)&' minutes ';
+								if(fix(seconds/60) EQ 0){
+									minutes="";
+								}
+								if(seconds MOD 60 NEQ 0){
+									minutes=minutes&(seconds MOD 60)&' seconds';
+								}
+							}
+							echo('Time since first visit: #minutes#<br />');
 						}
 						if(qTrack.track_user_hits GT 1){
 							echo('Clicks: #qTrack.track_user_hits#<br />');
@@ -401,11 +406,22 @@ Link 2 disabled since this may cause a duplicate google adwords PPC click						<
 			<th style="#thstyle# text-align:left;" >Assigned&nbsp;To:</th>
 			<td style="#tdstyle#"> 
 			 <cfif t.inquiries_assign_email NEQ ''> 
-				<cfif t.inquiries_assign_name neq ''>
-					<a href="mailto:#t.inquiries_assign_email#">#t.inquiries_assign_name#</a>
-				<cfelse>
-					<a href="mailto:#t.inquiries_assign_email#">#t.inquiries_assign_email#</a> 
-				</cfif>
+				<cfscript>
+				arrEmail=listToArray(t.inquiries_assign_email, ",");
+				for(i=1;i<=arraylen(arrEmail);i++){
+					e=arrEmail[i];
+					if(i NEQ 1){
+						echo(', ');
+					}
+					echo('<a href="mailto:#e#">');
+					if(structkeyexists(t, 'inquiries_assign_name') and t.inquiries_assign_name neq '' and arraylen(arrEmail) EQ 1){
+						echo(t.inquiries_assign_name);
+					}else{
+						echo(e);
+					}
+					echo('</a>');
+				}
+				</cfscript> 
 			<cfelse>
 				<cfif t.user_id NEQ 0>
 					<cfif t.user_first_name NEQ "">
@@ -422,8 +438,10 @@ Link 2 disabled since this may cause a duplicate google adwords PPC click						<
 		<!-- endadmincomments -->
 		<cfif t.inquiries_spam EQ 1>
 		<tr>
-			<th style="#thstyle# text-align:left;" >Spam:</th>
-			<td style="#tdstyle# width:90%;"><strong>This inquiry was marked as spam due to invalid form entry.</strong></td>
+			<th style="#thstyle# text-align:left;" >&nbsp;</th>
+			<td style="#tdstyle# width:90%;"><strong>This inquiry may be SPAM</strong><br>
+				Spam Filter Reported: #t.inquiries_spam_description#
+			</td>
 		</tr>
 		</cfif>
 		<tr>
@@ -631,6 +649,24 @@ Email Only
 				<td style="#tdstyle#">#t.inquiries_pets#</td>
 			</tr>
 		</cfif>
+		<cfif trim(t.inquiries_interest_level) NEQ ''>
+			<tr>
+				<th style="#thstyle# text-align:left;" >Interest Level:</th>
+				<td style="#tdstyle#">#t.inquiries_interest_level#&nbsp;</td>
+			</tr>
+		</cfif>
+		<cfif trim(t.inquiries_interested_in_category) NEQ ''>
+			<tr>
+				<th style="#thstyle# text-align:left;" >Interested In Category:</th>
+				<td style="#tdstyle#">#t.inquiries_interested_in_category#&nbsp;</td>
+			</tr>
+		</cfif>
+		<cfif trim(t.inquiries_interested_in_model) NEQ ''>
+			<tr>
+				<th style="#thstyle# text-align:left;" >Interested In Model:</th>
+				<td style="#tdstyle#">#t.inquiries_interested_in_model#&nbsp;</td>
+			</tr>
+		</cfif>
 		<cfif trim(application.zcore.functions.zso(t, 'inquiries_comments')) NEQ ''>
 			<tr>
 				<th style="#thstyle# vertical-align:top;text-align:left;">Comments:</th>
@@ -649,12 +685,23 @@ Email Only
 				if(jsonStruct.arrCustom[i].value EQ ""){
 					continue;
 				}
-				writeoutput('
-				<tr>
-					<th style="#thstyle# vertical-align:top;text-align:left;">'&htmleditformat(jsonStruct.arrCustom[i].label)&'</th>
-					<td style="#tdstyle#">'&(jsonStruct.arrCustom[i].value)&'</td>
-				</tr>
-				');	
+				if(len(jsonStruct.arrCustom[i].label) GT 30){
+					writeoutput('
+					<tr>
+						<th style="#thstyle# vertical-align:top;text-align:left;">&nbsp;</th>
+						<td style="#tdstyle#">
+						<p>'&htmleditformat(jsonStruct.arrCustom[i].label)&'</p>
+						<p>'&replace(jsonStruct.arrCustom[i].value, chr(10), "<br>", "all")&'</p></td>
+					</tr>
+					');	
+				}else{
+					writeoutput('
+					<tr>
+						<th style="#thstyle# vertical-align:top;text-align:left;">'&htmleditformat(jsonStruct.arrCustom[i].label)&'</th>
+						<td style="#tdstyle#">'&replace(jsonStruct.arrCustom[i].value, chr(10), "<br>", "all")&'</td>
+					</tr>
+					');	
+				}
 			}
 			</cfscript>
 		</cfif>

@@ -189,7 +189,13 @@ search sql generator has to be able to search on child group data for paging to 
 	from #db.table("search", request.zos.zcoreDatasource)# 
 	WHERE site_id = #db.param(request.zos.globals.id)# and 
 	(match(search_fulltext) against(#db.param(form.searchtext)#) or search_fulltext like #db.param('%'&form.searchtext&'%')#) and 
-	search_deleted = #db.param(0)#
+	search_deleted = #db.param(0)# and 
+	( user_group_id=#db.param(0)# ";
+	arrId=application.zcore.user.getGroupIdArrayForLoggedInUser();
+	for(id in arrId){
+		db.sql&=" or user_group_id=#db.param(id)# ";
+	}
+	db.sql&=")
 	ORDER BY relevance DESC 
 	LIMIT #db.param((form.zIndex-1)*10)#, #db.param(11)#";
 	qSearch=db.execute("qSearch");   
@@ -1669,43 +1675,42 @@ search sql generator has to be able to search on child group data for paging to 
 			#propertyHTML#
 		</cfif>
 		<cfif qM3.recordcount NEQ 0>
-		<cfset thereAreResults=true>
-		<h2>The following MLS Numbers matched your search</h2>
-		<hr size="1" />
-		<cfloop from="1" to="1" index="g2">
-			<cfset curQuery=newMLSdataStruct.arrQuery[g2]>
-			<cfloop query="curQuery" startrow="1" endrow="1">
-				<cfscript>
-				mls_id=listgetat(curQuery.listing_id,1,"-");
-				structappend(variables, request.zos.listingMlsComObjects[mls_id].baseGetDetails(newMLSdataStruct.arrQuery[g2],curQuery.currentrow), true);
-				variables.listing_id=curQuery.listing_id;
-				titleStruct = request.zos.listing.functions.zListinggetTitle(variables);
-				propertyLink = '#request.zos.globals.siteroot#/#titleStruct.urlTitle#-#variables.urlMlsId#-#variables.urlMLSPId#.html';
+			<cfset thereAreResults=true>
+			<h2>The following MLS Numbers matched your search</h2>
+			<hr size="1" /> 
+			<cfscript>
+			for(row in newMLSdataStruct.arrData){
+
+				mls_id=listgetat(row.listing_id,1,"-");
+				idx=structnew();
+				structappend(idx, request.zos.listingMlsComObjects[mls_id].baseGetDetails(row, 1), true);
+				idx.listing_id=row.listing_id;
+				titleStruct = request.zos.listing.functions.zListinggetTitle(idx);
+				propertyLink = '#request.zos.globals.siteroot#/#titleStruct.urlTitle#-#idx.urlMlsId#-#idx.urlMLSPId#.html';
 				if(enableRedirects){
 					if(qm3.recordcount EQ 1 and qSearch2.recordcount EQ 0 and qSearch.recordcount EQ 0 and qBlog.recordcount EQ 0){
 						application.zcore.functions.zRedirect(propertyLink);
 					}
 				}
-				</cfscript>
-			</cfloop>
-		</cfloop>
-		#propertyHTML3#
+				break;
+			}
+			</cfscript> 
+			#propertyHTML3#
 		</cfif>
 		
 		
 		
 		<cfif qM4.recordcount NEQ 0>
-		<cfset thereAreResults=true>
-		<h2>Matching results for &quot;#form.searchtext#&quot; in the entire MLS database</h2>
-		<hr size="1" />
-		<cfloop from="1" to="1" index="g2">
-			<cfset curQuery=newMLSdataStruct2.arrQuery[g2]>
-			<cfloop query="curQuery" startrow="1" endrow="1">
-				<cfscript>
-				mls_id=listgetat(curQuery.listing_id,1,"-");
+			<cfset thereAreResults=true>
+			<h2>Matching results for &quot;#form.searchtext#&quot; in the entire MLS database</h2>
+			<hr size="1" />
+			<cfscript>
+			for(row in newMLSdataStruct2.arrData){
+
+				mls_id=listgetat(row.listing_id,1,"-");
 				idx=structnew();
-				structappend(idx, request.zos.listingMlsComObjects[mls_id].baseGetDetails(newMLSdataStruct2.arrQuery[g2],curQuery.currentrow), true);
-				idx.listing_id=curQuery.listing_id;
+				structappend(idx, request.zos.listingMlsComObjects[mls_id].baseGetDetails(row, 1), true);
+				idx.listing_id=row.listing_id;
 				titleStruct = request.zos.listing.functions.zListinggetTitle(idx);
 				propertyLink = '#request.zos.globals.siteroot#/#titleStruct.urlTitle#-#idx.urlMlsId#-#idx.urlMLSPId#.html';
 				if(enableRedirects){
@@ -1713,10 +1718,10 @@ search sql generator has to be able to search on child group data for paging to 
 						application.zcore.functions.zRedirect(propertyLink);
 					}
 				}
-				</cfscript>
-			</cfloop>
-		</cfloop>
-		#propertyHTML4#
+				break;
+			}
+			</cfscript> 
+			#propertyHTML4#
 		</cfif>
 		
 		

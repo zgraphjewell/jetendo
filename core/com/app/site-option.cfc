@@ -259,6 +259,9 @@
 		ORDER BY s1.site_x_option_group_set_master_set_id asc, s1.site_x_option_group_set_sort asc";
 		qS=db.execute("qS"); 
 		for(row in qS){
+			if(cacheEnabled){
+				sog.optionGroupSetQueryCache[row.site_x_option_group_set_id]=row;
+			}
 			if(structkeyexists(sog.optionGroupSetArrays, row.site_option_app_id&chr(9)&row.site_option_group_id&chr(9)&row.site_x_option_group_set_parent_id) EQ false){
 				sog.optionGroupSetArrays[row.site_option_app_id&chr(9)&row.site_option_group_id&chr(9)&row.site_x_option_group_set_parent_id]=arraynew(1);
 			}
@@ -333,13 +336,14 @@
 	if(not structkeyexists(arguments.siteStruct, 'soGroupData')){
 		arguments.siteStruct.soGroupData={};
 	}
+	//sog.optionGroupSetQueryCache={};
 	for(i in sog){
 		if(not structkeyexists(arguments.siteStruct.soGroupData, i)){
 			arguments.siteStruct.soGroupData[i]={};
 		}
 		structappend(arguments.siteStruct.soGroupData[i], sog[i], true);
-	}
-	arguments.siteStruct.soGroupData.optionGroupSetQueryCache={};
+	} 
+	//arguments.siteStruct.soGroupData[i].optionGroupSetQueryCache={};
 	</cfscript>
 </cffunction>
  
@@ -445,12 +449,12 @@
 	ORDER BY site_option_group.site_option_group_display_name ASC ";
 	qGroup=db.execute("qGroup"); 
 	if(qGroup.recordcount NEQ 0){
-		ms["Custom"]={ parent:'', label: "Custom"};
+		ms["Custom"]={ parent:'', value:'Custom', label: "Custom"};
 		// loop the groups
 		// get the code from manageoptions"
 		// site_option_group_disable_admin=0
 		for(row in qGroup){
-			ms["Custom: "&row.site_option_group_display_name]={ parent:'Custom', label:chr(9)&row.site_option_group_display_name&chr(10)};
+			ms["Custom: "&row.site_option_group_display_name]={ parent:'Custom', value:"Custom: "&row.site_option_group_display_name, label:chr(9)&row.site_option_group_display_name&chr(10)};
 		}
 	}
 	</cfscript>
@@ -542,7 +546,7 @@
 		if(qOptionGroup.site_option_group_limit[local.i] EQ 1 or right(qOptionGroup.site_option_group_display_name[local.i], 1) EQ "s"){
 			plural="";
 		}
-		arguments.linkStruct[local.curMenu].children["Manage "&qoptionGroup.site_option_group_display_name[local.i]&plural]=ts;
+		arguments.linkStruct[local.curMenu].children[qoptionGroup.site_option_group_display_name[local.i]&plural]=ts;
 	}
 	return arguments.linkStruct;
 	</cfscript>
@@ -989,9 +993,9 @@ arr1=application.zcore.siteOptionCom.optionGroupSetFromDatabaseBySearch(ts, requ
 				}
 				out='<a href="#application.zcore.functions.zURLAppend("/z/admin/site-options/#manageAction#", "site_option_group_id=#q12.site_option_group_id#&amp;site_x_option_group_set_parent_id=#q12.d3#")#">#application.zcore.functions.zFirstLetterCaps(q12.site_option_group_display_name)#</a> / ';
 				if(not arguments.linkCurrentPage and curGroupID EQ arguments.site_option_group_id){
-					out&=q12.site_x_option_group_set_title&' /';
-				}else{
-					out&='<a href="/z/admin/site-options/#manageAction#?site_option_group_id=#curGroupId#&amp;site_x_option_group_set_parent_id=#q12.d2#">#q12.site_x_option_group_set_title#</a> /';
+					out&=application.zcore.functions.zLimitStringLength(application.zcore.functions.zRemoveHTMLForSearchIndexer(q12.site_x_option_group_set_title), 70)&' /';
+				}else{ 
+					out&='<a href="/z/admin/site-options/#manageAction#?site_option_group_id=#curGroupId#&amp;site_x_option_group_set_parent_id=#q12.d2#">#application.zcore.functions.zLimitStringLength(application.zcore.functions.zRemoveHTMLForSearchIndexer(q12.site_x_option_group_set_title), 70)#</a> /';
 				}
 				arrayappend(arrParent, out);
 				curGroupId=q12.site_option_group_id;
@@ -1075,10 +1079,10 @@ arr1=application.zcore.siteOptionCom.optionGroupSetFromDatabaseBySearch(ts, requ
 	}
 	db.sql&=" s1.site_x_option_group_set_id = #db.param(arguments.setId)# 
 	ORDER BY s1.site_x_option_group_set_sort asc";
-	qS=db.execute("qS"); 
+	qSet=db.execute("qSet"); 
 	resultStruct={};
 	lastSetId=0;
-	for(row in qS){
+	for(row in qSet){
 		if(lastSetId NEQ row.site_x_option_group_set_id){
 			resultStruct=variables.buildOptionGroupSetId(row);
 			lastSetId=row.site_x_option_group_set_id;
@@ -1486,13 +1490,13 @@ arr1=application.zcore.siteOptionCom.optionGroupSetFromDatabaseBySearch(ts, requ
 	var qS=db.execute("qS"); 
 	if(debug) writeoutput(((gettickcount()-startTime)/1000)& 'seconds1-3<br>'); startTime=gettickcount();
 	if(debug) writedump(qS);
-	if(qS.recordcount){
+	for(row in qS){
 		if(not structkeyexists(t9, 'optionGroupSetQueryCache')){
 			t9.optionGroupSetQueryCache={};
 		}
-		t9.optionGroupSetQueryCache[arguments.site_x_option_group_set_id]=qS;
-	}
-	for(row in qS){
+		if(row.site_option_group_enable_cache EQ 1){
+			t9.optionGroupSetQueryCache[row.site_x_option_group_set_id]=row;
+		}
 		if(structkeyexists(t9.optionGroupSetArrays, row.site_option_app_id&chr(9)&row.site_option_group_id&chr(9)&row.site_x_option_group_set_parent_id) EQ false){
 			t9.optionGroupSetArrays[row.site_option_app_id&chr(9)&row.site_option_group_id&chr(9)&row.site_x_option_group_set_parent_id]=arraynew(1);
 		}
@@ -2091,7 +2095,10 @@ arr1=application.zcore.siteOptionCom.optionGroupSetFromDatabaseBySearch(ts, requ
 		site_x_option_group_deleted = #db.param(0)# and 
 		site_id = #db.param(arguments.site_id)#";
 		q=db.execute("q");
-		db.sql="DELETE FROM #request.zos.queryObject.table("site_x_option_group_set", request.zos.zcoreDatasource)#  
+		db.sql="UPDATE #request.zos.queryObject.table("site_x_option_group_set", request.zos.zcoreDatasource)#  
+		SET 
+		site_x_option_group_set_deleted=site_x_option_group_set_id, 
+		site_x_option_group_set_updated_datetime=#db.param(request.zos.mysqlnow)# 
 		WHERE site_option_app_id = #db.param(arguments.site_option_app_id)# and 
 		site_x_option_group_set_deleted = #db.param(0)# and 
 		site_id = #db.param(arguments.site_id)#";
@@ -2291,11 +2298,26 @@ if(not rs.success){
 	</cfscript>
 </cffunction>
 
+<!--- <cffunction name="writeLogEntry" localmode="modern" access="private">
+	<cfargument name="message" type="string" required="yes">
+	<cfscript>
+	if(request.zos.isdeveloper){
+		p=request.zos.globals.privateHomeDir&"import-ralsc.txt"; 
+		f=fileopen(p, "append", "utf-8");
+		filewriteline(f, dateformat(now(), "yyyy-mm-dd")&" "&timeformat(now(), "HH:mm:ss")&": "&arguments.message);
+		fileclose(f);
+	}
+	</cfscript>
+</cffunction> --->
 
 <cffunction name="deleteGroupSetRecursively" localmode="modern" access="public" roles="member">
 	<cfargument name="site_x_option_group_set_id" type="numeric" required="yes">
 	<cfargument name="rowData" type="struct" required="no" default="#{}#">
 	<cfscript>
+	if(arguments.site_x_option_group_set_id EQ 0){
+		// dangerous, this causes an infinite loop.
+		throw("There is a site_x_option_group_set_id that is 0 on this site.  It must be manually deleted from the database to avoid infinite loops and other serious problems.");
+	}
 	db=request.zos.queryObject;
 	if(structcount(arguments.rowData) EQ 0){
 		db.sql="SELECT * FROM #db.table("site_x_option_group_set", request.zos.zcoreDatasource)# 
@@ -2312,15 +2334,17 @@ if(not rs.success){
 	}else{
 		row=arguments.rowData;
 	}
+	//writeLogEntry("deleteGroupSetRecursively set id:"&arguments.site_x_option_group_set_id);
 	db.sql="SELECT * FROM #db.table("site_x_option_group_set", request.zos.zcoreDatasource)# 
 	WHERE  site_x_option_group_set_parent_id=#db.param(arguments.site_x_option_group_set_id)# and  
 	site_x_option_group_set_deleted = #db.param(0)# and
 	site_x_option_group_set.site_id = #db.param(request.zos.globals.id)#  ";
 	qSets=db.execute("qSets");
 	for(row2 in qSets){
-		deleteGroupSetRecursively(row2.site_x_option_group_set_id);
+		deleteGroupSetRecursively(row2.site_x_option_group_set_id, {});
 	}
 	if(row.site_x_option_group_set_image_library_id NEQ 0){
+		//writeLogEntry("deleteImageLibrary id:"&row.site_x_option_group_set_image_library_id);
 		application.zcore.imageLibraryCom.deleteImageLibraryId(row.site_x_option_group_set_image_library_id);
 	}
 	// delete versions
@@ -2331,6 +2355,7 @@ if(not rs.success){
 		site_x_option_group_set.site_id = #db.param(request.zos.globals.id)#  ";
 		qVersion=db.execute("qVersion");
 		for(row2 in qVersion){
+			//writeLogEntry("deleteGroupSetRecursively version set id:"&row2.site_x_option_group_set_id);
 			deleteGroupSetRecursively(row2.site_x_option_group_set_id);
 		}
 	}
@@ -2350,6 +2375,7 @@ if(not rs.success){
 		site_x_option_group_deleted = #db.param(0)# and
 		site_option.site_option_id = site_x_option_group.site_option_id ";
 		qOptions=db.execute("qOptions");
+		//writeLogEntry("#qOptions.recordcount# qOptions records that need onDelete");
 		path=application.zcore.functions.zvar('privatehomedir', request.zos.globals.id)&'zupload/site-options/';
 		securepath=application.zcore.functions.zvar('privatehomedir', request.zos.globals.id)&'zuploadsecure/site-options/';
 		siteStruct=application.zcore.functions.zGetSiteGlobals(request.zos.globals.id);
@@ -2359,23 +2385,31 @@ if(not rs.success){
 				var currentCFC=application.zcore.siteOptionCom.getTypeCFC(sog.optionLookup[row2.site_option_id].type); 
 				if(currentCFC.hasCustomDelete()){
 					optionStruct=sog.optionLookup[row2.site_option_id].optionStruct;
+					//writeLogEntry("delete for site_option_id:"&row2.site_option_id&" type:"&sog.optionLookup[row2.site_option_id].type);
 					currentCFC.onDelete(row2, optionStruct); 
 				}
 			}
 		}
 	}   
 
+	//writeLogEntry("deleteOptionGroupSetIndex version set id:"&arguments.site_x_option_group_set_id);
 	deleteOptionGroupSetIndex(arguments.site_x_option_group_set_id, request.zos.globals.id);
 	db.sql="DELETE FROM #db.table("site_x_option_group", request.zos.zcoreDatasource)#  
 	WHERE  site_x_option_group_set_id=#db.param(arguments.site_x_option_group_set_id)# and  
 	site_x_option_group_deleted = #db.param(0)# and 
 	site_id = #db.param(request.zos.globals.id)# ";
 	result =db.execute("result");
-	db.sql="DELETE FROM #db.table("site_x_option_group_set", request.zos.zcoreDatasource)#  
+	//writeLogEntry("deleted set values for set id:"&arguments.site_x_option_group_set_id);
+	
+	db.sql="UPDATE #request.zos.queryObject.table("site_x_option_group_set", request.zos.zcoreDatasource)#  
+	SET 
+	site_x_option_group_set_deleted=site_x_option_group_set_id, 
+	site_x_option_group_set_updated_datetime=#db.param(request.zos.mysqlnow)# 
 	WHERE  site_x_option_group_set_id=#db.param(arguments.site_x_option_group_set_id)# and  
 	site_x_option_group_set_deleted = #db.param(0)# and 
 	site_id = #db.param(request.zos.globals.id)# ";
 	result =db.execute("result");
+	//writeLogEntry("deleted set for set id:"&arguments.site_x_option_group_set_id);
 
 	
 	t9=application.zcore.siteGlobals[request.zos.globals.id].soGroupData;
@@ -2387,6 +2421,7 @@ if(not rs.success){
 			path=request.zRootCFCPath&removeChars(path, 1, 5);
 		}
 		changeCom=application.zcore.functions.zcreateObject("component", path); 
+		//writeLogEntry("changeCom callback for set id:"&arguments.site_x_option_group_set_id);
 		changeCom[groupStruct.site_option_group_change_cfc_delete_method](arguments.site_x_option_group_set_id);
 	}
 	</cfscript>
@@ -2449,7 +2484,10 @@ if(not rs.success){
 	site_x_option_group_deleted = #db.param(0)# and 
 	site_id = #db.param(request.zos.globals.id)# ";
 	result =db.execute("result");
-	db.sql="DELETE FROM #db.table("site_x_option_group_set", request.zos.zcoreDatasource)#  
+	db.sql="UPDATE #request.zos.queryObject.table("site_x_option_group_set", request.zos.zcoreDatasource)#  
+	SET 
+	site_x_option_group_set_deleted=site_x_option_group_set_id, 
+	site_x_option_group_set_updated_datetime=#db.param(request.zos.mysqlnow)# 
 	WHERE  site_option_group_id=#db.param(arguments.site_option_group_id)# and 
 	site_x_option_group_set_deleted = #db.param(0)# and 
 	site_id = #db.param(request.zos.globals.id)# ";
@@ -2477,11 +2515,7 @@ if(not rs.success){
 
 	</cfscript>
 </cffunction>
-
-
-<!--- 
-http://www.daytonachamber.com.127.0.0.2.nip.io/z/admin/site-options/manageGroup?site_option_app_id=0&site_option_group_id=36
- --->
+ 
 <cffunction name="userDashboardAdmin" localmode="modern" access="public">
 	<cfscript>
 	db=request.zos.queryObject; 

@@ -19,20 +19,7 @@
 	resourceStruct["property"].resource="property";
 	resourceStruct["property"].id="MLnumber";
 	this.emptyStruct=structnew();
-	</cfscript>
-    
-    <cffunction name="deleteListings" localmode="modern" output="no" returntype="any">
-    	<cfargument name="idlist" type="string" required="yes">
-    	<cfscript>
-		var db=request.zos.queryObject;
-		var arrId=listtoarray(mid(replace(arguments.idlist," ","","ALL"),2,len(arguments.idlist)-2),"','");
-		super.deleteListings(arguments.idlist);
-		db.sql="DELETE FROM #db.table("rets21_property", request.zos.zcoreDatasource)#  
-		WHERE rets#this.mls_id#_MLnumber LIKE #db.param('#this.mls_id#-%')# and 
-		rets#this.mls_id#_MLnumber IN (#db.trustedSQL(arguments.idlist)#)";
-		db.execute("q"); 
-		</cfscript>
-    </cffunction>
+	</cfscript> 
     
     <cffunction name="initImport" localmode="modern" output="no" returntype="any">
     	<cfargument name="resource" type="string" required="yes">
@@ -91,8 +78,7 @@
 DELETE FROM `#request.zos.zcoreDatasource#`.listing_track WHERE listing_id LIKE '11-%';
 DELETE FROM `#request.zos.zcoreDatasource#`.listing WHERE listing_id LIKE '11-%';
 DELETE FROM `#request.zos.zcoreDatasource#`.listing_data WHERE listing_id LIKE '11-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.`listing_memory` WHERE listing_id LIKE '11-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.rets21_property where rets21_MLnumber LIKE '11-%';
+DELETE FROM `#request.zos.zcoreDatasource#`.`listing_memory` WHERE listing_id LIKE '11-%'; 
 		*/
 		if(arraylen(arguments.ss.arrData) NEQ arraylen(request.zos.listing.mlsStruct[this.mls_id].sharedStruct.lookupStruct.arrColumns)){
 			application.zcore.functions.zdump(request.zos.listing.mlsStruct[this.mls_id].sharedStruct.lookupStruct.arrColumns);
@@ -449,30 +435,18 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets21_property where rets21_MLnumbe
 		rs.listing_data_detailcache1=listing_data_detailcache1;
 		rs.listing_data_detailcache2=listing_data_detailcache2;
 		rs.listing_data_detailcache3=listing_data_detailcache3; 
+
+		rs.listing_track_sysid="";
 		return {
 			listingData:rs,
 			columnIndex:columnIndex,
 			arrData:arguments.ss.arrData
 		};
 		</cfscript>
-    </cffunction>
-    
-    <cffunction name="getJoinSQL" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="joinType" type="string" required="no" default="INNER">
-		<cfscript>
-		var db=request.zos.queryObject;
-		</cfscript>
-    	<cfreturn "#arguments.joinType# JOIN #db.table("rets21_property", request.zos.zcoreDatasource)# rets21_property ON rets21_property.rets21_MLnumber = listing.listing_id">
-    </cffunction>
-    <cffunction name="getPropertyListingIdSQL" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets21_property.rets21_MLnumber">
-    </cffunction>
-    <cffunction name="getListingIdField" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets21_MLnumber">
-    </cffunction>
+    </cffunction> 
     
     <cffunction name="getDetails" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="query" type="query" required="yes">
+    	<cfargument name="ss" type="struct" required="yes">
         <cfargument name="row" type="numeric" required="no" default="#1#">
         <cfargument name="fulldetails" type="boolean" required="no" default="#false#">
     	<cfscript>
@@ -490,7 +464,7 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets21_property where rets21_MLnumbe
 		var column=0;
 		var arrV=0;
 		var arrV2=0;
-		var idx=this.baseGetDetails(arguments.query, arguments.row, arguments.fulldetails);
+		var idx=this.baseGetDetails(arguments.ss, arguments.row, arguments.fulldetails);
 		t99=gettickcount();
 		idx["features"]="";
 		idx.listingSource=request.zos.listing.mlsStruct[listgetat(idx.listing_id,1,'-')].mls_disclaimer_name;
@@ -512,10 +486,10 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets21_property where rets21_MLnumbe
 				}
 			}
 		}
-		idx["agentName"]=idx.rets21_la_firstname&" "&idx.rets21_la_lastname;
+		idx["agentName"]=application.zcore.functions.zso(idx, "rets21_la_firstname")&" "&application.zcore.functions.zso(idx, "rets21_la_lastname");
 		idx["agentPhone"]="";
 		idx["agentEmail"]="";
-		idx["officeName"]=idx.rets21_lo_name;
+		idx["officeName"]=application.zcore.functions.zso(idx, "rets21_lo_name");
 		idx["officePhone"]="";
 		idx["officeCity"]="";
 		idx["officeAddress"]="";
@@ -523,11 +497,11 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets21_property where rets21_MLnumbe
 		idx["officeState"]="";
 		idx["officeEmail"]="";
 			
-		idx["virtualtoururl"]=idx.rets21_virtualtour;
-		idx["zipcode"]=idx.rets21_zipcode;
+		idx["virtualtoururl"]=application.zcore.functions.zso(idx, "rets21_virtualtour");
+		idx["zipcode"]=application.zcore.functions.zso(idx, "rets21_zipcode");
 		idx["maintfees"]="";
-		if(idx.rets21_maintenanceexpense NEQ ""){
-			idx["maintfees"]=idx.rets21_maintenanceexpense;
+		if(application.zcore.functions.zso(idx, "rets21_maintenanceexpense") NEQ ""){
+			idx["maintfees"]=application.zcore.functions.zso(idx, "rets21_maintenanceexpense");
 		}
 		
 		</cfscript>
@@ -564,20 +538,12 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets21_property where rets21_MLnumbe
 	
 	
     <cffunction name="getLookupTables" localmode="modern" access="public" output="no" returntype="struct">
-		<cfscript>
-		var i=0;
-		var s=0;
+		<cfscript> 
 		var arrSQL=[];
-		var db=request.zos.queryObject;
-		var qZ=0;
-		var fd=0;
-		var arrError=[];
-		var tempState=0;
+		var db=request.zos.queryObject; 
+		var arrError=[]; 
 		var failStr="";
-		var cityCreated=false;
-		var qD=0;
-		var qD2=0; 
-		var g=0;
+		var cityCreated=false; 
 		fd=structnew();
 		fd["income"]="Income";
 		fd["residential"]="Residential";

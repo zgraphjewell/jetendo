@@ -147,49 +147,8 @@ variables.typeStruct["text"]="text";
 
 <cffunction name="parseMetaData" localmode="modern" access="public" output="yes" returntype="any">
 	<cfargument name="metadataDateLastModified" type="date" required="yes">
-	<cfscript>
-	var path=0;
-	var qd=0;
-	var metadatapath=0;
-	var contents=0;
-	var xmlmeta=0;
-	var xmlbase=0;
-	var metalookupstruct=0;
-	var i=0;
-	var curtables=0;
-	var mk=0;
-	var curbase=0;
-	var n=0;
-	var lk=0;
-	var curlookup=0;
-	var g=0;
-	var f=0;
-	var curtable=0;
-	var ts=0;
-	var tempname=0;
-	var arrerror=0;
-	var alterstruct=0;
-	var g2=0;
-	var arrf=0;
-	var arrf2=0;
-	var fieldstruct=0;
-	var fieldnamestruct=0;
-	var columnstruct=0;
-	var columnnamestruct=0;
-	var db=request.zos.queryObject;
-	var nlow=0;
-	var type=0;
-	var field=0;
-	var qp=0;
-	var columnname=0;
-	var column=0;
-	var fieldname2=0;
-	var lastone=0;
-	var emailOut=0;
-	var diskMetaDataDate=0;
-	var db2=0;
-	var cfcatch=0;
-	var excpt=0;
+	<cfscript> 
+	var db=request.zos.queryObject; 
 	var metastruct=structnew();
 	var curday=dateformat(now(),'yyyy-mm-dd');
 	if(request.zos.istestserver){
@@ -197,16 +156,21 @@ variables.typeStruct["text"]="text";
 	}else{
 		path="#request.zos.sharedPath#mls-data/#this.mls_id#/";
 	} 
-	directory directory="#path#" filter="metadata*.xml" name="qD" sort="dateLastModified DESC";
+	directory directory="#path#" filter="metadata*.xml" name="qD" sort="name DESC"; 
 	if(qD.recordcount NEQ 0){
 		metadataPath=path&qd.name[1];
 		diskMetaDataDate=qD.dateLastModified[1];	
 	}
 	if(qD.recordcount EQ 0){
-		return false;
-		/*writeoutput('metadata cache is missing: #path#');
-		application.zcore.functions.zabort();
-		application.zcore.template.fail("metadatacache is missing.");*/	
+		return false; 
+	}
+	first=true;
+	for(row in qD){
+		if(first){
+			first=false;
+			continue;
+		} 
+		application.zcore.functions.zDeleteFile(path&row.name);
 	}
 	if(not structkeyexists(form, 'forceMetaDataRebuild') and (datecompare(diskMetaDataDate, arguments.metadataDateLastModified) LTE 0)){
 		try{
@@ -597,7 +561,7 @@ variables.typeStruct["text"]="text";
 	var sn=structnew();
 	var arrColumns2=arraynew(1);
 	application.zcore.listingStruct.mlsStruct[this.mls_id].sharedStruct.lookupStruct.idxSkipDataIndexStruct=structnew();
-	for(i=1;i LTE arraylen(arguments.arrColumns);i++){
+	/*for(i=1;i LTE arraylen(arguments.arrColumns);i++){
 		if(structkeyexists(sn, arguments.arrColumns[i]) EQ false){
 			sn[arguments.arrColumns[i]]=true;
 			arrayappend(arrColumns2, arguments.arrColumns[i]);
@@ -605,10 +569,9 @@ variables.typeStruct["text"]="text";
 			application.zcore.listingStruct.mlsStruct[this.mls_id].sharedStruct.lookupStruct.idxSkipDataIndexStruct[i]=true;
 		}
 	}
-	arguments.arrColumns=arrColumns2;
+	arguments.arrColumns=arrColumns2;*/
 	application.zcore.listingStruct.mlsStruct[this.mls_id].sharedStruct.lookupStruct.idxColumns="rets#this.mls_id#_"&replace(arraytolist(arguments.arrColumns),",",",rets#this.mls_id#_","ALL");
-	application.zcore.listingStruct.mlsStruct[this.mls_id].sharedStruct.lookupStruct.arrColumns=listtoarray(application.zcore.listingStruct.mlsStruct[this.mls_id].sharedStruct.lookupStruct.idxColumns);
-	//application.zcore.listingStruct.mlsStruct[this.mls_id].sharedStruct.lookupStruct.idxColumns="`"&replace(replace(application.zcore.listingStruct.mlsStruct[this.mls_id].sharedStruct.lookupStruct.idxColumns,",","`,`","ALL"),"'","''","ALL")&"`";
+	application.zcore.listingStruct.mlsStruct[this.mls_id].sharedStruct.lookupStruct.arrColumns=listtoarray(application.zcore.listingStruct.mlsStruct[this.mls_id].sharedStruct.lookupStruct.idxColumns); 
 	</cfscript>
 </cffunction>
 
@@ -683,14 +646,7 @@ variables.typeStruct["text"]="text";
 	</cfscript>
 </cffunction>
 
-
-
-<cffunction name="getPropertyTableName" localmode="modern">
-	<cfscript>
-	return "rets#this.mls_id#_property";
-	</cfscript>
-</cffunction>
-
+ 
 <cffunction name="initImport" localmode="modern" output="no" returntype="any">
 	<cfargument name="resource" type="string" required="yes">
 	<cfargument name="sharedStruct" type="struct" required="yes">
@@ -757,10 +713,10 @@ Metadata paths listed below (missing if there are none)#chr(10)#');
 	</cfscript>
 </cffunction>
 
-<cffunction name="initRETSMetaAndTables" localmode="modern">
+<cffunction name="initRETSMeta" localmode="modern">
 	<cfscript>
 	
-	lock name="#request.zos.installPath#-initRETSMetaAndTables-mls_id-#this.mls_id#" type="exclusive" timeout="1000"{
+	lock name="#request.zos.installPath#-initRETSMeta-mls_id-#this.mls_id#" type="exclusive" timeout="1000"{
 		var fieldOrderStruct=structnew();
 		var db=application.zcore.db.newQuery();
 		this.getRetsDataObject();
@@ -792,168 +748,14 @@ Metadata paths listed below (missing if there are none)#chr(10)#');
 			path="#request.zos.sharedPath#mls-data/"&this.mls_id&"/";
 		}else{
 			path="#request.zos.sharedPath#mls-data/"&this.mls_id&"/";
-		}
-		for(g in variables.resourceStruct){
-			if(request.zos.isdeveloper and structkeyexists(form, 'debug')) writeoutput('mls_id: '&this.mls_id&' g:'&g&'<br />');
-			i=variables.resourceStruct[g].resource;
-			ilow=application.zcore.functions.zescape(replace(lcase(i)," ","","ALL"));
-			newPath=path&ilow&".txt";
-			if(request.zos.isdeveloper and structkeyexists(form, 'debug')) writeoutput('path: '&newPath&' exists:'&fileexists(newPath)&'<br />');
-			if(fileexists(newPath) or i EQ "property"){
-				if(i EQ "property"){
-					dbMLSData.sql="SHOW TABLE STATUS  WHERE NAME = 'rets#this.mls_id#_property'";
-					qM=dbMLSData.execute("qM"); 
-					if(qM.recordcount NEQ 0){
-						continue;	
-					}
-				}
-				arrC=arraynew(1);
-				arrayappend(arrC, "`rets#this.mls_id#_#ilow#_id` int (11) UNSIGNED NOT NULL AUTO_INCREMENT");
-				offset=1;
-				fieldOrderStruct[i]=structnew();
-				arrTF=structkeyarray(sharedStruct.metaStruct[i].tableFields);
-				arraysort(arrTF,"textnocase","asc");
-				for(g2=1;g2 LTE arraylen(arrTF);g2++){
-					n=arrTF[g2];
-					nlow=application.zcore.functions.zescape(replace(lcase(n)," ","","ALL"));
-					type=variables.typeStruct[sharedStruct.metaStruct[i].tableFields[n].type];
-					if(sharedStruct.metaStruct[i].tableFields[n].length GT 79){
-						type="text";	
-						sharedStruct.metaStruct[i].tableFields[n].type="text";
-					}
-					arrayappend(arrC,", `rets#this.mls_id#_#nlow#` #type#");
-					
-					if(sharedStruct.metaStruct[i].tableFields[n].type EQ "boolean"){
-						arrayappend(arrC, "(1) NOT NULL DEFAULT '0'");
-						
-					}else if(sharedStruct.metaStruct[i].tableFields[n].type EQ "character" or sharedStruct.metaStruct[i].tableFields[n].type EQ "small"){
-						arrayappend(arrC,"(#sharedStruct.metaStruct[i].tableFields[n].length#) NOT NULL");
-					}else if(sharedStruct.metaStruct[i].tableFields[n].type EQ "tiny" or sharedStruct.metaStruct[i].tableFields[n].type EQ 'int' or sharedStruct.metaStruct[i].tableFields[n].type EQ 'decimal'){
-						arrayappend(arrC," UNSIGNED NOT NULL DEFAULT '0'");
-					}else{
-						arrayappend(arrC," NOT NULL ");
-					}
-					fieldOrderStruct[i][nlow]=offset;
-					offset++;
-				}
-				if(i EQ "property"){	
-					if(structkeyexists(this, 'sysidfield') and this.sysidfield NEQ ""){
-						local.sysidIndex=", KEY `NewIndex3` (`#this.sysidfield#`)";
-					}else{
-						local.sysidIndex="";
-					}
-					dbMLSData.sql="create table `rets#this.mls_id#_#ilow#`(
-						"&arraytolist(arrC,"")&", 
-						PRIMARY KEY (`rets#this.mls_id#_#ilow#_id`), 
-						UNIQUE KEY `NewIndex2` (`rets#this.mls_id#_#variables.resourceStruct[g].id#`) #local.sysidIndex#
-					)  
-					Engine=INNODB comment=''  ";
-					dbMLSData.execute("q"); 
-				}else{
-					if(structkeyexists(variables.resourceStruct[g], 'extraPrimaryKey')){
-						t44=", "&variables.resourceStruct[g].extraPrimaryKey;
-					}else{
-						t44="";
-					}
-					try{
-						dbMLSData.sql="drop table `rets#this.mls_id#_#ilow#_safe` ";
-						dbMLSData.execute("q"); 
-					}catch(Any local.e){
-					}
-					dbMLSData.sql="create table `rets#this.mls_id#_#ilow#_safe`("&arraytolist(arrC,"")&", 
-					PRIMARY KEY (`rets#this.mls_id#_#ilow#_id`), 
-					UNIQUE KEY `NewIndex2` (`rets#this.mls_id#_#variables.resourceStruct[g].id#`)  #t44#  )
-					Engine=INNODB comment=''  ";
-					dbMLSData.execute("q"); 
-					f=fileopen(newPath,"read");
-					try{
-						firstline=lcase(filereadline(f));
-						if(firstline EQ ""){
-							writeoutput("Data file empty");
-							application.zcore.functions.zabort();
-						}
-					}catch(Any excpt){
-						fileclose(f);
-						return;
-					}
-					fileclose(f);
-					columns=application.zcore.functions.zescape("rets#this.mls_id#_"&replace(firstline,chr(9),",rets#this.mls_id#_","ALL"));
-					newpath2=path&ilow&"-photos.txt";
-					if(request.zos.istestserver){
-						loadnewPath=replace(newPath,"#request.zos.sharedPath#", request.zos.sharedPathForDatabase);
-						loadnewpath2=replace(newpath2,"#request.zos.sharedPath#", request.zos.sharedPathForDatabase);
-					}else{
-						loadnewpath=newpath;
-						loadnewpath2=newpath2;	
-					}
-					dbMLSData.sql="LOAD DATA LOCAL INFILE '#loadnewPath#' 
-					REPLACE INTO TABLE `rets#this.mls_id#_#ilow#_safe` 
-					FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n' IGNORE 1 LINES (#columns#)";
-					dbMLSData.execute("q"); 
-					for(local.i9=2;local.i9 LTE 10;local.i9++){
-						local.tempPath=replace(newPath, ".txt", local.i9&".txt");	
-						if(fileexists(local.tempPath)){
-							if(request.zos.istestserver){
-								local.tempPath2=replace(local.tempPath,"#request.zos.sharedPath#", request.zos.sharedPathForDatabase);
-							}else{
-								local.tempPath2=local.tempPath;
-							}
-							dbMLSData.sql="LOAD DATA LOCAL INFILE '#local.tempPath2#' 
-							REPLACE INTO TABLE `rets#this.mls_id#_#ilow#_safe` 
-							FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n' IGNORE 1 LINES (#columns#)";
-							dbMLSData.execute("q"); 
-						}else{
-							break;
-						}
-						
-					}
-					if(fileexists(newpath2)){ // a hack added for ntreis which had way too many media records
-						dbMLSData.sql="LOAD DATA LOCAL INFILE '#loadnewpath2#' REPLACE INTO TABLE `rets#this.mls_id#_#ilow#_safe` FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\n' IGNORE 1 LINES (#columns#)";
-						dbMLSData.execute("q"); 
-						application.zcore.functions.zRenameFile(newPath2,newPath2&"-imported");
-					}
-
-					dbMLSData.sql="SHOW TABLES IN #request.zos.zcoreDatasource# LIKE 'rets#this.mls_id#_#ilow#'";
-					qC=dbMLSData.execute("qC"); 
-					if(qC.recordcount NEQ 0){
-						dbMLSData.sql="rename table 
-						`rets#this.mls_id#_#ilow#_safe` to `rets#this.mls_id#_#ilow#_safetemp`, 
-						`rets#this.mls_id#_#ilow#` to `rets#this.mls_id#_#ilow#_safe`, 
-						`rets#this.mls_id#_#ilow#_safetemp` to 
-						`rets#this.mls_id#_#ilow#`";
-						dbMLSData.execute("q"); 
-						dbMLSData.sql="drop table `rets#this.mls_id#_#ilow#_safe` ";
-						dbMLSData.execute("q"); 
-					}else{
-						
-						dbMLSData.sql="rename table `rets#this.mls_id#_#ilow#_safe` to `rets#this.mls_id#_#ilow#`";
-						dbMLSData.execute("q"); 
-					}
-					if(fileexists(newPath&"-imported")){
-						application.zcore.functions.zDeleteFile(newPath&"-imported");
-					}
-					application.zcore.functions.zRenameFile(newPath,newPath&"-imported");
-					for(local.i9=2;local.i9 LTE 10;local.i9++){
-						local.tempPath=replace(newPath, ".txt", local.i9&".txt");	
-						if(fileexists(local.tempPath)){
-							if(fileexists(local.tempPath&"-imported")){
-								application.zcore.functions.zDeleteFile(local.tempPath&"-imported");
-							}
-							application.zcore.functions.zRenameFile(local.tempPath,local.tempPath&"-imported");
-						}else{
-							break;
-						}
-					}
-				}
-			}
-		}
+		} 
 	}
 	</cfscript>
 </cffunction>
 
 <cffunction name="makeListingImportDataReady" localmode="modern" access="public">
 	<cfscript>
-	initRETSMetaAndTables();
+	initRETSMeta();
 	</cfscript>
 </cffunction>
 </cfoutput>

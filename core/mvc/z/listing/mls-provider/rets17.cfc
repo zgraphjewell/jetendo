@@ -21,21 +21,7 @@
 	resourceStruct["agent"]=structnew();
 	resourceStruct["agent"].resource="agent";
 	resourceStruct["agent"].id="la_la_code";
-	</cfscript>
-
-
-    <cffunction name="deleteListings" localmode="modern" output="no" returntype="any">
-    	<cfargument name="idlist" type="string" required="yes">
-    	<cfscript>
-		var db=request.zos.queryObject;
-		var arrId=listtoarray(mid(replace(arguments.idlist," ","","ALL"),2,len(arguments.idlist)-2),"','");
-		super.deleteListings(arguments.idlist);
-		db.sql="DELETE FROM #db.table("rets17_property", request.zos.zcoreDatasource)#  
-		WHERE rets17_mls_acct LIKE #db.param('#this.mls_id#-%')# and 
-		rets17_mls_acct IN (#db.trustedSQL(arguments.idlist)#)";
-		db.execute("q"); 
-		</cfscript>
-    </cffunction>
+	</cfscript> 
     
     
     <cffunction name="parseRawData" localmode="modern" output="yes" returntype="any">
@@ -81,8 +67,7 @@
 DELETE FROM `#request.zos.zcoreDatasource#`.listing_track WHERE listing_id LIKE '17-%';
 DELETE FROM `#request.zos.zcoreDatasource#`.listing WHERE listing_id LIKE '17-%';
 DELETE FROM `#request.zos.zcoreDatasource#`.listing_data WHERE listing_id LIKE '17-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.`listing_memory` WHERE listing_id LIKE '17-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.rets17_property where rets17_mls_acct LIKE '17-%';
+DELETE FROM `#request.zos.zcoreDatasource#`.`listing_memory` WHERE listing_id LIKE '17-%'; 
 		
 		*/
 		if(arraylen(arguments.ss.arrData) LT arraylen(request.zos.listing.mlsStruct[this.mls_id].sharedStruct.lookupStruct.arrColumns)){
@@ -342,6 +327,8 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets17_property where rets17_mls_acc
 		rs.listing_data_detailcache1=listing_data_detailcache1;
 		rs.listing_data_detailcache2=listing_data_detailcache2;
 		rs.listing_data_detailcache3=listing_data_detailcache3;
+
+		rs.listing_track_sysid="";
 		return {
 			listingData:rs,
 			columnIndex:columnIndex,
@@ -349,39 +336,14 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets17_property where rets17_mls_acc
 		};
 		</cfscript>
     </cffunction>
-    
-    <cffunction name="getJoinSQL" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="joinType" type="string" required="no" default="INNER">
-		<cfscript>
-		var db=request.zos.queryObject;
-		</cfscript>
-    	<cfreturn "#arguments.joinType# JOIN #db.table("rets17_property", request.zos.zcoreDatasource)# rets17_property ON rets17_property.rets17_mls_acct = listing.listing_id">
-    </cffunction>
-    <cffunction name="getPropertyListingIdSQL" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets17_property.rets17_mls_acct">
-    </cffunction>
-    <cffunction name="getListingIdField" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets17_mls_acct">
-    </cffunction>
+
     <cffunction name="getDetails" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="query" type="query" required="yes">
+    	<cfargument name="ss" type="struct" required="yes">
         <cfargument name="row" type="numeric" required="no" default="#1#">
         <cfargument name="fulldetails" type="boolean" required="no" default="#false#">
-    	<cfscript>
-		var q1=0;
-		var db=request.zos.queryObject;
-		var t1=0;
-		var t3=0;
-		var t9=0;
-		var d44=0;
-		var t2=0;
-		var i10=0;
-		var value=0;
-		var n=0;
-		var column=0;
-		var arrV=0;
-		var arrV2=0;
-		var idx=this.baseGetDetails(arguments.query, arguments.row, arguments.fulldetails);
+    	<cfscript> 
+		var db=request.zos.queryObject; 
+		var idx=this.baseGetDetails(arguments.ss, arguments.row, arguments.fulldetails);
 		idx["features"]="";
 		idx.listingSource=request.zos.listing.mlsStruct[listgetat(idx.listing_id,1,'-')].mls_disclaimer_name;
 		
@@ -402,9 +364,7 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets17_property where rets17_mls_acc
 		d44=dateformat(now(),"yyyymmdd");
 		if(structkeyexists(application.zcore,'rets17officelookup') EQ false or application.zcore.rets17officelookupdate NEQ d44){
 			t9=structnew();
-			db.sql="SELECT rets17_lo_name, rets17_lo_lo_code 
-			FROM #db.table("rets17_office", request.zos.zcoreDatasource)# rets17_office";
-			q1=db.execute("q1"); 
+			throw("deleted office table. need new way to get this info");
 			for(i10=1;i10 LTE q1.recordcount;i10++){
 				t9[q1.rets17_lo_lo_code[i10]]=q1.rets17_lo_name[i10];
 			}
@@ -412,14 +372,14 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets17_property where rets17_mls_acc
 			application.zcore.rets17officelookup=t9;
 		}
 		
-		if(structkeyexists(application.zcore.rets17officelookup, arguments.query.rets17_lo_code[arguments.row])){
-			idx.officeName=application.zcore.rets17officelookup[arguments.query.rets17_lo_code[arguments.row]];	
+		if(structkeyexists(application.zcore.rets17officelookup, application.zcore.functions.zso(arguments.ss, "rets17_lo_code"))){
+			idx.officeName=application.zcore.rets17officelookup[arguments.ss.rets17_lo_code];	
 		}else{
 			idx.officeName="Firm Name Not Available";
 		}
 		idx["virtualtoururl"]="";
-		idx["zipcode"]=arguments.query["rets17_zip"][arguments.row];
-		idx["maintfees"]=arguments.query["rets17_maint_fee"][arguments.row];
+		idx["zipcode"]=application.zcore.functions.zso(arguments.ss, "rets17_zip");
+		idx["maintfees"]=application.zcore.functions.zso(arguments.ss, "rets17_maint_fee");
 		
 		
 		</cfscript>

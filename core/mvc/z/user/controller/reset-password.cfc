@@ -277,11 +277,25 @@ application.zcore.functions.zReturnJson(rs);
 		rs.errorMessage="Request failed";
 		return rs;
 	}
-	domain=application.zcore.functions.zvar('domain', arguments.site_id);
+	if(arguments.site_id EQ request.zos.globals.id){
+		domain=request.zos.currentHostName;
+	}else{
+		domain=application.zcore.functions.zvar('domain', arguments.site_id);
+	}
 	ts={};
 	ts.to=arguments.email; 
+	if(request.zos.isTestServer){
+		ts.to=request.zos.developerEmailTo;
+	}
+	/*fromEmail=application.zcore.functions.zVarSO("zofficeemail", arguments.site_id);
+	if(fromEmail EQ ""){
+		if(not request.zos.isTestServer){
+			throw("Warning: Reset email requires that zofficeemail is set.");
+		}
+	}*/
 	ts.from=request.fromemail;
-	ts.subject="Reset password for #application.zcore.functions.zvar('shortdomain')#";
+
+	ts.subject="Reset password for #application.zcore.functions.zvar('shortdomain', arguments.site_id)#";
 	savecontent variable="ts.html"{
 		echo('<!DOCTYPE html>
 	<html>
@@ -305,7 +319,7 @@ application.zcore.functions.zReturnJson(rs);
 
 <p>If the link does not work, please copy and paste the entire link in your browser''s address bar and hit enter.    If you did not make this password reset request, you can ignore this email and the link will expire within 24 hours.</p>
 </body></html>');
-	}
+	} 
 	rCom=application.zcore.email.send(ts);
 	if(rCom.isOK() EQ false){
 		rs.success=false;
@@ -343,10 +357,10 @@ application.zcore.functions.zReturnJson(rs);
 		rs.errorMessage="Your session has expired.  Please refresh and try again.";
 		spam=true;
 	}
-	if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
+	/*if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
 		rs.errorMessage="Invalid request...";
 		spam=true;
-	}
+	}*/
 	if(spam){
 		rs.success=false;
 		application.zcore.functions.zReturnJSON(rs); 

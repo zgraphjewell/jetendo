@@ -141,9 +141,9 @@
 <cffunction name="processCopyrightAbuse" localmode="modern" access="remote">
 	<cfscript>
 	form.modalpopforced=application.zcore.functions.zso(form, 'modalpopforced',false,0);
- 	if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
+ 	/*if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
  		application.zcore.functions.z404("Invalid request");
- 	}
+ 	}*/
 	if(application.zcore.functions.zFakeFormFieldsNotEmpty()){ 
  		application.zcore.functions.z404("Invalid request");
 	}
@@ -222,9 +222,9 @@ if(structkeyexists(form, 'zforceapplicationurlrewriteupdate')){
 			}
 		}
 		application.zcore.functions.zLogError(ts);
-		echo('{"success":true}');
-		application.zcore.functions.zabort();
+		application.zcore.functions.zReturnJson({success:true});
 	}
+	application.zcore.functions.zReturnJson({success:false});
 	</cfscript>
 </cffunction>
 	
@@ -319,6 +319,25 @@ if(structkeyexists(form, 'zforceapplicationurlrewriteupdate')){
 	echo(application.zcore.functions.zvarso('Lead Conversion Tracking Code'));
 	abort;
 </cfscript>
+</cffunction>
+
+
+
+<cffunction name="redirectToLink" localmode="modern" access="remote">
+	<cfscript>
+	form.short_link_id=application.zcore.functions.zso(form, 'short_link_id', true, 0);
+	db=request.zos.queryObject;
+	db.sql="SELECT * FROM #db.table("short_link", request.zos.zcoreDatasource)# WHERE 
+	short_link_deleted=#db.param(0)# and 
+	site_id = #db.param(request.zos.globals.id)# and 
+	short_link_id=#db.param(form.short_link_id)#";
+	qLink=db.execute("qLink");
+	if(qLink.recordcount EQ 0){
+		application.zcore.functions.z301Redirect("/");
+	} 
+	application.zcore.tracking.backOneHit(); 
+	application.zcore.functions.z301Redirect(qLink.short_link_url);
+	</cfscript>
 </cffunction>
 </cfoutput>
 </cfcomponent>

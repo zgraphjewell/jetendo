@@ -18,7 +18,7 @@
 	if(application.zcore.functions.zso(application.zcore.app.getAppData( 'job' ).optionStruct, 'job_config_disable_apply_online', true, 0) EQ 1){
 		application.zcore.functions.z404("Apply online is disabled");
 	}
-		jobId = form.jobId;
+		jobId = application.zcore.functions.zso(form, 'jobId');
 
 		jobCom = application.zcore.app.getAppCFC( 'job' );
 
@@ -152,8 +152,8 @@
 
 		form.inquiries_datetime           = request.zos.mysqlnow;
 		form.inquiries_custom_json        = serializeJson( jsonStruct );
-		form.inquiries_type_id            = 3;
-		form.inquiries_type_id_siteIdType = 1;
+		form.inquiries_type_id            = 17;
+		form.inquiries_type_id_siteIdType = 4;
 		form.inquiries_email              = form.email;
 		form.inquiries_subject            = "New Job Application on #request.zos.globals.shortdomain#";
 
@@ -171,7 +171,7 @@
 	}
 		request.zos.currentURLISAJobPage = true;
 
-		jobId = form.jobId;
+		jobId = application.zcore.functions.zso(form, 'jobId');
 
 		application.zcore.functions.zStatusHandler( request.zsid, true );
 

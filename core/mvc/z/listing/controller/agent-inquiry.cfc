@@ -163,14 +163,17 @@ agentCom.displayAgentInquiryForm(user_id, user_id_siteIdType);
 	if(form.modalpopforced EQ 1){
 		if(application.zcore.functions.zso(form, 'js3811') NEQ "j219"){
 			form.inquiries_spam=1; 
+			form.inquiries_spam_description="js3811 value not set";
 		}
 		if(application.zcore.functions.zCheckFormHashValue(application.zcore.functions.zso(form, 'js3812')) EQ false){
 			form.inquiries_spam=1; 
+			form.inquiries_spam_description="Form hash value was wrong";
 		}
 	}
-	if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
+	/*if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
 		form.inquiries_spam=1; 
-	} 
+		form.inquiries_spam_description="zset9 was wrong";
+	} */
 
 	db.sql="select * from #db.table("user", request.zos.zcoreDatasource)# 
 	WHERE user_deleted = #db.param(0)# and 
@@ -219,8 +222,10 @@ agentCom.displayAgentInquiryForm(user_id, user_id_siteIdType);
 	}
 	if(Find("@", form.inquiries_first_name) NEQ 0){
 		form.inquiries_spam=1;
+		form.inquiries_spam_description="@ symbol in first name";
 	}
 	 
+	form.inquiries_session_id=application.zcore.session.getSessionId();
 	form.user_id=0;
 	//	Insert Into Inquiry Database
 	form.site_id = request.zOS.globals.id; 
@@ -233,11 +238,7 @@ agentCom.displayAgentInquiryForm(user_id, user_id_siteIdType);
 	site_id = #db.param(request.zos.globals.id)# and 
 	inquiries_deleted = #db.param(0)#";
 	db.execute("q"); 
-	inputStruct = StructNew();
-	inputStruct.table = "inquiries";
-	inputStruct.struct=form;
-	inputStruct.datasource=request.zos.zcoreDatasource;
-	form.inquiries_id = application.zcore.functions.zInsert(inputStruct); 
+	form.inquiries_id=application.zcore.functions.zInsertLead();
 	if(form.inquiries_id EQ false){
 		request.zsid = application.zcore.status.setStatus(Request.zsid, "Your inquiry has not been sent due to an error.", false,true);
 		application.zcore.functions.zRedirect("/z/listing/agent-inquiry/index?modalpopforced=#form.modalpopforced#&zsid="&request.zsid);
@@ -269,7 +270,7 @@ agentCom.displayAgentInquiryForm(user_id, user_id_siteIdType);
 	if(application.zcore.functions.zso(form, 'inquiries_email') EQ "" or application.zcore.functions.zEmailValidate(form.inquiries_email) EQ false){
 		form.inquiries_email=request.fromemail;
 	}
-	if(form.inquiries_spam EQ 0){
+	//if(form.inquiries_spam EQ 0){
 		ts=structnew();
 		ts.inquiries_id=form.inquiries_id;
 		ts.subject="New Agent Inquiry on #request.zos.globals.shortdomain#";
@@ -285,7 +286,7 @@ agentCom.displayAgentInquiryForm(user_id, user_id_siteIdType);
 			// failed to assign/email lead
 			//zdump(rs);
 		}
-	} 
+	//} 
 	form.mail_user_id=application.zcore.user.automaticAddUser(application.zcore.functions.zUserMapFormFields(structnew()));	 
 	
 	application.zcore.functions.zRedirect("/z/misc/thank-you/index?modalpopforced=#form.modalpopforced#&zsid="&request.zsid); 

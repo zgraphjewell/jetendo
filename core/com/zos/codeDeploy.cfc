@@ -20,6 +20,16 @@
 	//tFunctions.onApplicationEnd=onApplicationEnd;
 	//tFunctions.onSessionStart=onSessionStart;
 	//tFunctions.onSessionEnd=onSessionEnd;
+	tfunctions.loadDbCFC=loadDbCFC;
+	tfunctions.loadSite=loadSite;
+	tfunctions.getSiteId=getSiteId;
+	tfunctions.setSiteRequestGlobals=setSiteRequestGlobals;
+	tFunctions.showInitStatus=showInitStatus;
+	tFunctions.OnInternalApplicationStart=OnInternalApplicationStart;
+	tFunctions.loadNextSite=loadNextSite;
+	tFunctions.OnApplicationListingStart=OnApplicationListingStart;
+	tFunctions.loadNextListingSite=loadNextListingSite; 
+	tFunctions.checkDomainRedirect=checkDomainRedirect; 
 	tFunctions.onApplicationStart=onApplicationStart;
 	tFunctions.onRequestStart=onRequestStart;
 	tFunctions.onRequestStart1=onRequestStart1;
@@ -100,6 +110,7 @@
 		componentObjectCache.paypal=createobject("component","zcorerootmapping.com.ecommerce.paypal");
 		componentObjectCache.adminSecurityFilter=createobject("component","zcorerootmapping.com.app.adminSecurityFilter");
 		componentObjectCache.grid=createobject("component","zcorerootmapping.com.grid.grid");
+		componentObjectCache.virtualFile=createobject("component","zcorerootmapping.com.zos.virtualFile");
 
 		componentObjectCache.siteOptionCom.init("site", "site");
  
@@ -141,7 +152,7 @@
 		request.zos.requestLogEntry('onCodeDeploy3');
 		
 		
-		application.zcore.skin.onCodeDeploy(application.zcore.skinObj);
+		application.zcore.skin.onCodeDeploy();//application.zcore.skinObj);
 		request.zos.requestLogEntry('onCodeDeploy4');
 		application.zcore.listingCom=createobject("component","zcorerootmapping.mvc.z.listing.controller.listing");
 		application.zcore.listingStruct.configCom=application.zcore.listingCom;

@@ -242,7 +242,7 @@ SCHEDULE DAILY TASK: /z/_com/app/image-library?method=deleteInactiveImageLibrari
 		application.zcore.functions.z404("No cookie set, so generateImage is prevented to avoid hotlinks to dynamic image requests.");
 	}  
 	if(arguments.crop NEQ 1 and arguments.crop NEQ 0){
-		application.zcore.template.fail("Error: zcorerootmapping.com.app.image-library.cfc - getImageLink() failed because arguments.crop must be a 1 or 0 and it is: #arguments.crop#.");
+		application.zcore.functions.z404("Invalid request: zcorerootmapping.com.app.image-library.cfc - getImageLink() failed because arguments.crop must be a 1 or 0 and it is: #arguments.crop#.");
 	}
 	if(arguments.crop EQ 0){
 		arguments.crop =0;
@@ -264,9 +264,35 @@ SCHEDULE DAILY TASK: /z/_com/app/image-library?method=deleteInactiveImageLibrari
 				application.zcore.functions.zXSendFile("#request.zos.zcoreRootPath#static/a/listing/images/image-not-available.jpg");
 			}
 		}else{
-			application.zcore.template.fail("Error: zcorerootmapping.com.app.image-library.cfc - getImageLink() failed because arguments.size: #arguments.size# must be formatted like widthxheight i.e. 250x160.");
+			application.zcore.functions.z404("Invalid request: zcorerootmapping.com.app.image-library.cfc - getImageLink() failed because arguments.size: #arguments.size# must be formatted like widthxheight i.e. 250x160.");
 		}
 	} 
+	db.sql="SELECT * FROM #db.table("image_cache", request.zos.zcoreDatasource)#  
+	WHERE 
+	image_id = #db.param(arguments.image_id)# and 
+	image_cache_width=#db.param(arrSize[1])# and  
+	image_cache_height=#db.param(arrSize[2])# and  
+	image_cache_crop=#db.param(arguments.crop)# and 
+	image_cache_deleted = #db.param(0)# and 
+	site_id =#db.param(request.zos.globals.id)#";
+	qCache=db.execute("qCache");
+	if(qCache.recordcount NEQ 0){
+		// serve cached image instead - test that it works on image update still
+		ext=application.zcore.functions.zGetFileExt(qCache.image_cache_file);
+		type="image/jpeg";
+		if(ext EQ "png"){
+			type="image/png";
+		}else if(ext EQ "gif"){
+			type="image/gif";
+		} 
+		application.zcore.functions.zheader("Content-Type", type);
+		if(cgi.SERVER_SOFTWARE EQ "" or cgi.SERVER_SOFTWARE CONTAINS "nginx"){
+			application.zcore.functions.zXSendFile("/"&destination&qCache.image_cache_file);
+		}else{
+			application.zcore.functions.zXSendFile(request.zos.globals.privatehomedir&destination&qCache.image_cache_file);
+		}
+	}
+
 	
 	/*
 	// registering image size prevents extra images from being generated then are officially allowed.
@@ -353,7 +379,7 @@ SCHEDULE DAILY TASK: /z/_com/app/image-library?method=deleteInactiveImageLibrari
 	if(fileexists(request.zos.globals.privatehomedir&destination&qImage.image_file)){
 		arrList = application.zcore.functions.zResizeImage(request.zos.globals.privatehomedir&destination&qImage.image_file,request.zos.globals.privatehomedir&destination,arguments.size,arguments.crop,true,newFileName); 
 		if(isarray(arrList) EQ false){
-			application.zcore.template.fail("Error: zcorerootmapping.com.app.image-library.cfc - getImageLink() failed because zResizeImage() failed.");
+			throw("Error: zcorerootmapping.com.app.image-library.cfc - getImageLink() failed because zResizeImage() failed.");
 		}else if(ArrayLen(arrList) EQ 1){
 			newFileName=arrList[1];
 			ts=structnew();
@@ -395,7 +421,7 @@ SCHEDULE DAILY TASK: /z/_com/app/image-library?method=deleteInactiveImageLibrari
 				}
 			} 
 		}else{
-			application.zcore.template.fail("Error: zcorerootmapping.com.app.image-library.cfc - getImageLink() failed because zResizeImage() returned an unexpected value.");
+			throw("Error: zcorerootmapping.com.app.image-library.cfc - getImageLink() failed because zResizeImage() returned an unexpected value.");
 		}
 	}else{
 		if(zdebug){
@@ -1314,7 +1340,7 @@ application.zcore.imageLibraryCom.displayImages(ts);
 	ts.top=false;
 	ts.size="#request.zos.globals.maximagewidth#x2000";
 	ts.crop=0;
-	ts.thumbSize="110x60";
+	//ts.thumbSize="110x60";
 	ts.image_id="";
 	ts.offset=0;
 	ts.limit=0;
@@ -1419,7 +1445,7 @@ application.zcore.imageLibraryCom.displayImages(ts);
 		}
 		newSize=thumbnailWidth&"x"&thumbnailHeight;
 		application.zcore.imageLibraryCom.registerSize(arguments.ss.image_library_id, newSize, arguments.ss.crop);
-		</cfscript>
+		</cfscript> 
 
 		<div id="contentFlow#qImages.image_library_id#" class="ContentFlow">
 			<div class="loadIndicator">
@@ -1476,12 +1502,18 @@ application.zcore.imageLibraryCom.displayImages(ts);
 			.mfp-gallery{z-index:20001;}
 			.mfp-bg{z-index:20000;}
 			
-			##zThumbnailLightgallery ul { width:100%; text-align:center; display:block; list-style: none; margin:0px !important; padding:0px !important; }
-			##zThumbnailLightgallery ul li {  min-width:250px; width:33%; background-image:none !important; list-style:none !important; display: inline-block; margin:0px; padding:0px;}
+			##zThumbnailLightgallery ul *{box-sizing:border-box;}
+			##zThumbnailLightgallery ul {  width:100%; text-align:center; display:block; list-style: none; margin:0px !important; padding:0px !important; }
+			##zThumbnailLightgallery ul li {  min-width:150px; width:32.9%; background-image:none !important; list-style:none !important; display: inline-block; margin:0px; padding:0px;}
+			##zThumbnailLightgallery ul a {
+			display:block; float:left;
+			margin-right:10px;
+			margin-bottom:10px;
+			}
 			##zThumbnailLightgallery ul img {
 			padding:4px;
-			margin:2px;
 			background-color:##FFF;
+			max-width:100%;
 			border: 1px solid ##DFDFDF; 
 			}
 			##zThumbnailLightgallery ul a:hover img {
@@ -1513,9 +1545,11 @@ application.zcore.imageLibraryCom.displayImages(ts);
 			.mfp-with-zoom.mfp-removing.mfp-bg {
 			  opacity: 0;
 			}
-
+			@media only screen and (max-width: 767px) { 
+				##zThumbnailLightgallery ul li { min-width:250px; width:33.3%; }
+			}
 			 /* ]]> */
-			</style><!------>
+			</style>
 			</cfif>
 			<script type="text/javascript">
 			/* <![CDATA[ */ zArrDeferredFunctions.push(function(){
@@ -1684,6 +1718,9 @@ application.zcore.imageLibraryCom.displayImages(ts);
 	filmstrip_position: 'bottom', 	//STRING - position of filmstrip within gallery (bottom, top, left, right)
 	<cfif arguments.ss.forceSize>
 		<cfscript>
+		if(not structkeyexists(arguments.ss, 'thumbSize')){
+			arguments.ss.thumbSize="110x60";
+		}
 		local.arrT2=listToArray(arguments.ss.thumbSize, 'x');
 		</cfscript>
 		frame_width: #local.arrT2[1]#, 
@@ -1779,8 +1816,14 @@ application.zcore.imageLibraryCom.displayImages(ts);
 	if(structkeyexists(form, 'imagefiles') and form.imagefiles NEQ ""){
 		// patched cfml server to support multiple file uploads
 		file action="uploadAll" result="cffileresult" destination="#tempPath#" nameconflict="makeunique" filefield="imagefiles" charset="utf-8";
+
+		arrFile=[];
 		for(n=1;n LTE arraylen(cffileresult);n++){
-			form.image_file=cffileresult[n].serverDirectory&"/"&cffileresult[n].clientfile;
+			arrayAppend(arrFile, cffileresult[n].serverDirectory&"/"&cffileresult[n].clientfile);
+		}
+		arraySort(arrFile, "text", "asc");
+		for(n=1;n LTE arraylen(arrFile);n++){
+			form.image_file=arrFile[n];
 			r=this.imageprocessform();
 			if(not r){
 				local.failed=true;
@@ -1995,7 +2038,7 @@ application.zcore.imageLibraryCom.getViewOriginalImagesURL(image_library_id, ima
 	}
 	fileName=getFileFromPath(tempZipPath);
 
-	header name="Content-disposition"  value="attachment;filename=#Replace(fileName, " ",  "_", "all")#";
+	header name="Content-disposition"  value="attachment;filename=#Replace(replace(fileName, ",", " ", "all"), " ",  "_", "all")#";
 	content deleteFile="yes" file="#tempZipPath#" type="application/x-zip-compressed";
 
 	abort;

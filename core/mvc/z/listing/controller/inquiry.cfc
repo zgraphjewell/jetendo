@@ -41,12 +41,14 @@
 			ts = StructNew();
 			if(application.zcore.functions.zFakeFormFieldsNotEmpty()){
 				form.inquiries_spam=1;
+				form.inquiries_spam_description="Fake form fields not empty";
 				//application.zcore.functions.zRedirect("/z/misc/thank-you/index");
 			}
 			pos=findnocase("</",application.zcore.functions.zso(form, 'inquiries_comments'));
 			
 			if(pos NEQ 0){
 				form.inquiries_spam=1;
+				form.inquiries_spam_description="Comments had html";
 				//application.zcore.functions.zRedirect("/z/misc/thank-you/index");
 			}
 			// get select properties based on mls_id and listing_id
@@ -118,19 +120,22 @@
 	}
 	if(form.modalpopforced EQ 1){
 		if(application.zcore.functions.zso(form, 'js3811') NEQ "j219"){
-			form.inquiries_spam=1;
+			form.inquiries_spam=1; 
+			form.inquiries_spam_description="js3811 value not set"; 
 			//writeoutput('~n~');application.zcore.functions.zabort();
 		}
 		if(application.zcore.functions.zCheckFormHashValue(application.zcore.functions.zso(form, 'js3812')) EQ false){
-			form.inquiries_spam=1;
+			form.inquiries_spam=1; 
+			form.inquiries_spam_description="Form hash value was wrong"; 
 			//application.zcore.status.setStatus(request.zsid, "Your session has expired.  Please submit the form again.",form,true);
 			//application.zcore.functions.zRedirect("/z/listing/inquiry/index?modalpopforced=#form.modalpopforced#&zsid=#Request.zsid#&content_id=#form.content_id#&listing_id=#form.listing_id#");
 		}
 	}
-	if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
-		form.inquiries_spam=1;
+	/*if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
+		form.inquiries_spam=1; 
+		form.inquiries_spam_description="zset9 was wrong";
 		//application.zcore.functions.zredirect('/');
-	}
+	}*/
 	// form validation struct
 	if(structkeyexists(application.zcore.app.getAppData("content").optionStruct,'content_config_email_required') EQ false or application.zcore.app.getAppData("content").optionStruct.content_config_email_required EQ 1){
 		myForm.inquiries_email.required = true;
@@ -139,6 +144,8 @@
 	}
 	myForm.inquiries_first_name.required = true;
 	myForm.inquiries_first_name.friendlyName = "First Name";
+	myForm.inquiries_last_name.required=true;
+	myForm.inquiries_last_name.friendlyName = "Last Name";
 	if(application.zcore.app.getAppData("content").optionStruct.content_config_phone_required EQ 1){
 		myForm.inquiries_phone1.required = true;
 		myForm.inquiries_phone1.friendlyName = "Phone";
@@ -160,9 +167,11 @@
 	}
 	if(Find("@", form.inquiries_first_name) NEQ 0){
 		form.inquiries_spam=1;
+		form.inquiries_spam_description="@ symbol in first name";
 		//application.zcore.status.setStatus(Request.zsid, "Invalid Request",form,true);
 		//application.zcore.functions.zRedirect("/z/listing/inquiry/index?modalpopforced=#form.modalpopforced#&zsid=#Request.zsid#&content_id=#form.content_id#&listing_id=#form.listing_id#");
 	}
+	form.inquiries_session_id=application.zcore.session.getSessionId();
 	 
 	form.user_id=0;
 	//	Insert Into Inquiry Database
@@ -177,11 +186,7 @@
 	site_id = #db.param(request.zos.globals.id)# and 
 	inquiries_deleted = #db.param(0)#";
 	db.execute("q"); 
-	inputStruct = StructNew();
-	inputStruct.table = "inquiries";
-	inputStruct.struct=form;
-	inputStruct.datasource=request.zos.zcoreDatasource;
-	form.inquiries_id = application.zcore.functions.zInsert(inputStruct); 
+	form.inquiries_id=application.zcore.functions.zInsertLead();
 	if(form.inquiries_id EQ false){
 		if(structkeyexists(form, 'x_ajax_id')){
 	  		application.zcore.functions.zheader("x_ajax_id", form.x_ajax_id);
@@ -219,7 +224,7 @@
 	if(application.zcore.functions.zso(form, 'inquiries_email') EQ "" or application.zcore.functions.zEmailValidate(form.inquiries_email) EQ false){
 		form.inquiries_email=request.fromemail;
 	}
-	if(form.inquiries_spam EQ 0){
+	//if(form.inquiries_spam EQ 0){
 		ts=structnew();
 		ts.inquiries_id=form.inquiries_id;
 		ts.subject="New Property Inquiry on #request.zos.globals.shortdomain#";
@@ -255,7 +260,7 @@
 			// failed to assign/email lead
 			//zdump(rs);
 		}
-	}
+	//}
 	form.mail_user_id=application.zcore.user.automaticAddUser(application.zcore.functions.zUserMapFormFields(structnew()));	
 	ts=StructNew();
 	ts.listing_type_id = application.zcore.functions.zso(form, 'inquiries_property_type');

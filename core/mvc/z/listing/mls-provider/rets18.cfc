@@ -24,22 +24,7 @@
 	resourceStruct["media"]=structnew();
 	resourceStruct["media"].id="tableuid";
 	resourceStruct["media"].resource="media";
-	</cfscript>
-
-
-    <cffunction name="deleteListings" localmode="modern" output="no" returntype="any">
-    	<cfargument name="idlist" type="string" required="yes">
-    	<cfscript>
-		var db=request.zos.queryObject;
-		var arrId=listtoarray(mid(replace(arguments.idlist," ","","ALL"),2,len(arguments.idlist)-2),"','");
-		super.deleteListings(arguments.idlist);
-		db.sql="DELETE FROM #db.table("rets18_property", request.zos.zcoreDatasource)#  
-		WHERE rets18_mlsnum LIKE #db.param('#this.mls_id#-%')# and 
-		rets18_mlsnum IN (#db.trustedSQL(arguments.idlist)#)";
-		db.execute("q"); 
-		</cfscript>
-    </cffunction>
-    
+	</cfscript> 
     
     <cffunction name="parseRawData" localmode="modern" output="yes" returntype="any">
     	<cfargument name="ss" type="struct" required="yes">
@@ -53,8 +38,7 @@
 DELETE FROM `#request.zos.zcoreDatasource#`.listing_track WHERE listing_id LIKE '18-%';
 DELETE FROM `#request.zos.zcoreDatasource#`.listing WHERE listing_id LIKE '18-%';
 DELETE FROM `#request.zos.zcoreDatasource#`.listing_data WHERE listing_id LIKE '18-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.`listing_memory` WHERE listing_id LIKE '18-%';
-DELETE FROM `#request.zos.zcoreDatasource#`.rets18_property where rets18_mlsnum LIKE '18-%';
+DELETE FROM `#request.zos.zcoreDatasource#`.`listing_memory` WHERE listing_id LIKE '18-%'; 
 		
 		*/
 		
@@ -210,14 +194,9 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets18_property where rets18_mlsnum 
 		rs.listing_subdivision=application.zcore.functions.zso(ts, 'rets18_subdivision');
 		rs.listing_year_built=application.zcore.functions.zso(ts, 'rets18_yearbuilt');
 		rs.listing_office=application.zcore.functions.zso(ts, 'rets18_officelist');
-		db.sql="select * from #db.table("rets18_office", request.zos.zcoreDatasource)# rets18_office 
-		where rets18_uid=#db.param(ts.rets18_officelist)#";
-		q1=db.execute("q1"); 
-		if(q1.recordcount NEQ 0){
-			rs.listing_office_name=q1.rets18_officename;
-		}else{
-			rs.listing_office_name="";
-		}
+
+		throw("need to find which field is office");
+		rs.listing_office_name="";
 		rs.listing_agent=application.zcore.functions.zso(ts, 'rets18_agentlist');
 		rs.listing_latitude=curLat;
 		rs.listing_longitude=curLong;
@@ -241,6 +220,8 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets18_property where rets18_mlsnum 
 		rs.listing_data_detailcache1=listing_data_detailcache1;
 		rs.listing_data_detailcache2=listing_data_detailcache2;
 		rs.listing_data_detailcache3=listing_data_detailcache3;
+
+		rs.listing_track_sysid="";
 		return {
 			listingData:rs,
 			columnIndex:columnIndex,
@@ -248,26 +229,13 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets18_property where rets18_mlsnum 
 		};
 		</cfscript>
     </cffunction>
-    
-    <cffunction name="getJoinSQL" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="joinType" type="string" required="no" default="INNER">
-		<cfscript>
-		var db=request.zos.queryObject;
-		</cfscript>
-    	<cfreturn "#arguments.joinType# JOIN #db.table("rets18_property", request.zos.zcoreDatasource)# rets18_property ON rets18_property.rets18_mlsnum = listing.listing_id">
-    </cffunction>
-    <cffunction name="getPropertyListingIdSQL" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets18_property.rets18_mlsnum">
-    </cffunction>
-    <cffunction name="getListingIdField" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets18_mlsnum">
-    </cffunction>
+
     <cffunction name="getDetails" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="query" type="query" required="yes">
+    	<cfargument name="ss" type="struct" required="yes">
         <cfargument name="row" type="numeric" required="no" default="#1#">
         <cfargument name="fulldetails" type="boolean" required="no" default="#false#">
     	<cfscript> 
-		var idx=this.baseGetDetails(arguments.query, arguments.row, arguments.fulldetails);
+		var idx=this.baseGetDetails(arguments.ss, arguments.row, arguments.fulldetails);
 		idx["features"]="";
 		idx.listingSource=request.zos.listing.mlsStruct[listgetat(idx.listing_id,1,'-')].mls_disclaimer_name;
 		
@@ -313,8 +281,8 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets18_property where rets18_mlsnum 
 		}else{
 			idx["virtualtoururl"]="";
 		}
-		idx["zipcode"]=arguments.query["rets18_zipcode"][arguments.row];
-		idx["maintfees"]=arguments.query["rets18_assocfee"][arguments.row];
+		idx["zipcode"]=application.zcore.functions.zso(arguments.ss, "rets18_zipcode");
+		idx["maintfees"]=application.zcore.functions.zso(arguments.ss, "rets18_assocfee");
 		</cfscript>
         <cfsavecontent variable="details"><table class="ztablepropertyinfo">
         #idx.listing_data_detailcache1#
@@ -339,12 +307,12 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets18_property where rets18_mlsnum 
 		var db=request.zos.queryObject;
 		application.zcore.template.fail("ntreis getphoto queries not optimized like the other rets servers");
 		if(arguments.sysid EQ 0){
-			db.sql="select rets18_media.rets18_mediasource, rets18_property.rets18_uid 
-			from #db.table("rets18_property", request.zos.zcoreDatasource)# rets18_property, 
+			db.sql="select rets18_media.rets18_mediasource, listing_track_sysid
+			from #db.table("listing_track", request.zos.zcoreDatasource)#, 
 			#db.table("rets18_media", request.zos.zcoreDatasource)# rets18_media 
 			WHERE rets18_mediatype=#db.param('pic')# and 
-			rets18_media.rets18_tableuid = rets18_property.rets18_uid and 
-			rets18_property.rets18_mlsnum=#db.param('18-#arguments.mls_pid#')# 
+			rets18_media.rets18_tableuid = listing_track_sysid and 
+			listing_id=#db.param('18-#arguments.mls_pid#')# 
 			limit #db.param(0)#,#db.param(1)#";
 			qId=db.execute("qId"); 
 			if(qId.recordcount NEQ 0){
@@ -385,10 +353,7 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets18_property where rets18_mlsnum 
 		}
 		
 		
-		 db.sql="select cast(group_concat(distinct rets18_county SEPARATOR #db.param(',')#) AS CHAR) datalist 
-		 from #db.table("rets18_property", request.zos.zcoreDatasource)# rets18_property 
-		WHERE rets18_county<> #db.param('')#";
-		qD=db.execute("qD");
+		throw("have to build list of counties a new way, qD was deleted");
 		arrD=listtoarray(qD.datalist);
 		dS=structnew();
 		for(i=1;i LTE arraylen(arrD);i++){
@@ -415,10 +380,7 @@ DELETE FROM `#request.zos.zcoreDatasource#`.rets18_property where rets18_mlsnum 
 		}
 		
 		
-		 db.sql="select cast(group_concat(distinct rets18_city SEPARATOR #db.param(',')#) AS CHAR) datalist 
-		 from #db.table("rets18_property", request.zos.zcoreDatasource)# rets18_property 
-		WHERE rets18_city NOT IN #db.trustedSQL("('Belize','NTREIS TEST ONLY','no city','')")#";
-		qD=db.execute("qD");
+		throw("have to build list of cities a new way, qD was deleted");
 		arrD=listtoarray(qD.datalist);
 		tcs=structnew();
 		for(i=1;i LTE arraylen(arrd);i++){

@@ -1,4 +1,5 @@
 <?php
+
 // force variable to exist, with optional forcing of number data type and default value.
 // you'd have to call it like zo(@$fakeVar) to avoid undefined error
 function zo($varName, $isNumber=false, $defaultValue=''){
@@ -188,66 +189,62 @@ function zRemoveEmptyValuesFromArray($arr){
 }
 function getRets12ByListingId(){
 	global $mlsDataDatasource;
-	return array("select SQL_NO_CACHE rets12_sysid as imageid, rets12_157 as listingid from rets12_property where rets12_157 IN ('", $mlsDataDatasource);
+	return array("select SQL_NO_CACHE listing_track_sysid as imageid, listing_id as listingid from listing_track where listing_id IN ('", $mlsDataDatasource);
 }
 function getRets16ByListingId(){
 	global $mlsDataDatasource;
-	return array("select SQL_NO_CACHE rets16_sysid as imageid, rets16_157 as listingid from rets16_property where rets16_157 IN ('", $mlsDataDatasource);
+	return array("select SQL_NO_CACHE listing_track_sysid as imageid, listing_id as listingid from listing_track where listing_id IN ('", $mlsDataDatasource);
 }
 function getRets18ByListingId(){
 	global $mlsDataDatasource;
-	echo "18 is not tested.";
-	exit;
-	//return array("select rets18_media.rets18_mediasource as id from rets18_property, rets18_media WHERE rets18_mediatype='pic' and rets18_media.rets18_tableuid = rets18_property.rets18_uid and concat('18-',rets18_property.rets18_mlsnum) IN ('", $mlsDataDatasource);
+	return array("select rets18_media.rets18_mediasource as id, listing_id as listingid from listing_track, rets18_media WHERE rets18_mediatype='pic' and rets18_media.rets18_tableuid = listing_track_sysid and listing_id IN ('", $mlsDataDatasource);
 }
 function getRets20ByListingId(){
 	global $mlsDataDatasource;
-	return array("select SQL_NO_CACHE rets20_matrix_unique_id as imageid, rets20_mlsnumber as listingid from rets20_property where rets20_mlsnumber IN ('", $mlsDataDatasource);
+	return array("select SQL_NO_CACHE listing_track_sysid as imageid, listing_id as listingid from listing_track where listing_id IN ('", $mlsDataDatasource);
 }
 function getRets22ByListingId(){
 	global $mlsDataDatasource;
-	return array("select SQL_NO_CACHE rets22_list_1 as imageid, rets22_list_105 as listingid from rets22_property where rets22_list_105 IN ('", $mlsDataDatasource);
+	return array("select SQL_NO_CACHE listing_track_sysid as imageid, listing_id as listingid from listing_track where listing_id IN ('", $mlsDataDatasource);
 }
 
 function getRets24ByListingId(){
 	global $mlsDataDatasource;
-	return array("select SQL_NO_CACHE rets24_list_1 as imageid, rets24_list_105 as listingid from rets24_property where rets24_list_105 IN ('", $mlsDataDatasource);
+	return array("select SQL_NO_CACHE listing_track_sysid as imageid, listing_id as listingid from listing_track where listing_id IN ('", $mlsDataDatasource);
 }
 function getRets25ByListingId(){
 	global $mlsDataDatasource;
-	return array("select SQL_NO_CACHE rets25_matrix_unique_id as imageid, rets25_mlsnumber as listingid from rets25_property where rets25_mlsnumber IN ('", $mlsDataDatasource);
+	return array("select SQL_NO_CACHE listing_track_sysid as imageid, listing_id as listingid from listing_track where listing_id IN ('", $mlsDataDatasource);
 }
 
 function getRets12BySysId(){
 	global $mlsDataDatasource;
-	return array("select SQL_NO_CACHE rets12_sysid as imageid, rets12_157 as listingid from rets12_property where rets12_sysid IN ('", $mlsDataDatasource);
+	return array("select SQL_NO_CACHE listing_track_sysid as imageid, listing_id as listingid from listing_track where listing_track_sysid IN ('", $mlsDataDatasource);
 }
 function getRets16BySysId(){
 	global $mlsDataDatasource;
-	return array("select SQL_NO_CACHE rets16_sysid as imageid, rets16_157 as listingid from rets16_property where rets16_sysid IN ('", $mlsDataDatasource);
+	return array("select SQL_NO_CACHE listing_track_sysid as imageid, listing_id as listingid from listing_track where listing_track_sysid IN ('", $mlsDataDatasource);
 }
 function getRets18BySysId(){
 	global $mlsDataDatasource;
-	echo "18 is not tested.";
-	exit;
-	//return array("select rets18_media.rets18_mediasource as id from rets18_property, rets18_media WHERE rets18_mediatype='pic' and rets18_media.rets18_tableuid = rets18_property.rets18_uid and concat('18-',rets18_property.rets18_mlsnum) IN ('", $mlsDataDatasource);
+	return array("select rets18_media.rets18_mediasource as id, listing_id as listingid from listing_track, rets18_media WHERE rets18_mediatype='pic' and rets18_media.rets18_tableuid = listing_track_sysid and listing_track_sysid IN ('", $mlsDataDatasource);
 }
 function getRets20BySysId(){
 	global $mlsDataDatasource;
-	return array("select SQL_NO_CACHE rets20_matrix_unique_id as imageid, rets20_mlsnumber as listingid from rets20_property where rets20_matrix_unique_id IN ('", $mlsDataDatasource);
+	return array("select SQL_NO_CACHE listing_track_sysid as imageid, listing_id as listingid from listing_track where listing_track_sysid IN ('", $mlsDataDatasource);
 }
 function getRets22BySysId(){
 	global $mlsDataDatasource;
-	return array("select SQL_NO_CACHE rets22_list_1 as imageid, rets22_list_105 as listingid from rets22_property where rets22_list_1 IN ('", $mlsDataDatasource);
+	return array("select SQL_NO_CACHE listing_track_sysid as imageid, listing_id as listingid from listing_track where listing_track_sysid IN ('", $mlsDataDatasource);
 }
 
 function getRets24BySysId(){
 	global $mlsDataDatasource;
-	return array("select SQL_NO_CACHE rets24_list_1 as imageid, rets24_list_105 as listingid from rets24_property where rets24_list_1 IN ('", $mlsDataDatasource);
+	return array("select SQL_NO_CACHE listing_track_sysid as imageid, listing_id as listingid from listing_track where listing_track_sysid IN ('", $mlsDataDatasource);
 }
 function getRets25BySysId(){
 	global $mlsDataDatasource;
-	return array("select SQL_NO_CACHE rets25_matrix_unique_id as imageid, rets25_mlsnumber as listingid from rets25_property where rets25_matrix_unique_id IN ('", $mlsDataDatasource);
+	return array("select SQL_NO_CACHE listing_track_sysid as imageid, listing_id as listingid from listing_track where listing_track_sysid IN ('", $mlsDataDatasource);
 }
 $arrQueryFunction=array();
 $arrQueryFunction["12"]="getRets12BySysId";
@@ -354,8 +351,7 @@ function zDownloadRetsImages($listingId, $sysId, $photoIndex){
 	if($type === false){
 		echo "getRetsImageType returned false for mls_id = ".$mls_id."\n";
 		return false;
-	}
-	 // SELECT rets25_mlsnumber, rets25_matrix_unique_id FROM rets25_property WHERE rets25_mlsnumber='25-O5190454';
+	} 
 	if($photoIndex == 0){
 		$photoIndex="*";
 	}else{

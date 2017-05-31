@@ -36,20 +36,7 @@ variables.tableLookup["G"]="G";
 variables.tableLookup["H"]="H";
 variables.tableLookup["I"]="I";
 
-</cfscript>
-
-<cffunction name="deleteListings" localmode="modern" output="no" returntype="any">
-	<cfargument name="idlist" type="string" required="yes">
-	<cfscript>
-	var db=request.zos.queryObject;
-	var arrId=listtoarray(mid(replace(arguments.idlist," ","","ALL"),2,len(arguments.idlist)-2),"','");
-	super.deleteListings(arguments.idlist);
-	
-	db.sql="DELETE FROM #db.table("rets24_property", request.zos.zcoreDatasource)#  
-	WHERE rets24_list_105 IN (#db.trustedSQL(arguments.idlist)#)";
-	db.execute("q"); 
-	</cfscript>
-</cffunction>
+</cfscript> 
 
 <cffunction name="initImport" localmode="modern" output="no" returntype="any">
 	<cfargument name="resource" type="string" required="yes">
@@ -172,10 +159,7 @@ variables.tableLookup["I"]="I";
 	
 	if(ts['Unit ##'] NEQ ''){
 		address&=" Unit: "&ts["Unit ##"];
-	}
-	
-	
-	
+	}  
 	
 	s2=structnew();
 	liststatus=this.getRetsValue("property", ts["rets24_list_8"], 'list_15', ts["status"]);
@@ -377,14 +361,7 @@ variables.tableLookup["I"]="I";
 	rs.listing_subdivision=local.listing_subdivision;
 	rs.listing_year_built=ts["year built"];
 	rs.listing_office=ts["Office ID"];
-	db.sql="select * from #db.table("rets24_office", request.zos.zcoreDatasource)# rets24_office 
-	where rets24_office_0=#db.param(rs.listing_office)#";
-	qOffice=db.execute("qOffice"); 
-	if(qOffice.recordcount NEQ 0){
-		rs.listing_office_name=qOffice.rets24_office_2;
-	}else{
-		rs.listing_office_name="";
-	}
+	rs.listing_office_name=ts["rets24_listing_office_name"];
 	rs.listing_agent=ts["Agent ID"];
 	rs.listing_latitude=curLat;
 	rs.listing_longitude=curLong;
@@ -407,50 +384,25 @@ variables.tableLookup["I"]="I";
 	rs.listing_data_detailcache1=local.listing_data_detailcache1;
 	rs.listing_data_detailcache2=local.listing_data_detailcache2;
 	rs.listing_data_detailcache3=local.listing_data_detailcache3; 
+	//writedump(ts);writedump(rs);abort;
 
-	return {
+
+	rs.listing_track_sysid=ts["rets24_list_1"];
+
+	return { 
 		listingData:rs,
 		columnIndex:columnIndex,
 		arrData:arguments.ss.arrData
 	};
 	</cfscript>
-</cffunction>
-    
-<cffunction name="getJoinSQL" localmode="modern" output="yes" returntype="any">
-	<cfargument name="joinType" type="string" required="no" default="INNER">
-	<cfscript>
-	var db=request.zos.queryObject;
-	</cfscript>
-	<cfreturn "#arguments.joinType# JOIN #db.table("rets24_property", request.zos.zcoreDatasource)# rets24_property ON rets24_property.rets24_list_105 = listing.listing_id">
-</cffunction>
-    <cffunction name="getPropertyListingIdSQL" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets24_property.rets24_list_105">
-    </cffunction>
-    <cffunction name="getListingIdField" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "rets24_list_105">
-    </cffunction>
+</cffunction> 
     
 <cffunction name="getDetails" localmode="modern" output="yes" returntype="any">
-	<cfargument name="query" type="query" required="yes">
+	<cfargument name="ss" type="struct" required="yes">
 	<cfargument name="row" type="numeric" required="no" default="#1#">
 	<cfargument name="fulldetails" type="boolean" required="no" default="#false#">
-	<cfscript>
-	var q1=0;
-	var t44444=0;
-	var t99=0;
-	var qOffice=0;
-	var details=0;
-	var i=0;
-	var t1=0;
-	var t3=0;
-	var t2=0;
-	var i10=0;
-	var value=0;
-	var n=0;
-	var column=0;
-	var arrV=0;
-	var arrV2=0;
-	var idx=this.baseGetDetails(arguments.query, arguments.row, arguments.fulldetails);
+	<cfscript> 
+	var idx=this.baseGetDetails(arguments.ss, arguments.row, arguments.fulldetails);
 	t99=gettickcount();
 	idx["features"]="";
 	idx.listingSource=request.zos.listing.mlsStruct[listgetat(idx.listing_id,1,'-')].mls_disclaimer_name;
@@ -478,13 +430,13 @@ variables.tableLookup["I"]="I";
 	idx["officeState"]="";
 	idx["officeEmail"]="";
 		
-	idx["virtualtoururl"]=arguments.query["rets24_unbrandedidxvirtualtour"];
-	idx["zipcode"]=arguments.query["listing_zip"][arguments.row];
+	idx["virtualtoururl"]=application.zcore.functions.zso(arguments.ss, "rets24_unbrandedidxvirtualtour");
+	idx["zipcode"]=arguments.ss["listing_zip"];
 	idx["maintfees"]="";
-	if(isnumeric(arguments.query["rets#this.mls_id#_LIST_150"][arguments.row])){
-		idx["maintfees"]=arguments.query["rets#this.mls_id#_LIST_150"][arguments.row];
-	}else if(isnumeric(arguments.query["rets#this.mls_id#_LIST_50"][arguments.row])){
-		idx["maintfees"]=arguments.query["rets#this.mls_id#_LIST_50"][arguments.row];
+	if(isnumeric(application.zcore.functions.zso(arguments.ss, "rets#this.mls_id#_LIST_150"))){
+		idx["maintfees"]=arguments.ss["rets#this.mls_id#_LIST_150"];
+	}else if(isnumeric(application.zcore.functions.zso(arguments.ss, "rets#this.mls_id#_LIST_50"))){
+		idx["maintfees"]=arguments.ss["rets#this.mls_id#_LIST_50"];
 	}
 	
 	</cfscript>
@@ -512,22 +464,10 @@ variables.tableLookup["I"]="I";
 </cffunction>
 	
 <cffunction name="getLookupTables" localmode="modern" access="public" output="no" returntype="struct">
-	<cfscript>
-	var i=0;
-	var s=0;
-	var arrSQL=[];
-	var fd=0;
-	var arrError=[];
-	var i2=0;
-	var tmp=0;
-	var g=0;
-	var db=request.zos.queryObject;
-	var qD2=0;
-	var arrC=0;
-	var tempState=0;
-	var failStr=0;
-	var qD=0;
-	var qZ=0;
+	<cfscript> 
+	var arrSQL=[]; 
+	var arrError=[]; 
+	var db=request.zos.queryObject; 
 	var cityCreated=false; 
 	fd=structnew();
 	fd["A"]="Residential";

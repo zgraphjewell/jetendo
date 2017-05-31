@@ -255,12 +255,12 @@ if(compare(arguments.photourl, local.c) NEQ 0){
 		qCheckExclusiveListingPage=db.execute("qCheckExclusiveListingPage"); 
 		if(qCheckExclusiveListingPage.recordcount NEQ 0){
 			ts=structnew();
-			ts.featureName="Manage Listings";
+			ts.featureName="Listings";
 			ts.link='/z/content/admin/content-admin/add?content_parent_id='&qCheckExclusiveListingPage.cid;
 			arguments.linkStruct["Real Estate"].children["Add New Listing"]=ts;
 			ts=structnew();
 			ts.link='/z/content/admin/content-admin/index?content_parent_id='&qCheckExclusiveListingPage.cid;
-			arguments.linkStruct["Real Estate"].children["Manage Listings"]=ts;
+			arguments.linkStruct["Real Estate"].children["Listings"]=ts;
   		}*/
 		if(structkeyexists(arguments.linkStruct["Real Estate"].children,"Saved Listing Searches") EQ false){
 			ts=structnew();
@@ -1103,10 +1103,10 @@ Enter the maximum distance from the center of the primary city that you want the
 			arrTables=['city','city_distance','listing'];
 		}else{
 			for(i=1;i<=arraylen(arrTables2);i++){
-			arrayappend(arrQ2,"SELECT #arrTables3[i]# id FROM #db.table("#arrTables4[i]#", request.zos.zcoreDatasource)#  
-				LIMIT #db.param(0)#,#db.param(1)#");
+			arrayappend(arrQ2,"(SELECT #arrTables3[i]# id FROM #db.table("#arrTables4[i]#", request.zos.zcoreDatasource)#  
+				LIMIT #db.param(0)#,#db.param(1)#)");
 			}
-			db.sql=arraytolist(arrQ2,' UNION ALL ')&' UNION ALL SELECT #db.param(0)# id LIMIT #db.param(4)#';
+			db.sql=arraytolist(arrQ2,' UNION ALL ')&' UNION ALL (SELECT #db.param(0)# id)';
 			qC=db.execute("qC");
 			if(isQuery(qC) EQ false or qC.recordcount NEQ 4){
 				arrTables=arrTables2;
@@ -1204,14 +1204,7 @@ Enter the maximum distance from the center of the primary city that you want the
 	</cfloop>
 	<cfloop query="qMLS">
 		<cfscript>
-		ts.mlsIdLookup[qMLS.mls_provider]=qMLS.mls_id;
-		if(qMLS.mls_mls_id EQ "midfl"){
-			ts.mlsIdLookup["far"]=7;
-			ts.mlsIdLookup["rets7"]=7;
-		}
-		if(qMLS.mls_provider EQ "far"){
-			ts.mlsIdLookup["far"]=7;
-		}
+		ts.mlsIdLookup[qMLS.mls_provider]=qMLS.mls_id; 
 		arrayappend(arrMlsId,"'#qMLS.mls_id#'");
 		ts.mlsStruct[qMLS.mls_id]=structnew();
 		ts.mlsStruct[qMLS.mls_id].app_x_mls_office_id=replace(qMLS.app_x_mls_office_id,",","','","ALL");
@@ -1373,13 +1366,14 @@ Enter the maximum distance from the center of the primary city that you want the
 	<cfargument name="ss" type="struct" required="yes">
 	<cfscript>
 	arguments.ss.listingStruct.functions=createobject("component", "zcorerootmapping.mvc.z.listing.controller.functions");
-	
-	for(i in arguments.ss.listingStruct.mlsStruct){
-		tempCom=createobject("component",arguments.ss.listingStruct.mlsStruct[i].mlsComPath);
-		tempCom.setMLS(i);
-		//tempCom.baseInitImport(arguments.ss.mlsStruct[i].sharedStruct);
-		//tempCom.init(arguments.ss.mlsStruct[i].sharedStruct);
-		arguments.ss.listingStruct.mlsComObjects[i]=tempCom;
+	if(structkeyexists(arguments.ss.listingStruct, 'mlsStruct')){
+		for(i in arguments.ss.listingStruct.mlsStruct){
+			tempCom=createobject("component",arguments.ss.listingStruct.mlsStruct[i].mlsComPath);
+			tempCom.setMLS(i);
+			//tempCom.baseInitImport(arguments.ss.mlsStruct[i].sharedStruct);
+			//tempCom.init(arguments.ss.mlsStruct[i].sharedStruct);
+			arguments.ss.listingStruct.mlsComObjects[i]=tempCom;
+		}
 	}
 	</cfscript>
 </cffunction>
@@ -1538,14 +1532,7 @@ Enter the maximum distance from the center of the primary city that you want the
 	</cfscript>
 	<cfloop query="qMLS">
 		<cfscript>
-		ts.mlsIdLookup[qMLS.mls_provider]=qMLS.mls_id;
-		if(qMLS.mls_mls_id EQ "midfl"){
-			ts.mlsIdLookup["far"]=7;
-			ts.mlsIdLookup["rets7"]=7;
-		}
-		if(qmls.mls_provider EQ "far"){
-			ts.mlsIdLookup["far"]=7;
-		}
+		ts.mlsIdLookup[qMLS.mls_provider]=qMLS.mls_id; 
 		arrayappend(arrMlsId,"'#qMLS.mls_id#'");
 		ts.mlsStruct[qMLS.mls_id]=structnew();
 		ts.mlsStruct[qMLS.mls_id].mlsComPath="zcorerootmapping.mvc.z.listing.mls-provider.#qMLS.mls_com#";
@@ -2905,6 +2892,7 @@ zCreateMemoryTable(ts);
 			INSERT INTO #db.table("##"&memoryTable, request.zos.zcoreDatasource)#  
 			SELECT * FROM #db.table(arguments.ss.table, request.zos.zcoreDatasource)# 
 			<cfif request.zos.istestserver and arguments.ss.table EQ "listing"> 
+				<!--- TODO: this is unsafe for replication --->
 				WHERE CEILING(RAND()*#db.param(10)#) >= #db.param(7)# 
 			</cfif>
 			<cfif arguments.ss.table EQ "listing">

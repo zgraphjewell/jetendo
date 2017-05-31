@@ -190,29 +190,34 @@
     } 
 	if(application.zcore.functions.zFakeFormFieldsNotEmpty()){
 		form.inquiries_spam=1;
+		form.inquiries_spam_description="Fake form fields not empty"; 
 		//application.zcore.functions.zRedirect("/z/misc/thank-you/index?modalpopforced=#form.modalpopforced#");
 	} 
 	if(form.modalpopforced EQ 1){
 		if(application.zcore.functions.zso(form, 'js3811') NEQ "j219"){
-			form.inquiries_spam=1;
+			form.inquiries_spam=1; 
+			form.inquiries_spam_description="js3811 value not set"; 
 			//writeoutput('~n~');application.zcore.functions.zabort();
 		}
 		if(application.zcore.functions.zCheckFormHashValue(application.zcore.functions.zso(form, 'js3812')) EQ false){
-			form.inquiries_spam=1;
+			form.inquiries_spam=1; 
+			form.inquiries_spam_description="Form hash value was wrong"; 
 			//application.zcore.status.setStatus(request.zsid, "Your session has expired.  Please submit the form again.",form,true);
 			//application.zcore.functions.zRedirect("/z/listing/new-listing-email-signup/index?modalpopforced=#form.modalpopforced#&zsid=#Request.zsid#");
 		}
 	} 
-        if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
-		form.inquiries_spam=1;
+    /*if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
+		form.inquiries_spam=1; 
+		form.inquiries_spam_description="zset9 was wrong";
 		//application.zcore.functions.zredirect('/');
-        }
+    }*/
 	form.inquiries_email=form.saved_search_email;
 	application.zcore.tracking.setUserEmail(form.saved_search_email);  
 	form.inquiries_type_id = 14;
 	form.inquiries_type_id_siteIdType=4; 
-        form.inquiries_status_id = 1;
-        form.site_id = request.zOS.globals.id;
+    form.inquiries_status_id = 1;
+    form.site_id = request.zOS.globals.id;
+	form.inquiries_session_id=application.zcore.session.getSessionId();
         
         form.inquiries_primary=1;
         db.sql="UPDATE #db.table("inquiries", request.zos.zcoreDatasource)# inquiries 
@@ -222,29 +227,25 @@
 	inquiries_deleted = #db.param(0)# and 
 	site_id = #db.param(request.zos.globals.id)# ";
 	db.execute("q"); 
-        //	Insert Into Inquiry Database
-        local.inputStruct = StructNew();
-	local.inputStruct.table = "inquiries";
-	local.inputstruct.datasource=request.zos.zcoreDatasource;
-	local.inputStruct.struct=form;
-        form.inquiries_id = application.zcore.functions.zInsert(local.inputStruct); 
-        
-        if(form.inquiries_id EQ false){
+    //	Insert Into Inquiry Database
+	form.inquiries_id=application.zcore.functions.zInsertLead();
+    
+    if(form.inquiries_id EQ false){
 		application.zcore.status.setStatus(Request.zsid, "Your inquiry has not been sent due to an error.", false,true);
 		application.zcore.functions.zRedirect("/z/misc/inquiry/index?modalpopforced=#form.modalpopforced#&content_id=#form.content_id#&zsid="&request.zsid);
-        }
+    }
 	
 	 
 	application.zcore.tracking.setConversion('inquiry',form.inquiries_id); 
 	form.saved_search_format=application.zcore.functions.zso(form, 'saved_search_format', true, 1);
 	form.saved_search_last_sent_date=request.zos.mysqlnow; 
 	form.mls_saved_search_id=request.zos.listing.functions.zMLSSearchOptionsUpdate('update', 0, form.saved_search_email, form);  
-	if(form.inquiries_spam EQ 0){
+	//if(form.inquiries_spam EQ 0){
 		local.ts=structnew();
 		local.ts.inquiries_id=form.inquiries_id;
 		local.ts.subject="New listing email alert signup on #request.zos.globals.shortdomain#"; 
 		local.rs=application.zcore.functions.zAssignAndEmailLead(local.ts);  
-	}
+	//}
 	form.inquiries_email=form.saved_search_email;
 	form.mail_user_id=application.zcore.user.automaticAddUser(application.zcore.functions.zUserMapFormFields(structnew())); 
 	request.zsession.inquiries_email=form.saved_search_email;

@@ -5,7 +5,7 @@
 <cffunction name="delete" localmode="modern" access="remote" roles="member">
 	<cfscript>
 	var db=request.zos.queryObject; 
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Jobs", true);	
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Jobs", true);	
 	db.sql="SELECT * FROM #db.table("job", request.zos.zcoreDatasource)# job
 	WHERE job_id= #db.param(application.zcore.functions.zso(form,'job_id'))# and 
 	job_deleted = #db.param(0)# and
@@ -131,17 +131,17 @@
 				errors=true;
 			}
 		}
-		if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
-			application.zcore.status.setStatus(request.zsid, "Invalid submission.  Please submit the form again.",form,true);
-			errors=true;
-		}
+		//if(application.zcore.functions.zso(form, 'zset9') NEQ "9989"){
+			//application.zcore.status.setStatus(request.zsid, "Invalid submission.  Please submit the form again.",form,true);
+			//errors=true;
+		//}
 		if(errors){
 			application.zcore.functions.zRedirect("/z/job/suggest-an-job/index?zsid=#request.zsid#");
 		}
 	}else{
 
 */
-		application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Jobs", true);	
+		application.zcore.adminSecurityFilter.requireFeatureAccess("Jobs", true);	
 
 /*	} */
 
@@ -441,7 +441,7 @@
 
 	</cfscript>
 	<p>* denotes required field.</p>
-	<form action="#action#" method="post" enctype="multipart/form-data" <cfif not notPublic>onsubmit="zSet9('zset9_#form.set9#');"</cfif>>
+	<form class="zFormCheckDirty" action="#action#" method="post" enctype="multipart/form-data" <cfif not notPublic>onsubmit="zSet9('zset9_#form.set9#');"</cfif>>
 		<cfif notPublic>
 			
 		<cfelse>
@@ -784,8 +784,34 @@
 					</cfscript>#application.zcore.functions.zInput_Boolean("job_status")#</td>
 				</tr> 
 				<tr>
+					<th style="vertical-align:top; width:120px; ">Meta Title</th>
+					<td>
+						<input type="text" name="job_metatitle" style="width:95%;" value="#htmleditformat(form.job_metatitle)#">
+					</td>
+				</tr>
+				<tr>
+					<th style="vertical-align:top; width:120px; ">Meta Keywords</th>
+					<td>
+						<textarea name="job_metakey" style="width:95%; height:60px; ">#htmleditformat(form.job_metakey)#</textarea>
+					</td>
+				</tr>
+				<tr>
+					<th style="vertical-align:top; width:120px; ">Meta Description</th>
+					<td>
+						<textarea name="job_metadesc" style="width:95%; height:60px; ">#htmleditformat(form.job_metadesc)#</textarea>
+					</td>
+				</tr>
+	  
+
+				<tr>
 					<th>Unique URL</th>
-					<td><input type="text" name="job_unique_url" value="#htmleditformat(form.job_unique_url)#" /><br />
+					<td>
+					<cfif form.method EQ "add">
+						#application.zcore.functions.zInputUniqueUrl("job_unique_url", true)#
+					<cfelse>
+						#application.zcore.functions.zInputUniqueUrl("job_unique_url")#
+					</cfif>
+					<br />
 				It is not recommended to use this feature unless you know what you are doing regarding SEO and broken links.  It is used to change the URL of this record within the site.</td>
 				</tr> 
 
@@ -854,7 +880,7 @@
  	form.job_searchtext=application.zcore.functions.zso(form, 'job_searchtext');
  	form.job_category_id=application.zcore.functions.zso(form, 'job_category_id');
 
-	application.zcore.adminSecurityFilter.requireFeatureAccess("Manage Jobs");
+	application.zcore.adminSecurityFilter.requireFeatureAccess("Jobs");
 
 	form.job_searchtext=replace(replace(form.job_searchtext, '+', ' ', 'all'), ' ', '%', 'all');
 
@@ -1183,8 +1209,14 @@
 		echo('<a href="#request.jobCom.getJobURL(row)#" target="_blank">View</a> | 
 		<a href="/z/job/admin/manage-jobs/add?job_id=#row.job_id#">Copy</a> | ');
 		echo('<a href="/z/job/admin/manage-jobs/edit?job_id=#row.job_id#&amp;modalpopforced=1" onclick="zTableRecordEdit(this);  return false;">Edit</a>');
-		echo(' | 
-		<a href="##" onclick="zDeleteTableRecordRow(this, ''/z/job/admin/manage-jobs/delete?job_id=#row.job_id#&amp;returnJson=1&amp;confirm=1''); return false;">Delete</a>');
+
+		echo(' | ');
+
+		if (not application.zcore.functions.zIsForceDeleteEnabled(row.job_unique_url) ) {
+			echo( 'Locked' );
+		} else {
+			echo( '<a href="##" onclick="zDeleteTableRecordRow(this, ''/z/job/admin/manage-jobs/delete?job_id=#row.job_id#&amp;returnJson=1&amp;confirm=1''); return false;">Delete</a>');
+		}
 	echo('</td>');
 
 	</cfscript>

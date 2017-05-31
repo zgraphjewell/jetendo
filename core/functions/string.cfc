@@ -550,53 +550,96 @@
 	arrFinal=[];
 
 	dirName=lcase(application.zcore.functions.zURLEncode(application.zcore.functions.zLimitStringLength(arguments.directoryName, 30, false), "-"));
-	if(not arraylen(a)){
-		return t;
-	}
-	application.zcore.functions.zCreateDirectory("#request.zos.globals.privatehomedir#zupload/user/auto-cached/");
-	dirPath="#request.zos.globals.privatehomedir#zupload/user/auto-cached/#dirName#/";
-	application.zcore.functions.zCreateDirectory(dirPath);
-	//echo("create dir:"&dirPath&chr(10)&"<br>");
-	for(i=1;i LTE arraylen(a);i++){
-		//echo('processing: '&a[i]&chr(10)&'<br />');
-		fileName=getfilefrompath(a[i]);
-		absoluteLink=application.zcore.functions.zForceAbsoluteURL(request.zos.currentHostName&"/", a[i]);
-		if(left(absoluteLink, len(request.zos.currentHostName&"/")) EQ request.zos.currentHostName&"/"){
-			continue;
-		}
-		count=0;
-		ext=application.zcore.functions.zGetFileExt(fileName);
-		theName=application.zcore.functions.zURLEncode(application.zcore.functions.zGetFileName(fileName), '-');
-		newFileName=theName&"."&ext;
-		if(fileexists(dirPath&newFileName)){
-			while(true){
-				count++;
-				if(count EQ 100){
-					throw("Detected infinite loop");
+	if(arraylen(a)){
+
+		fileCom=createobject("component", "zcorerootmapping.mvc.z.admin.controller.files");
+		virtualFileCom=fileCom.getVirtualFileCom(); 
+		if(not virtualFileCom.folderExistsByPath("auto-cached")){
+			ts={
+				data:{
+					virtual_folder_name:"auto-cached",
+					virtual_folder_path:"auto-cached"
 				}
-				if(not fileexists(dirPath&theName&count&"."&ext)){
-					newFileName=theName&count&"."&ext;
-					break;
-				}
+			};
+			rs=virtualFileCom.createFolder(ts);
+			if(not rs.success){ 
+				// failed to create auto-cached folder  
+				return t;
 			}
 		}
-		success=true;
-		//echo("newFileName:"&newFileName&"<br>");
-		try{
-			http url="#a[i]#" timeout="30" path="#dirPath#" file="#newFileName#"{
+		dirPath="#request.zos.globals.privatehomedir#zupload/user/auto-cached/#dirName#/";
+		rs=virtualFileCom.getFolderByPath("auto-cached/#dirName#");
+ 
+		if(not rs.success){
+			ts={
+				data:{
+					virtual_folder_name:dirName,
+					virtual_folder_path:"auto-cached/"&dirName
+				}
+			}
+			rs=virtualFileCom.createFolder(ts);
+			if(not rs.success){ 
+				// failed to create folder 
+				return t;
+			}
+		} 
+		for(i=1;i LTE arraylen(a);i++){ 
+			fileName=getfilefrompath(a[i]);
+			absoluteLink=application.zcore.functions.zForceAbsoluteURL(request.zos.currentHostName&"/", a[i]);
+			if(left(absoluteLink, len(request.zos.currentHostName&"/")) EQ request.zos.currentHostName&"/"){
+				continue;
+			}
+			count=0;
+			ext=application.zcore.functions.zGetFileExt(fileName);
+			theName=application.zcore.functions.zURLEncode(application.zcore.functions.zGetFileName(fileName), '-');
+			newFileName=theName&"."&ext; 
+			tempPath="auto-cached/"&dirName&"/"&newFileName;
+			dirPath=request.zos.globals.privateHomeDir&"zupload/user/auto-cached/"&dirName&"/";
+			if(virtualFileCom.fileExistsByPath(tempPath)){
+				while(true){
+					count++;
+					if(count EQ 100){
+						throw("Detected infinite loop");
+					}
+					newFileName=theName&count&"."&ext;
+					tempPath="auto-cached/"&dirName&"/"&newFileName;
+					if(not virtualFileCom.fileExistsByPath(tempPath)){
+						break;
+					}
+				}
+			}
+			success=true; 
+			try{
+				http url="#a[i]#" timeout="30" path="#dirPath#" file="#newFileName#"{
 
-			};
-		}catch(Any e){
-			success=false;
-		}
-		if(success){
-			arrayAppend(arrFinal, {originalURL: a[i], newURL: "/zupload/user/auto-cached/#dirName#/#newFileName#" });
-		}
-	}
+				};
+			}catch(Any e){   
+				success=false;
+			}
+			if(success){
+				ts={
+					data:{
+						virtual_file_name:newFileName,
+						virtual_file_path:tempPath,
+						virtual_file_secure:0,
+						virtual_file_user_group_list:""
+					}
+				};
+				rs=virtualFileCom.createFile(ts); 
+				if(rs.success EQ false){
+					// Failed to create file
+					continue;
+				} 
 
-	for(i=1;i LTE arraylen(arrFinal);i++){
-		t=replace(t, arrFinal[i].originalURL, arrFinal[i].newURL, 'all'); 
-	}
+				viewLink=virtualFileCom.getViewLink(rs.data);
+				arrayAppend(arrFinal, {originalURL: a[i], newURL: viewLink });
+			}
+		}
+
+		for(i=1;i LTE arraylen(arrFinal);i++){
+			t=replace(t, arrFinal[i].originalURL, arrFinal[i].newURL, 'all'); 
+		}
+	} 
 	return t;
 	</cfscript>
 </cffunction>
@@ -1501,5 +1544,26 @@ Example usage:
 	</cfscript>
 </cffunction>
 
+
+
+<cffunction name="zFormatInquiryPhone" localmode="modern" access="public">
+	<cfargument name="phone" type="string" required="yes">
+	<cfscript>
+	phone=arguments.phone;
+	if(phone EQ ""){
+		return "";
+	}
+	// remove county prefix for ctm data
+	phone=reReplace(phone, '\+1(.*)', '\1', 'ALL' );
+	// try to remove ext
+	phone=reReplaceNocase(phone, 'ext.*', '', 'ALL' );
+	// remove all non-numeric
+	phone=reReplace(phone, '[^0-9]*', '', 'ALL' );
+	if(len(phone) LT 7){
+		phone=""; // probably an invalid phone number
+	}
+	return trim(phone);
+	</cfscript>
+</cffunction>
 </cfoutput>
 </cfcomponent>

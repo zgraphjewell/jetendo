@@ -27,6 +27,9 @@
 			site_deleted=#db.param(0)# ";
 		qU=db.execute("qU");
 		application.zcore.functions.zOS_cacheSitePaths();
+		structdelete(application.zcoreSiteDataStruct, form.site_id);
+		structdelete(application.zcoreSitesLoaded, form.site_id);
+		structdelete(application.zcoreSitesListingLoaded, form.site_id);
 
 		var rs=application.zcore.functions.zGenerateNginxMap(false);
 		var result=application.zcore.functions.zSecureCommand("publishNginxSiteConfig"&chr(9)&form.site_id, 30);
@@ -349,6 +352,7 @@
 	}
 	form.site_domain=request.zos.originalFormScope.site_domain;
 	form.site_securedomain=request.zos.originalFormScope.site_securedomain;
+	form.site_google_search_console_domain=request.zos.originalFormScope.site_google_search_console_domain;
 
 	form.site_short_domain=lcase(form.site_short_domain);
 	form.site_domain=lcase(form.site_domain);
@@ -360,6 +364,19 @@
 		}else{
 			form.site_theme_sync_site_id=0;
 		}
+	}
+	if(form.site_phone_tracking_label_text EQ ""){
+		form.site_phone_tracking_label_text="Tracking Label";
+	}
+	if(form.site_report_start_date NEQ "" and isdate(form.site_report_start_date)){
+		form.site_report_start_date=dateformat(form.site_report_start_date, "yyyy-mm-dd");
+	}
+	if(form.site_keyword_ranking_start_date NEQ "" and isdate(form.site_keyword_ranking_start_date)){
+		form.site_keyword_ranking_start_date=dateformat(form.site_keyword_ranking_start_date, "yyyy-mm-dd");
+	}
+	
+	if(form.site_facebook_insights_start_date NEQ "" and isdate(form.site_facebook_insights_start_date)){
+		form.site_facebook_insights_start_date=dateformat(form.site_facebook_insights_start_date, "yyyy-mm-dd");
 	}
 	if(form.site_lead_reminder_start_date NEQ "" and isdate(form.site_lead_reminder_start_date)){
 		form.site_lead_reminder_start_date=dateformat(form.site_lead_reminder_start_date, 'yyyy-mm-dd');
@@ -389,6 +406,10 @@
 	if(structkeyexists(form, 'site_send_confirm_opt_in') EQ false){
 		form.site_send_confirm_opt_in=0;
 	}
+	if(structkeyexists(form, 'site_enable_send_to_friend') EQ false){
+		form.site_enable_send_to_friend=0;
+	}
+
 	if(structkeyexists(form, 'site_disable_cfml') EQ false){
 		form.site_disable_cfml=0;
 	}
@@ -397,6 +418,9 @@
 	}
 	if(structkeyexists(form, 'site_plain_text_password') EQ false){
 		form.site_plain_text_password=0;
+	}
+	if(structkeyexists(form, 'site_administrator_enable_force_delete') EQ false){
+		form.site_administrator_enable_force_delete=0;
 	}
 	if(structkeyexists(form, 'site_login_iframe_enabled') EQ false){
 		form.site_login_iframe_enabled=0;
@@ -757,6 +781,14 @@
 	}
 	application.zcore.functions.zOS_cacheSitePaths();
 	application.zcore.functions.zOS_cacheSiteAndUserGroups(form.site_id);
+	if(form.site_active EQ 0){
+		structdelete(application.zcoreSiteDataStruct, form.site_id);
+		structdelete(application.zcoreSitesLoaded, form.site_id);
+		structdelete(application.zcoreSitesListingLoaded, form.site_id);
+	}else{
+		application.zcoreSitesLoaded[form.site_id]=0;
+		application.zcoreSitesListingLoaded[form.site_id]=0;
+	}
 	
 	if(structkeyexists(form, 'createUserBlogContent')){
 		// must run after the globals are updated
@@ -858,35 +890,35 @@
 	if(not local.rs.success){
 		application.zcore.template.fail("Failed to create site.  See the sql errors below.");	
 	}
-	db.sql="INSERT INTO #db.table("user_group", request.zos.zcoreDatasource)#  (user_group_deleted, `user_group_name`,`user_group_friendly_name`,`site_id`,`user_group_primary`, user_group_updated_datetime) VALUES #db.trustedSQL("(0,   'administrator','','#form.site_id#','0', '#request.zos.mysqlnow#')")#";
+	db.sql="INSERT INTO #db.table("user_group", request.zos.zcoreDatasource)#  (user_group_deleted, `user_group_name`,`user_group_friendly_name`,`site_id`,`user_group_primary`, user_group_updated_datetime) VALUES #db.trustedSQL("(0,   'administrator','Administrator','#form.site_id#','0', '#request.zos.mysqlnow#')")#";
 	local.rs=db.insert("insertCheck", request.zOS.insertIDColumnForSiteIDTable); 
 	if(not local.rs.success){
 		application.zcore.template.fail("Failed to create site.  See the sql errors below.");	
 	}else{
 		qId1={id:local.rs.result};
 	}
-	db.sql="INSERT INTO #db.table("user_group", request.zos.zcoreDatasource)#  (user_group_deleted, `user_group_name`,`user_group_friendly_name`,`site_id`,`user_group_primary`, user_group_updated_datetime) VALUES #db.trustedSQL("(0,   'agent','','#form.site_id#','0', '#request.zos.mysqlnow#')")#";
+	db.sql="INSERT INTO #db.table("user_group", request.zos.zcoreDatasource)#  (user_group_deleted, `user_group_name`,`user_group_friendly_name`,`site_id`,`user_group_primary`, user_group_updated_datetime) VALUES #db.trustedSQL("(0,   'agent','Agent','#form.site_id#','0', '#request.zos.mysqlnow#')")#";
 	local.rs=db.insert("insertCheck", request.zOS.insertIDColumnForSiteIDTable); 
 	if(not local.rs.success){
 		application.zcore.template.fail("Failed to create site.  See the sql errors below.");	
 	}else{
 		qId2={id:local.rs.result};
 	}
-	db.sql="INSERT INTO #db.table("user_group", request.zos.zcoreDatasource)#  (user_group_deleted, `user_group_name`,`user_group_friendly_name`,`site_id`,`user_group_primary`, user_group_updated_datetime) VALUES #db.trustedSQL("(0,   'broker','','#form.site_id#','0', '#request.zos.mysqlnow#')")#";
+	db.sql="INSERT INTO #db.table("user_group", request.zos.zcoreDatasource)#  (user_group_deleted, `user_group_name`,`user_group_friendly_name`,`site_id`,`user_group_primary`, user_group_updated_datetime) VALUES #db.trustedSQL("(0,   'broker','Broker','#form.site_id#','0', '#request.zos.mysqlnow#')")#";
 	local.rs=db.insert("insertCheck", request.zOS.insertIDColumnForSiteIDTable); 
 	if(not local.rs.success){
 		application.zcore.template.fail("Failed to create site.  See the sql errors below.");	
 	}else{
 		qId3={id:local.rs.result};
 	}
-	 db.sql="INSERT INTO #db.table("user_group", request.zos.zcoreDatasource)#  (user_group_deleted, `user_group_name`,`user_group_friendly_name`,`site_id`,`user_group_primary`, user_group_updated_datetime) VALUES #db.trustedSQL("(0,   'member','','#form.site_id#','1', '#request.zos.mysqlnow#')")#";
+	 db.sql="INSERT INTO #db.table("user_group", request.zos.zcoreDatasource)#  (user_group_deleted, `user_group_name`,`user_group_friendly_name`,`site_id`,`user_group_primary`, user_group_updated_datetime) VALUES #db.trustedSQL("(0,   'member','Member','#form.site_id#','1', '#request.zos.mysqlnow#')")#";
 	local.rs=db.insert("insertCheck", request.zOS.insertIDColumnForSiteIDTable); 
 	if(not local.rs.success){
 		application.zcore.template.fail("Failed to create site.  See the sql errors below.");	
 	}else{
 		qId4={id:local.rs.result};
 	}
-	db.sql="INSERT INTO #db.table("user_group", request.zos.zcoreDatasource)#  (user_group_deleted, `user_group_name`,`user_group_friendly_name`,`site_id`,`user_group_primary`, user_group_updated_datetime) VALUES #db.trustedSQL("(0,  'user','','#form.site_id#','0', '#request.zos.mysqlnow#')")#";
+	db.sql="INSERT INTO #db.table("user_group", request.zos.zcoreDatasource)#  (user_group_deleted, `user_group_name`,`user_group_friendly_name`,`site_id`,`user_group_primary`, user_group_updated_datetime) VALUES #db.trustedSQL("(0,  'user','User','#form.site_id#','0', '#request.zos.mysqlnow#')")#";
 	local.rs=db.insert("insertCheck", request.zOS.insertIDColumnForSiteIDTable); 
 	if(not local.rs.success){
 		application.zcore.template.fail("Failed to create site.  See the sql errors below.");	
@@ -1114,7 +1146,7 @@
 		<cfscript>
 		tabCom=createobject("component","zcorerootmapping.com.display.tab-menu");
 		tabCom.init();
-		tabCom.setTabs(["Basic","Advanced", "CallTrackingMetrics"]);//,"Plug-ins"]);
+		tabCom.setTabs(["Basic", "Marketing","Advanced"]);//,"Plug-ins"]);
 		tabCom.setMenuName("member-site-edit");
 		cancelURL="/z/server-manager/admin/site-select/index?zid=#form.zid#&action=select&sid=#form.sid#";
 		tabCom.setCancelURL(cancelURL);
@@ -1203,19 +1235,24 @@
 		<tr>
 			<td style="vertical-align:top; width:140px;">Short Domain:</td>
 			<td><input name="site_short_domain" type="text" size="70" maxlength="255" value="#htmleditformat(form.site_short_domain)#"><br />
-            You must exclude. www., http:// and the test domain.  I.e. domain.com or subdomain.domain.com. This field is used for the root directory name for this domain.</td>
+			<cfif request.zos.isTestServer>
+				On test server, this must be the full domain without http:// or https:// at the beginning.  I.e. www.domain.com.#request.zos.testDomain#
+			<cfelse>
+				On live server, you must exclude www., http:// and https in this field. This field is used for the root directory name for this domain.
+			</cfif>
+            </td>
 		</tr>
 		<tr>
 			<td style="vertical-align:top; width:140px;">Site Name:</td>
-			<td  #application.zcore.status.getErrorStyle(Request.zsid, "site_sitename", "table-error","")#><input name="site_sitename" type="text" size="70" maxlength="255" value="#form.site_sitename#"></td>
+			<td  #application.zcore.status.getErrorStyle(Request.zsid, "site_sitename", "table-error","")#><input name="site_sitename" type="text" size="70" maxlength="255" value="#form.site_sitename#"><br>Please exclude http:// and www. from domain.</td>
 		</tr>
 		<tr >
 			<td style="vertical-align:top; width:140px;">Domain:</td>
-			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_domain", "table-error","")#><input name="site_domain" type="text" size="70" maxlength="255" value="#form.site_domain#"></td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_domain", "table-error","")#><input name="site_domain" type="text" size="70" maxlength="255" value="#form.site_domain#"><br>Please include http:// and www. or another subdomain in this field.</td>
 		</tr>
 		<tr >
 			<td style="vertical-align:top; width:140px;">Secure Domain:</td>
-			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_securedomain", "table-error","")#><input name="site_securedomain" type="text" size="70" maxlength="255" value="#form.site_securedomain#"></td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_securedomain", "table-error","")#><input name="site_securedomain" type="text" size="70" maxlength="255" value="#form.site_securedomain#"><br>Please include https:// and www. or another subdomain in this field.  If you specify secure domain, you should change domain to use https:// as well.  Plus setup domain redirects to force http:// to https:// for domain.com and www.domain.com</td>
 		</tr>
 		
 		<tr >
@@ -1254,8 +1291,13 @@
 		
 		<tr>
 			<td style="vertical-align:top; width:140px;">&nbsp;</td>
-			<td><input name="site_send_confirm_opt_in" type="checkbox" value="1" <cfif form.site_send_confirm_opt_in EQ 1>checked="checked"</cfif> style="background:none; border:none;"> Enable Confirm Opt-in?</td>
+			<td><input name="site_send_confirm_opt_in" type="checkbox" value="1" <cfif form.site_send_confirm_opt_in EQ 1>checked="checked"</cfif> style="background:none; border:none;"> Enable Confirm Opt-in? (Email will come from "Email Campaign From")</td>
 		</tr>
+		<tr>
+			<td style="vertical-align:top; width:140px;">&nbsp;</td>
+			<td><input name="site_enable_send_to_friend" type="checkbox" value="1" <cfif form.site_enable_send_to_friend EQ 1>checked="checked"</cfif> style="background:none; border:none;"> Enable Send to Friend? (Email will come from "Email Campaign From")</td>
+		</tr>
+		
 		<tr>
 			<td style="vertical-align:top; width:140px;">&nbsp;</td>
 			<td><input name="site_live" type="checkbox" value="1" <cfif form.site_live EQ 1>checked="checked"</cfif> style="background:none; border:none;"> Is this site live? WARNING: Do not check unless it is ready because XML Sitemap will start pinging when it is live.</td>
@@ -1440,9 +1482,21 @@
 		</tr>
 		<tr>
 			<td style="vertical-align:top; width:140px;">Custom Create Account URL:</td>
-			<td><input name="site_custom_create_account_url" type="text" size="70" maxlength="255" value="#htmleditformat(form.site_custom_create_account_url)#"></td>
+			<td><input name="site_custom_create_account_url" type="text" size="70" maxlength="255" value="#htmleditformat(form.site_custom_create_account_url)#"><br />
+				This replaces the built-in create account link with a custom URL.
+			</td>
+		</tr>
+		<tr>
+			<td style="vertical-align:top; width:140px;">Custom User Login URL:</td>
+			<td><input name="site_user_login_url" type="text" size="70" maxlength="100" value="#htmleditformat(form.site_user_login_url)#"><br />
+				This override the URL that users are sent to if they are not logged in for certain features.
+			</td>
 		</tr>
 
+		<tr>
+			<td style="vertical-align:top; width:140px;">Administrator Enable Force Delete?:</td>
+			<td >#application.zcore.functions.zInput_Boolean("site_administrator_enable_force_delete")# | Yes will allow site administrators to delete locked records and change locked URLs</td>
+		</tr>
 		<tr>
 			<td style="vertical-align:top; width:140px;">Disable New User Email?:</td>
 			<td >#application.zcore.functions.zInput_Boolean("site_disable_new_user_email")#</td>
@@ -1459,7 +1513,10 @@
 			<td style="vertical-align:top; width:140px;">Lead Reminder Disable CC:</td>
 			<td >#application.zcore.functions.zInput_Boolean("site_enable_lead_reminder_disable_cc")#</td>
 		</tr> 
-
+		<tr>
+			<td style="vertical-align:top; width:140px;">Enable Lead Reminder Office Manager CC:</td>
+			<td >#application.zcore.functions.zInput_Boolean("site_enable_lead_reminder_office_manager_cc")# (If the lead's assigned user belongs to an office, that office's manager email list will also be CC'd on lead notifications.)</td>
+		</tr>  
 		<tr>
 			<td style="vertical-align:top; width:140px;">Lead Reminder Start Date:</td>
 			<td ><cfscript>
@@ -1698,14 +1755,26 @@
 			<td style="vertical-align:top; width:140px;">Disable Nginx<br />Default Includes:</td>
 			<td >#application.zcore.functions.zInput_Boolean("site_nginx_disable_jetendo")#</td>
 		</tr>
+
+		
         </table>
+        <cfscript>
+	 
+		application.zcore.skin.addDeferredScript('
+		$( "##site_report_start_date" ).datepicker();  
+		$( "##site_keyword_ranking_start_date" ).datepicker();  
+		');
+		application.zcore.skin.addDeferredScript('
+		$( "##site_facebook_insights_start_date" ).datepicker();  
+		');
+		</cfscript>
 		#tabCom.endFieldSet()#
 
-		#tabCom.beginFieldSet("CallTrackingMetrics")#
+		#tabCom.beginFieldSet("Marketing")#
 		<table style="width:100%; border-spacing:0px;" class="table-list">
 		<tr >
-			<td style="vertical-align:top; width:140px;">Enable:</td>
-			<td>#application.zcore.functions.zInput_Boolean("site_calltrackingmetrics_enable_import")#</td> 
+			<td style="vertical-align:top; width:140px;">CTM Enable:</td>
+			<td>#application.zcore.functions.zInput_Boolean("site_calltrackingmetrics_enable_import")# (CTM is CallTrackingMetrics.com)</td> 
 		</tr>
 		<cfscript>
 		if(form.site_calltrackingmetrics_import_datetime NEQ ""){
@@ -1713,29 +1782,182 @@
 		}
 		</cfscript>
 		<tr >
-			<td style="vertical-align:top; width:140px;">Last Import Date:</td>
+			<td style="vertical-align:top; width:140px;">CTM Last Import Date:</td>
 			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_calltrackingmetrics_import_datetime", "table-error","")#><input name="site_calltrackingmetrics_import_datetime" type="text" size="70" maxlength="50" value="#htmleditformat(form.site_calltrackingmetrics_import_datetime)#"> (Strict format required: yyyy-mm-dd HH:mm:ss)</td>
 		</tr>
 		<tr >
-			<td style="vertical-align:top; width:140px;">Account ID:</td>
+			<td style="vertical-align:top; width:140px;">CTM Account ID:</td>
 			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_calltrackingmetrics_account_id", "table-error","")#><input name="site_calltrackingmetrics_account_id" type="text" size="70" maxlength="50" value="#htmleditformat(form.site_calltrackingmetrics_account_id)#"></td>
 		</tr>
 		<tr >
-			<td style="vertical-align:top; width:140px;">API Access Key:</td>
-			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_calltrackingmetrics_access_key", "table-error","")#><input name="site_calltrackingmetrics_access_key" type="text" size="70" maxlength="50" value="#htmleditformat(form.site_calltrackingmetrics_access_key)#"> (Either the Agency or Account API Access Key)</td>
+			<td style="vertical-align:top; width:140px;">CTM API Access Key:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_calltrackingmetrics_access_key", "table-error","")#><input name="site_calltrackingmetrics_access_key" type="text" size="70" value="#htmleditformat(form.site_calltrackingmetrics_access_key)#"> (Either the Agency or Account API Access Key - Each site must have a unique key)</td>
 		</tr>
 		<tr >
-			<td style="vertical-align:top; width:140px;">API Secret Key:</td>
-			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_calltrackingmetrics_secret_key", "table-error","")#><input name="site_calltrackingmetrics_secret_key" type="text" size="70" maxlength="50" value="#htmleditformat(form.site_calltrackingmetrics_secret_key)#"> (Either the Agency or Account API Access Key)</td>
+			<td style="vertical-align:top; width:140px;">CTM API Secret Key:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_calltrackingmetrics_secret_key", "table-error","")#><input name="site_calltrackingmetrics_secret_key" type="text" size="70" value="#htmleditformat(form.site_calltrackingmetrics_secret_key)#"> (Either the Agency or Account API Access Key - Each site must have a unique key)</td>
 		</tr>
 		<tr >
 			<td style="vertical-align:top; width:140px;">CTM CFC Path:</td>
-			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_calltrackingmetrics_cfc_path", "table-error","")#><input name="site_calltrackingmetrics_cfc_path" type="text" size="70" maxlength="50" value="#htmleditformat(form.site_calltrackingmetrics_cfc_path)#"> (Used to define a custom CallTrackingMetrics.com Import Filter for this site)</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_calltrackingmetrics_cfc_path", "table-error","")#><input name="site_calltrackingmetrics_cfc_path" type="text" size="70" value="#htmleditformat(form.site_calltrackingmetrics_cfc_path)#"> (Used to define a custom CallTrackingMetrics.com Import Filter for this site)</td>
 		</tr>
 		<tr >
 			<td style="vertical-align:top; width:140px;">CTM CFC Method:</td>
-			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_calltrackingmetrics_cfc_method", "table-error","")#><input name="site_calltrackingmetrics_cfc_method" type="text" size="70" maxlength="50" value="#htmleditformat(form.site_calltrackingmetrics_cfc_method)#"></td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_calltrackingmetrics_cfc_method", "table-error","")#><input name="site_calltrackingmetrics_cfc_method" type="text" size="70" value="#htmleditformat(form.site_calltrackingmetrics_cfc_method)#"></td>
 		</tr>
+		<tr >
+			<td style="vertical-align:top; width:140px;">Webposition.com ID List:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_webposition_id_list", "table-error","")#>
+				<input name="site_webposition_id_list" type="text" size="70" maxlength="500" value="#htmleditformat(form.site_webposition_id_list)#"><br />
+				The file name for webposition.com CSV export file (Files are stored in #request.zos.globals.serverPrivateHomeDir#webposition-backup/.  Separate multiple profile files by commas. I.e. Client Name.csv
+			</td>
+		</tr>
+		<tr >
+			<td style="vertical-align:top; width:140px;">Moz.com ID List:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_seomoz_id_list", "table-error","")#>
+				<input name="site_seomoz_id_list" type="text" size="70" value="#htmleditformat(form.site_seomoz_id_list)#"><br />
+				The project/account id for moz.com.  Separate multiple profile ids by commas. I.e. 251246.96649
+			</td>
+		</tr>
+		<tr >
+			<td style="vertical-align:top; width:140px;">Semrush.com Domain:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_semrush_domain", "table-error","")#>
+				<input name="site_semrush_domain" type="text" size="70" value="#htmleditformat(form.site_semrush_domain)#"><br />
+				Must be formatted like clientdomain.com without www or http at the beginning. The Short Domain field will be used if you leave this empty.
+			</td>
+		</tr>
+		<tr >
+			<td style="vertical-align:top; width:140px;">Semrush.com ID List:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_semrush_id_list", "table-error","")#>
+				<input name="site_semrush_id_list" type="text" size="70" value="#htmleditformat(form.site_semrush_id_list)#"><br />
+				The project/account id for semrush.com.  Separate multiple profile ids by commas. I.e. 511227
+			</td>
+		</tr>
+		<tr >
+			<td style="vertical-align:top; width:140px;">Semrush.com Label List:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_semrush_label_list", "table-error","")#>
+				<input name="site_semrush_label_list" type="text" size="70" value="#htmleditformat(form.site_semrush_label_list)#"><br />
+				Optional. This will divide the reports for SEMRush if the labels are different. Each label must be less then 100 characters.
+			</td>
+		</tr>
+		<tr >
+			<td style="vertical-align:top; width:140px;">Semrush.com Primary Label:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_semrush_label_primary", "table-error","")#>
+				<input name="site_semrush_label_primary" type="text" size="70" maxlength="100" value="#htmleditformat(form.site_semrush_label_primary)#"><br />
+				Identifies which label is the national/worldwide account so that Search Console &amp; Moz keyword rankings can mix into it.
+			</td>
+		</tr> 
+		<tr >
+			<td style="vertical-align:top; width:140px;">Google Analytics<br>View ID:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_google_analytics_view_id", "table-error","")#>
+				<input name="site_google_analytics_view_id" type="text" size="70" value="#htmleditformat(form.site_google_analytics_view_id)#"><br />
+				You can get the View Id from google analytics admin, view settings page.
+			</td>
+		</tr> 
+		<tr >
+			<td style="vertical-align:top; width:140px;">Google Analytics<br>Account Email:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_google_api_account_email", "table-error","")#>
+				<input name="site_google_api_account_email" type="text" size="70" maxlength="100" value="#htmleditformat(form.site_google_api_account_email)#">
+			</td>
+		</tr> 
+
+		<tr >
+			<td style="vertical-align:top; width:140px;">Google Analytics<br>Exclude Keyword List:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_google_analytics_exclude_keyword_list", "table-error","")#>
+				<input name="site_google_analytics_exclude_keyword_list" type="text" size="70" value="#htmleditformat(form.site_google_analytics_exclude_keyword_list)#"><br />
+				This is for excluding the client's name, staff, or products on organic traffic reports.   Separate multiple keyword phrases by commas.
+			</td>
+		</tr> 
+		<tr >
+			<td style="vertical-align:top; width:140px;">Google Search<br>Console Domain:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_google_search_console_domain", "table-error","")#>
+				<input name="site_google_search_console_domain" type="text" size="70" value="#htmleditformat(form.site_google_search_console_domain)#"><br />
+				This must be the full domain including schema and trailing forward slash that is setup in Google Webmaster Tools, i.e. https://www.clientdomain.com/
+			</td>
+		</tr> 
+		<tr >
+			<td style="vertical-align:top; width:140px;">Facebook Page<br>Id List:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_facebook_page_id_list", "table-error","")#>
+				<input name="site_facebook_page_id_list" type="text" size="70" maxlength="100" value="#htmleditformat(form.site_facebook_page_id_list)#"><br>
+				Comma separate multiple page ids. You can find the page id on the main business manager overview page.
+			</td>
+		</tr>  
+		<tr >
+			<td style="vertical-align:top; width:140px;">Facebook Insights<br>Start Date:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_facebook_insights_start_date", "table-error","")#>
+				<input name="site_facebook_insights_start_date" id="site_facebook_insights_start_date" type="text" size="10" value="#htmleditformat(dateformat(form.site_facebook_insights_start_date, "m/d/yyyy"))#"><br>
+				No facebook data will be included for anything before the date set.
+			</td>
+		</tr>  
+
+		<tr >
+			<td style="vertical-align:top; width:140px;">Report Company Name:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_report_company_name", "table-error","")#>
+				<input name="site_report_company_name" type="text" size="70" value="#htmleditformat(form.site_report_company_name)#">
+			</td>
+		</tr> 
+		<tr >
+			<td style="vertical-align:top; width:140px;">Exclude Lead Type List:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_exclude_lead_type_list", "table-error","")#>
+				<input name="site_exclude_lead_type_list" type="text" size="70" value="#htmleditformat(form.site_exclude_lead_type_list)#"><br>
+				Format must be inquiries_type_id|siteIdType and comma separated for multiple.   I.e. excluding General inquiry would be: 1|4
+			</td>
+		</tr> 
+		<tr >
+			<td style="vertical-align:top; width:140px;">Interspire Email<br>Owner Id List:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_interspire_email_owner_id_list", "table-error","")#>
+				<input name="site_interspire_email_owner_id_list" type="text" size="70" value="#htmleditformat(form.site_interspire_email_owner_id_list)#"><br>
+				This is the id of the user account in interspire email marketer. Comma separated if there are multiple ids.
+			</td>
+		</tr> 
+		<tr >
+			<td style="vertical-align:top; width:140px;">Campaign Monitor<br>User Id List:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_campaign_monitor_user_id_list", "table-error","")#>
+				<input name="site_campaign_monitor_user_id_list" type="text" size="70" value="#htmleditformat(form.site_campaign_monitor_user_id_list)#"><br>
+				This is the id of the user account in campaign monitor. Comma separated if there are multiple ids.
+			</td>
+		</tr> 
+		<tr >
+			<td style="vertical-align:top; width:140px;">Month Newsletter Count:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_monthly_email_campaign_count", "table-error","")#>
+				<input name="site_monthly_email_campaign_count" id="site_monthly_email_campaign_count" type="text" size="70" value="#htmleditformat(form.site_monthly_email_campaign_count)#"><br>
+				The number of marketing newsletters that should be sent each month.
+			</td>
+		</tr> 
+		<tr >
+			<td style="vertical-align:top; width:140px;">Late Newsletter Email Delay:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_monthly_email_campaign_alert_day_delay", "table-error","")#>
+				<input name="site_monthly_email_campaign_alert_day_delay" id="site_monthly_email_campaign_alert_day_delay" type="text" size="70" value="#htmleditformat(form.site_monthly_email_campaign_alert_day_delay)#"><br>
+				## of days of the current month to wait before sending late newsletter email alerts.
+			</td>
+		</tr> 
+
+		<tr >
+			<td style="vertical-align:top; width:140px;">Report Start Date:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_report_start_date", "table-error","")#>
+				<input name="site_report_start_date" id="site_report_start_date" type="text" size="70" value="#htmleditformat(dateformat(form.site_report_start_date, "m/d/yyyy"))#"><br>
+				No data will be included for anything before the date set.
+			</td>
+		</tr> 
+		<tr >
+			<td style="vertical-align:top; width:140px;">Keyword Ranking Start Date:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_keyword_ranking_start_date", "table-error","")#>
+				<input name="site_keyword_ranking_start_date" id="site_keyword_ranking_start_date" type="text" size="70" value="#htmleditformat(dateformat(form.site_keyword_ranking_start_date, "m/d/yyyy"))#"><br>
+				Forces the first month for keyword position data on report
+			</td>
+		</tr> 
+		<cfscript>
+		if(form.site_phone_tracking_label_text EQ ""){
+			form.site_phone_tracking_label_text="Tracking Label";
+		}
+		</cfscript>
+		<tr >
+			<td style="vertical-align:top; width:140px;">Tracking Label Text:</td>
+			<td #application.zcore.status.getErrorStyle(Request.zsid, "site_phone_tracking_label_text", "table-error","")#>
+				<input name="site_phone_tracking_label_text" type="text" size="70" value="#htmleditformat(form.site_phone_tracking_label_text)#"><br>
+				Default is "Tracking Label"
+			</td>
+		</tr> 
         </table>
 		#tabCom.endFieldSet()#
 		#tabCom.endTabMenu()#

@@ -289,15 +289,18 @@ var zLastAjaxVarName=""; */
 		}
 		var arrSort=[];
 		$( '#'+tableId+' tbody tr' ).each(function(){
-			if(this.id == '' || ($("."+tableId+"_handle", this).length && $("."+tableId+"_handle", this)[0].getAttribute('data-ztable-sort-primary-key-id') == '')){
+			if(this.id == ''){
 				validated=false;
 			}else{
 				if($("."+tableId+"_handle", this).length){
-					arrSort.push($("."+tableId+"_handle", this)[0].getAttribute('data-ztable-sort-primary-key-id'));
+					var v=$("."+tableId+"_handle", this)[0].getAttribute('data-ztable-sort-primary-key-id');
+					if(v != ""){
+						arrSort.push(v);
+					}
 				}
 			}
 		}); 
-		var originalSortOrderList=arrSort.join("|");
+		var originalSortOrderList=arrSort.join("|"); 
 		$("#"+tableId+" tbody").attr("data-original-sort", originalSortOrderList);
 		if(validated){
 			$('#'+tableId+' tbody' ).sortable({
@@ -308,7 +311,9 @@ var zLastAjaxVarName=""; */
 					var arrId2=[]; 
 					for(var i=0;i<arrId.length;i++){
 						var v=$("#"+arrId[i]+" ."+tableId+"_handle").attr("data-ztable-sort-primary-key-id"); 
-						arrId2.push(v); 
+						if(typeof v != "undefined" && v != ""){
+							arrId2.push(v); 
+						}
 					} 
 					var sortOrderList=arrId2.join("|");
 					//console.log("sorted list:"+sortOrderList);
@@ -329,17 +334,20 @@ var zLastAjaxVarName=""; */
 
 							arrSort=[];
 							$( '#'+tableId+' tbody tr' ).each(function(){
-								if(this.id == '' || ($("."+tableId+"_handle", this).length && $("."+tableId+"_handle", this)[0].getAttribute('data-ztable-sort-primary-key-id') == '')){
+								if(this.id == ''){
 									validated=false;
 								}else{
-									arrSort.push($("."+tableId+"_handle", this)[0].getAttribute('data-ztable-sort-primary-key-id'));
+									if($("."+tableId+"_handle", this).length){
+										var v=$("."+tableId+"_handle", this)[0].getAttribute('data-ztable-sort-primary-key-id');
+										if(v != ""){
+											arrSort.push(v);
+										}
+									}
 								}
 							}); 
 							originalSortOrderList=arrSort.join("|");
 							$("#"+tableId+" tbody").attr("data-original-sort", originalSortOrderList); 
-							ajaxCallback(tempObj); 
-
-							
+							ajaxCallback(tempObj);  
 						}
 					};
 					tempObj.errorCallback=function(){
@@ -702,6 +710,88 @@ var zLastAjaxVarName=""; */
 		}
 	}
 
+
+	function zEmailValidate(e){ 
+		var filter = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+		if (filter.test(e)) {
+			return true;
+		}else{
+			return false;
+		}
+	}
+
+
+	// makes it easier to fill out forms on a touchscreen device.
+	function setupTouchFriendlyInputs(){ 
+		if(!zIsTouchscreen()){
+			return;
+		}
+		var selector=".zEnableMobileInputOKButton input, .zEnableMobileInputOKButton select, .zEnableMobileInputOKButton textarea";
+		var $inputs=$(selector);
+
+		function resizeMobileInput(){
+			if(typeof currentInput == "boolean"){
+				return;
+			}
+			setOKPosition(currentInput);
+		}
+		function setOKPosition(obj){ 
+			var position=zGetAbsPosition(obj);  
+
+			var leftPosition=position.x+position.width+2;
+			if(zWindowSize.width-55 < leftPosition){
+				leftPosition=zWindowSize.width-55;
+			}
+			$okButton.css({
+				"left":(leftPosition)+"px",
+				"top":(position.y)+"px",
+				"display":"block"
+			});
+		}
+
+
+		
+		if($inputs.length){
+			if($(".zMobileInputOKButton").length=='0'){
+				$("body").append('<a href="#" class="zMobileInputOKButton">OK</a>');
+			}
+			var $okButton=$(".zMobileInputOKButton");
+			$okButton.on("click", function(e){
+				$(".zMobileInputOKButton").hide();
+				currentInput=false;
+			});
+			$(document).on("keyup", selector, function(e){ 
+			    if(e.which==13){
+			    	e.preventDefault();
+			    	e.stopImmediatePropagation();
+			    	$(this).trigger("blur");
+			    }
+			});
+			var currentInput=false;
+			zArrResizeFunctions.push({functionName:resizeMobileInput});
+			$(document).on("focus", selector, function(e){ 
+				var target=this; 
+				if(target.type == "radio" || target.type=="checkbox" || target.type=="select-multiple" || target.type=="select" || target.type=="select-one"){
+					return;
+				} 
+				var position=zGetAbsPosition(target); 
+				setOKPosition(target);
+				currentInput=target;
+
+				// TODO: get next input to focus on, and trigger focus
+				// $('input[tabindex=7]')
+				// var tabIndex=$(target).attr("tabindex"); 
+				// $element=...
+				// $element.trigger("focus");
+
+			});
+			$(document).on("blur", selector, function(e){
+				$(".zMobileInputOKButton").hide();
+				currentInput=false;
+			});
+		} 
+	}
+	zArrDeferredFunctions.push(setupTouchFriendlyInputs);
 	
 	function zFormSubmit(formName,validationOnly,onChange,debug, returnObject){	
 		// validation for all fields...
@@ -1619,27 +1709,49 @@ var zLastAjaxVarName=""; */
 		var ignoreDirtyCheck=false;
 		var formDataCache={};  
 		var unloadCalled=false;
+		var formDirtyTempCache={};
+		function zIsFormDirty(id){ 
+			var form=document.getElementById(id);
+			zCheckFormDataForChangesByObj(form);
+			if(typeof formDirtyTempCache[id] != "undefined"){
+				delete formDirtyTempCache[id]; 
+				return true;
+			}else{
+				return false;
+			}
+		}
+		function zCheckFormDataForChangesByObj(obj){ 
+			if(obj.id == "" || typeof formDataCache[obj.id] == "undefined"){
+				return true;
+			}
+			var cachedData=formDataCache[obj.id];
+			var newData=zGetFormDataByFormId(obj.id);
+			var changed=false;
+			for(var i in cachedData){
+				if(typeof newData[i]== "undefined"){
+					changed=true;
+					break;
+				}else if(newData[i] != cachedData[i]){
+					changed=true;
+					break;
+				}
+			}
+			for(var i in newData){
+				if(typeof cachedData[i]== "undefined"){
+					changed=true;
+					break;
+				}
+			} 
+			if(changed){
+				formDirtyTempCache[obj.id]=true;
+				formDataCache[obj.id]=newData;
+				zSetDirty(true);
+			}
+			return true; 
+		}
 		function zCheckFormDataForChanges(){ 
 			$(".zFormCheckDirty").each(function(e){
-				if(this.id == "" || typeof formDataCache[this.id] == "undefined"){
-					return true;
-				}
-				var cachedData=formDataCache[this.id];
-				var newData=zGetFormDataByFormId(this.id);
-				var changed=false;
-				for(var i in cachedData){
-					if(typeof newData[i]== "undefined"){
-						changed=true;
-						break;
-					}else if(newData[i] != cachedData[i]){
-						changed=true;
-						break;
-					}
-				}
-				if(changed){
-					zSetDirty(true);
-				}
-				return true;
+				return zCheckFormDataForChangesByObj(this);
 			});
 		} 
 		$(window).bind("hashchange", function() {
@@ -1657,7 +1769,7 @@ var zLastAjaxVarName=""; */
 			}
 		});
 		$(window).bind("beforeunload", function(e){
-			zCheckFormDataForChanges();
+			zCheckFormDataForChanges(); 
 			if(!zIsDirty || ignoreDirtyCheck){
 				return;
 			}  
@@ -1682,9 +1794,15 @@ var zLastAjaxVarName=""; */
 				formDataCache[this.id]=zGetFormDataByFormId(this.id);
 			});
 			$(".zFormCheckDirty").bind("submit",function(e){
+				if(typeof formDirtyTempCache[this.id] != "undefined"){
+					delete formDirtyTempCache[this.id];
+				}
+				formDataCache[this.id]={};
 				ignoreDirtyCheck=true;
 			});
 		});
+
+		
 
 		function zConfirmCloseModal(){
 			var r=window.confirm("Do you want to leave this page?\n\nChanges you made may not be saved.");
@@ -1703,6 +1821,7 @@ var zLastAjaxVarName=""; */
 		window.zCheckFormDataForChanges=zCheckFormDataForChanges;
 		window.zConfirmCloseModal=zConfirmCloseModal; 
 		window.zSetDirty=zSetDirty;
+		window.zIsFormDirty=zIsFormDirty;
 	})();  
 
 	window.zCalculateTableCells=zCalculateTableCells;
@@ -1757,6 +1876,7 @@ var zLastAjaxVarName=""; */
 	window.zOS_mode_status_off=zOS_mode_status_off;
 	window.zOS_mode_hide=zOS_mode_hide;
 	window.zOS_mode_show=zOS_mode_show;
+	window.zEmailValidate=zEmailValidate;
 	//window.zSetupAjaxTableSortAgain=zSetupAjaxTableSortAgain;
 
 })(jQuery, window, document, "undefined"); 

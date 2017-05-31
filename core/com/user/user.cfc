@@ -136,18 +136,28 @@ this.customStruct = StructNew();
 	2 - user account data and login is no longer valid
 	3 - manually logged out
 	*/
-	db.sql="INSERT INTO #db.table("login_log", request.zos.zcoreDatasource)# SET 
-	login_log_datetime=#db.param(request.zos.mysqlnow)#,
-	login_log_ip=#db.param(request.zos.cgi.remote_addr)#,
-	login_log_user_agent=#db.param(cgi.HTTP_USER_AGENT)#,
-	site_id=#db.param(request.zos.globals.id)#,
-	login_log_status=#db.param(arguments.status)#,
-	login_log_updated_datetime=#db.param(request.zos.mysqlnow)#,
-	login_log_deleted=#db.param(0)# ";
-	if(structkeyexists(form, 'zusername')){
-		db.sql&=" , login_log_username = #db.param(form.zusername)#";
+	count=0;
+	try{
+		db.sql="INSERT INTO #db.table("login_log", request.zos.zcoreDatasource)# SET 
+		login_log_datetime=#db.param(request.zos.mysqlnow)#,
+		login_log_deleted=#db.param(0)#,
+		login_log_ip=#db.param(request.zos.cgi.remote_addr)#,
+		login_log_status=#db.param(arguments.status)#,
+		login_log_user_agent=#db.param(cgi.HTTP_USER_AGENT)#,
+		login_log_updated_datetime=#db.param(request.zos.mysqlnow)#, ";
+		if(structkeyexists(form, 'zusername')){
+			db.sql&=" login_log_username = #db.param(form.zusername)#,";
+		}
+		db.sql&=" site_id=#db.param(request.zos.globals.id)# ";
+		db.execute("qLog");
+	}catch(Any e){
+		count++;
+		if(count GT 2){
+			rethrow;
+		}else{
+			retry;
+		}
 	}
-	db.execute("qLog");
 	</cfscript>
 </cffunction>
 
@@ -184,6 +194,7 @@ this.customStruct = StructNew();
 <cfscript>
 // set checkLogin options
 inputStruct = StructNew();
+inputStruct.disableGlobalLogin=false;
 inputStruct.user_group_name = "administrator";
 // optional
 inputStruct.secureLogin=true; // secureLogin=false; doesn't have access to areas with secureLogin=true;
@@ -224,6 +235,7 @@ userCom.checkLogin(inputStruct);
 	var qcheck="";
 	var rs=structnew();
 	var ts={
+		disableGlobalLogin:false,
 		openIdEnabled=false,
 		noLoginForm=false,
 		tokenLoginEnabled=false,
@@ -271,13 +283,15 @@ userCom.checkLogin(inputStruct);
 		oldDate=dateadd("h",-4,now());
 		oldDate=DateFormat(oldDate,'yyyy-mm-dd')&' '&TimeFormat(oldDate,'HH:mm:ss');
 		db.sql="SELECT * FROM #db.table("login_log", request.zos.zcoreDatasource)# login_log 
-		WHERE login_log_ip=#db.param(request.zos.cgi.remote_addr)# and 
-		login_log_deleted = #db.param(0)# and 
-		login_log_user_agent=#db.param(left(request.zos.cgi.HTTP_USER_AGENT,150))# and 
+		WHERE 
 		login_log_datetime > #db.param(oldDate)# and 
-		login_log_username=#db.param(form.zUsername)# and 
+		login_log_deleted = #db.param(0)# and 
+		login_log_ip=#db.param(request.zos.cgi.remote_addr)# and 
 		login_log_status NOT IN (#db.param('1')#,#db.param('3')#) and 
-		site_id <> #db.param(-1)# ORDER BY login_log_datetime DESC 
+		login_log_user_agent=#db.param(left(request.zos.cgi.HTTP_USER_AGENT,150))# and 
+		login_log_username=#db.param(form.zUsername)# and 
+		site_id <> #db.param(-1)# 
+		ORDER BY login_log_datetime DESC 
 		LIMIT #db.param(0)#,#db.param(10)# ";
 		qCheck=db.execute("qCheck");
 		arrLogOut=arrayNew(1);
@@ -307,15 +321,18 @@ userCom.checkLogin(inputStruct);
 		}
 		if(failCount EQ 10){
 			if(emailSent EQ false){
+				count=0; 
 				db.sql="UPDATE #db.table("login_log", request.zos.zcoreDatasource)# login_log 
-				SET login_log_email_sent =#db.param(1)#,
+				SET 
+				login_log_email_sent =#db.param(1)#,
 				login_log_updated_datetime=#db.param(request.zos.mysqlnow)# 
-				WHERE login_log_ip=#db.param(request.zos.cgi.remote_addr)# and 
-				login_log_deleted = #db.param(0)# and 
-				login_log_user_agent=#db.param(left(request.zos.cgi.HTTP_USER_AGENT,150))# and 
+				WHERE
 				login_log_datetime > #db.param(oldDate)# and 
+				login_log_deleted = #db.param(0)# and 
+				login_log_ip=#db.param(request.zos.cgi.remote_addr)# and 
+				login_log_user_agent=#db.param(left(request.zos.cgi.HTTP_USER_AGENT,150))# and 
 				site_id <> #db.param(-1)# ";
-				qCheck=db.execute("qCheck");
+				qCheck=db.execute("qCheck"); 
 				// need to make sure i only email myself once 
 				mail  to="#request.zos.developerEmailTo#" from="#request.zos.developerEmailFrom#" subject="Jetendo CMS has detected abusive login behavior."{
 					writeoutput('Domain: #request.zos.cgi.http_host##chr(10)#Username: #form.zUsername##chr(10)#IP: #request.zos.cgi.remote_addr##chr(10)#User Agent: #cgi.HTTP_USER_AGENT##chr(10)#Date: #request.zos.mysqlnow##chr(10)#Last 10 login attempts failed within 4 hours:#chr(10)##arraytolist(arrLogOut,chr(10))##chr(10)&chr(10)#This IP+User Agent+username will not be able to login until there are fewer then 10 failures in the `#request.zos.zcoreDatasource#`.login_log in the last 4 hours.');
@@ -488,7 +505,8 @@ userCom.checkLogin(inputStruct);
 			this.updateSession(arguments.inputStruct);
 			db.sql="UPDATE #db.table("user", request.zos.zcoreDatasource)# user 
 			SET user_updated_ip = #db.param(request.zos.cgi.remote_addr)#, 
-			user_updated_datetime = #db.param(request.zos.mysqlnow)# 
+			user_updated_datetime = #db.param(request.zos.mysqlnow)#, 
+			user_last_login_datetime=#db.param(request.zos.mysqlnow)# 
 			WHERE user.user_id = #db.param(qUserCheck.user_id)# and 
 			user_deleted = #db.param(0)# and 
 			site_id = #db.param(qUserCheck.site_id)#";
@@ -845,6 +863,7 @@ userCom.checkLogin(inputStruct);
 	}
 	request.zsession[userSiteId].first_name = qUser.user_first_name;
 	request.zsession[userSiteId].last_name = qUser.user_last_name;
+	request.zsession[userSiteId].office_id = qUser.office_id;
 	request.zsession[userSiteId].email = qUser.user_email;
 	request.zsession[userSiteId].server_administrator = qUser.user_server_administrator;
 	request.zsession[userSiteId].site_administrator = qUser.user_site_administrator;
@@ -1089,6 +1108,7 @@ userCom.checkLogin(inputStruct);
 <cfscript>
 // set login form options
 inputStruct = StructNew();
+inputStruct.disableGlobalLogin=false;
 inputStruct.user_group_name = arguments.user_group_name;
 // optional
 inputStruct.loginMessage = "Please login Below";
@@ -1114,6 +1134,7 @@ formString = userCom.loginForm(inputStruct);
 	var returnStruct = application.zcore.functions.zGetRepostStruct();
 	var returnString = "";
 	var tempStruct = StructNew();
+	tempStruct.disableGlobalLogin=false;
 	tempStruct.loginMessage = "Please Login Below";
 	tempStruct.usernameLabel = "Username";
 	tempStruct.passwordLabel = "Password";
@@ -1123,7 +1144,9 @@ formString = userCom.loginForm(inputStruct);
 	tempStruct.styles.labels = false;
 	StructAppend(arguments.inputStruct, tempStruct, false);
 	ss = arguments.inputStruct;
-	this.displayTokenScripts();
+	if(not ss.disableGlobalLogin){
+		this.displayTokenScripts();
+	}
 	
 	request.zos.inMemberArea=true;
 	
@@ -1282,10 +1305,10 @@ formString = userCom.loginForm(inputStruct);
 			</cfif>
 			<div class="zmember-openid-buttons" style="width:100%;">
 				<cfif request.zos.globals.parentID NEQ 0>
-					<a href="#application.zcore.functions.zvar("domain", request.zos.globals.parentId)#/member/" style="height:16px;" target="_blank">Log in to #application.zcore.functions.zvar("shortdomain", request.zos.globals.parentId)#</a>
+					<a href="#application.zcore.functions.zvar("domain", request.zos.globals.parentId)#/member/" style="height:26px;" target="_blank">Log in to #application.zcore.functions.zvar("shortdomain", request.zos.globals.parentId)#</a>
 				</cfif>
 				<cfif request.zos.isdeveloper>
-					<a href="#application.zcore.functions.zvar("domain", request.zos.globals.serverId)#/" style="height:16px;" target="_blank">Log in to Server Manager</a>
+					<a href="#application.zcore.functions.zvar("domain", request.zos.globals.serverId)#/" style="height:26px;" target="_blank">Log in to Server Manager</a>
 				</cfif>
 			</div>
 		</div>
@@ -1295,10 +1318,10 @@ formString = userCom.loginForm(inputStruct);
 				<div style="width:100%; float:left; font-size:120%; padding-top:5px; padding-bottom:5px;">If you want to log out of all your web sites, click on the following link(s):</div>
 				<div class="zmember-openid-buttons" style="width:100%; float:left; font-size:120%; padding-top:5px; padding-bottom:5px;">
 					<cfif request.zos.globals.parentID NEQ 0>
-						<a href="#application.zcore.functions.zvar('domain',request.zos.globals.parentId)#/member/?zlogout=1" style="height:16px;" target="_blank">Log out of #application.zcore.functions.zvar("shortdomain", request.zos.globals.parentId)#</a>
+						<a href="#application.zcore.functions.zvar('domain',request.zos.globals.parentId)#/member/?zlogout=1" style="height:26px;" target="_blank">Log out of #application.zcore.functions.zvar("shortdomain", request.zos.globals.parentId)#</a>
 					</cfif>
 					<cfif request.zos.isDeveloper>
-						<a href="#request.zos.globals.serverdomain#/?zlogout=1" style="height:16px;" target="_blank">Log out of Server Manager</a>
+						<a href="#request.zos.globals.serverdomain#/?zlogout=1" style="height:26px;" target="_blank">Log out of Server Manager</a>
 					</cfif>
 				</div>
 			</cfif>
@@ -1632,10 +1655,14 @@ formString = userCom.loginForm(inputStruct);
 
 <cffunction name="requireLogin" localmode="modern" access="public">
 	<cfargument name="user_group_name" type="string" required="no" default="user">
+	<cfargument name="loginMessage" type="string" required="no" default="">
 	<cfscript>
 	inputStruct = StructNew();
 	inputStruct.user_group_name = arguments.user_group_name;
 	inputStruct.secureLogin=true;
+	if(arguments.loginMessage NEQ ""){
+		inputStruct.loginMessage = arguments.loginMessage;
+	}
 	inputStruct.site_id = request.zos.globals.id;
 	application.zcore.user.checkLogin(inputStruct); 
 	</cfscript>
@@ -1695,6 +1722,217 @@ formString = userCom.loginForm(inputStruct);
 	ORDER BY user_first_name ASC, user_last_name ASC, member_company ASC";
 	qUser=db.execute("qUser"); 
 	return qUser;
+	</cfscript>
+</cffunction>
+
+<cffunction name="getGroupIdArrayForLoggedInUser" localmode="modern" access="public">
+	<cfscript>
+	arrID=[];
+	if(not structkeyexists(request, 'zsession') or not structkeyexists(request.zsession, 'user') or not structkeyexists(request.zsession.user, 'groupAccess')){
+		return arrID;
+	}
+	for(group in request.zsession.user.groupAccess){
+		if(group NEQ "serveradministrator" and group NEQ "siteadministrator"){
+			arrayAppend(arrId, request.zsession.user.groupAccess[group]);
+		}
+	}
+	return arrId;
+	</cfscript>
+</cffunction>
+
+
+<cffunction name="selectOfficeSave" localmode="modern" access="remote" roles="user">
+	<cfscript>
+	var db=request.zos.queryObject;  
+	form.select_office_id=application.zcore.functions.zso(form, 'select_office_id', true);
+	form.redirectURL=application.zcore.functions.zso(form, 'redirectURL');
+
+	arrUserOffice=listToArray(request.zsession.user.office_id, ",");
+	// verify user has access to office
+	db.sql="SELECT * FROM #db.table("office", request.zos.zcoreDatasource)# office 
+	WHERE site_id = #db.param(request.zos.globals.id)# and 
+	office_deleted = #db.param(0)# and 
+	office_id = #db.param(form.select_office_id)# ";
+	if(arraylen(arrUserOffice) EQ 0){
+		db.sql&=" and office_id =#db.param(-1)# ";
+	}else{
+		db.sql&=" and office_id IN (#db.trustedSQL(arrayToList(arrUserOffice, ","))#) ";
+	}
+	qOffice=db.execute("qOffice"); 
+	if(qOffice.recordcount NEQ 0){
+		request.zsession.selectedOfficeId=form.select_office_id;
+	} 
+	application.zcore.functions.zRedirect(form.redirectURL); 
+	</cfscript>	
+</cffunction>
+
+<!--- #application.zcore.user.selectOfficeForm()# --->
+<cffunction name="selectOfficeForm" localmode="modern" access="public" roles="user">
+	<cfscript>
+	var db=request.zos.queryObject;  
+	arrUserOffice=listToArray(request.zsession.user.office_id, ",");
+	db.sql="SELECT * FROM #db.table("office", request.zos.zcoreDatasource)# 
+	WHERE site_id = #db.param(request.zos.globals.id)# and 
+	office_deleted = #db.param(0)# ";
+	if(arraylen(arrUserOffice) EQ 0){
+		db.sql&=" and office_id =#db.param(-1)# ";
+	}else{
+		db.sql&=" and office_id IN (#db.trustedSQL(arrayToList(arrUserOffice, ","))#) ";
+	}
+	db.sql&=" ORDER BY office_name";
+	qOffice=db.execute("qOffice");
+	if(qOffice.recordcount EQ 0){
+		request.zsession.selectedOfficeId=0;
+	}else if(qOffice.recordcount EQ 1){
+		request.zsession.selectedOfficeId=qOffice.office_id;
+	}else{
+		if(not structkeyexists(request.zsession, 'selectedOfficeId')){
+			request.zsession.selectedOfficeId=qOffice.office_id;
+		}
+		form.select_office_id=application.zcore.functions.zso(request.zsession, 'selectedOfficeId');
+		echo('<form action="/z/_com/user/user?method=selectOfficeSave" method="post">
+			<input type="hidden" name="redirectURL" value="#request.zos.originalURL#?#request.zos.cgi.query_string#">
+		');
+		selectStruct = StructNew();
+		selectStruct.hideSelect=true;
+		selectStruct.name = "select_office_id";
+		selectStruct.query = qOffice;
+		selectStruct.queryParseLabelVars=true;
+		selectStruct.queryLabelField = "##office_name##, ##office_address##";
+		selectStruct.queryValueField = "office_id";
+		application.zcore.functions.zInputSelectBox(selectStruct);
+		echo(' <input type="submit" name="select1" value="Select"> 
+		</form>');
+	}
+	</cfscript>
+</cffunction>
+
+<cffunction name="getUsersByOfficeIdList" localmode="modern" access="public">
+    <cfargument name="officeIdList" type="string" required="yes">
+    <cfscript> 
+    db=request.zos.queryObject;
+
+    arrId=listToArray(arguments.officeIdList, ",");
+
+    db.sql="SELECT * FROM #db.table("user", request.zos.zcoreDatasource)# 
+    WHERE site_id = #db.param(request.zos.globals.id)# AND 
+    user_deleted=#db.param(0)# and 
+    user_active=#db.param(1)#";
+    if(arrayLen(arrId) GT 0){
+        db.sql&=" and ( ";
+        for(i=1;i LTE arraylen(arrId);i++){
+            id=arrId[i];
+            if(i NEQ 1){
+                db.sql&=" or ";
+            }
+            db.sql&=" CONCAT(#db.param(',')#, office_id, #db.param(',')#) LIKE #db.param('%,#id#,%')# ";
+        }
+        db.sql&=" ) ";
+    }
+    db.sql&=" ORDER BY user_first_name ASC, user_last_name ASC ";
+    qUser=db.execute("qUser"); 
+    return qUser;
+    </cfscript>
+</cffunction> 
+
+<cffunction name="getOfficesByOfficeIdList" localmode="modern" access="public">
+    <cfargument name="officeIdList" type="string" required="yes">
+    <cfscript> 
+    db=request.zos.queryObject;
+
+    arrId=listToArray(arguments.officeIdList, ",");
+
+    db.sql="SELECT * FROM #db.table("office", request.zos.zcoreDatasource)# 
+    WHERE site_id = #db.param(request.zos.globals.id)# AND 
+    office_deleted=#db.param(0)#";
+    if(application.zcore.user.checkGroupAccess("administrator")){
+    	// do all
+    }else if(arrayLen(arrId) EQ 0){
+    	db.sql&=" and  office_id=#db.param(-1)# ";
+    }else{
+    	db.sql&=" and  office_id IN (";
+        for(i=1;i LTE arraylen(arrId);i++){
+            id=arrId[i];
+            if(i NEQ 1){
+            	db.sql&=", ";
+            }
+            db.sql&=db.param(id);
+        }
+        db.sql&=" ) "; 
+    }
+    db.sql&=" ORDER BY office_name ASC";
+    qUser=db.execute("qUser"); 
+    return qUser;
+    </cfscript>
+</cffunction>
+
+
+<!--- 
+ts={
+	"office_name":"Name",
+	"Meta Field":"Value"
+};
+arrOffice=application.zcore.user.searchOfficesByStruct(ts);
+ --->
+<cffunction name="searchOfficesByStruct" localmode="modern" access="public" returntype="array">
+    <cfargument name="ss" type="struct" required="yes">
+    <cfscript> 
+    ss=arguments.ss;
+    db=request.zos.queryObject;
+    db.sql="select * FROM #db.table("office", request.zos.zcoreDatasource)# WHERE 
+    site_id=#db.param(request.zos.globals.id)# and 
+    office_deleted=#db.param(0)# 
+    ORDER BY office_name ASC";
+    qOffice=db.execute("qOffice");
+    arrOffice=[];
+    for(row in qOffice){
+    	if(row.office_meta_json NEQ ""){
+    		js=deserializeJson(row.office_meta_json);
+    	}
+    	structappend(row, js.data);
+    	match=true;
+    	for(field in ss){
+    		value=ss[field];
+    		if(not structkeyexists(row, field)){
+    			match=false;
+    			break;
+    		}
+    		if(row[field] NEQ value){
+    			match=false;
+    			break;
+    		}
+    		//writedump(row);
+    	}
+    	if(match){
+    		arrayAppend(arrOffice, row);
+    	}
+    }
+    return arrOffice;
+    </cfscript>
+</cffunction>
+
+<cffunction name="groupIdHasAccessToGroup" localmode="modern" access="public">
+	<cfargument name="groupId" type="string" required="yes">
+	<cfargument name="checkGroupName" type="string" required="yes">
+	<cfscript>
+	db=request.zos.queryObject;
+	db.sql="
+	SELECT * FROM 
+	#db.table("user_group_x_group", request.zos.zcoreDatasource)#, 
+	#db.table("user_group", request.zos.zcoreDatasource)# 
+	WHERE user_group_x_group.user_group_id=#db.param(arguments.groupId)# AND 
+	user_group_x_group.site_id = #db.param(request.zos.globals.id)# AND 
+	user_group_x_group.user_group_child_id=user_group.user_group_id AND 
+	user_group_x_group.site_id = user_group.site_id AND 
+	user_group_x_group.user_group_x_group_deleted=#db.param(0)# AND 
+	user_group.user_group_deleted=#db.param(0)# AND 
+	user_group_name=#db.param(arguments.checkGroupName)# ";
+	qCheckGroup=db.execute("qCheckGroup");
+	if(qCheckGroup.recordcount NEQ 0){
+		return true;
+	}else{
+		return false;
+	}
 	</cfscript>
 </cffunction>
 </cfoutput>

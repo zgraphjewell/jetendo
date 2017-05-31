@@ -112,42 +112,54 @@
 			ts.children=structnew();
 			arguments.sharedStruct["Leads"]=ts;
 		}
-		if(structkeyexists(arguments.sharedStruct["Leads"].children,"Manage Leads") EQ false){
+		if(structkeyexists(arguments.sharedStruct["Leads"].children,"Leads") EQ false){
 			ts=structnew();
-			ts.featureName="Manage Leads";
+			ts.featureName="Leads";
 			ts.link="/z/inquiries/admin/manage-inquiries/index";
-			arguments.sharedStruct["Leads"].children["Manage Leads"]=ts;
+			arguments.sharedStruct["Leads"].children["Leads"]=ts;
 		}
 		if(structkeyexists(arguments.sharedStruct["Leads"].children,"Add Lead") EQ false){
 			ts=structnew();
-			ts.featureName="Manage Leads";
+			ts.featureName="Leads";
 			ts.link="/z/inquiries/admin/inquiry/add";
 			arguments.sharedStruct["Leads"].children["Add Lead"]=ts;
 		}
-		if(structkeyexists(arguments.sharedStruct["Leads"].children,"Search Engine Keyword Lead Report") EQ false){
+		if(structkeyexists(arguments.sharedStruct["Leads"].children,"Lead Export") EQ false){
 			ts=structnew();
-			ts.featureName="Lead Reports";
-			ts.link="/z/inquiries/admin/search-engine-keyword-report/index";
-			arguments.sharedStruct["Leads"].children["Search Engine Keyword Lead Report"]=ts;
+			ts.featureName="Lead Export";
+			ts.link="/z/inquiries/admin/manage-inquiries/index##exportLeadDiv";
+			arguments.sharedStruct["Leads"].children["Lead Export"]=ts;
 		} 
 		if(structkeyexists(request.zos.userSession.groupAccess, "administrator")){
-			if(structkeyexists(arguments.sharedStruct["Leads"].children,"Manage Lead Template Emails") EQ false){
+			if(structkeyexists(arguments.sharedStruct["Leads"].children,"Search Engine Keyword Lead Report") EQ false){
+				ts=structnew();
+				ts.featureName="Lead Reports";
+				ts.link="/z/inquiries/admin/search-engine-keyword-report/index";
+				arguments.sharedStruct["Leads"].children["Search Engine Keyword Lead Report"]=ts;
+			} 
+			if(structkeyexists(arguments.sharedStruct["Leads"].children,"Lead Template Emails") EQ false){
 				ts=structnew();
 				ts.featureName="Lead Templates";
 				ts.link="/z/inquiries/admin/lead-template/index";
-				arguments.sharedStruct["Leads"].children["Manage Lead Template Emails"]=ts;
+				arguments.sharedStruct["Leads"].children["Lead Template Emails"]=ts;
 			} 
-			if(structkeyexists(arguments.sharedStruct["Leads"].children,"Manage Lead Types") EQ false){
+			if(structkeyexists(arguments.sharedStruct["Leads"].children,"Lead Types") EQ false){
 				ts=structnew();
 				ts.featureName="Lead Types";
 				ts.link="/z/inquiries/admin/types/index";
-				arguments.sharedStruct["Leads"].children["Manage Lead Types"]=ts;
+				arguments.sharedStruct["Leads"].children["Lead Types"]=ts;
 			} 
-			if(structkeyexists(arguments.sharedStruct["Leads"].children,"Manage Lead Routing") EQ false){
+			if(structkeyexists(arguments.sharedStruct["Leads"].children,"Lead Routing") EQ false){
 				ts=structnew();
 				ts.featureName="Lead Routing";
 				ts.link="/z/inquiries/admin/routing/index";
-				arguments.sharedStruct["Leads"].children["Manage Lead Routing"]=ts;
+				arguments.sharedStruct["Leads"].children["Lead Routing"]=ts;
+			} 
+			if(structkeyexists(arguments.sharedStruct["Leads"].children,"Lead Autoresponders") EQ false){
+				ts=structnew();
+				ts.featureName="Lead Autoresponders";
+				ts.link="/z/inquiries/admin/autoresponder/index";
+				arguments.sharedStruct["Leads"].children["Lead Autoresponders"]=ts;
 			} 
 			if(structkeyexists(arguments.sharedStruct["Leads"].children,"Mailing List Export") EQ false){
 				ts=structnew();
@@ -155,20 +167,14 @@
 				ts.link="/z/admin/mailing-list-export/index";
 				arguments.sharedStruct["Leads"].children["Mailing List Export"]=ts;
 			} 
+			if(structkeyexists(arguments.sharedStruct["Leads"].children,"Lead Source Report") EQ false){
+				ts=structnew();
+				ts.featureName="Lead Reports"
+				ts.link="/z/inquiries/admin/lead-source-report/index";
+				arguments.sharedStruct["Leads"].children["Lead Source Report"]=ts;
+			} 
 		}
 		
-		if(structkeyexists(arguments.sharedStruct["Leads"].children,"Lead Source Report") EQ false){
-			ts=structnew();
-			ts.featureName="Lead Reports"
-			ts.link="/z/inquiries/admin/lead-source-report/index";
-			arguments.sharedStruct["Leads"].children["Lead Source Report"]=ts;
-		} 
-		if(structkeyexists(arguments.sharedStruct["Leads"].children,"Export All Leads As CSV") EQ false){
-			ts=structnew();
-			ts.featureName="Lead Export";
-			ts.link="/z/inquiries/admin/export";
-			arguments.sharedStruct["Leads"].children["Export All Leads As CSV"]=ts;
-		} 
 		
 		if(structkeyexists(request.zos.userSession.groupAccess, "administrator")){
 			if(structkeyexists(arguments.sharedStruct, "Users") EQ false){
@@ -178,17 +184,17 @@
 				ts.children=structnew();
 				arguments.sharedStruct["Users"]=ts;
 			}
-			if(structkeyexists(arguments.sharedStruct["Users"].children,"Manage Users") EQ false){
+			if(structkeyexists(arguments.sharedStruct["Users"].children,"Users") EQ false){
 				ts=structnew();
 				ts.featureName="Users";
 				ts.link="/z/admin/member/index";
-				arguments.sharedStruct["Users"].children["Manage Users"]=ts;
+				arguments.sharedStruct["Users"].children["Users"]=ts;
 			}
-			if(structkeyexists(arguments.sharedStruct["Users"].children,"Manage Offices") EQ false){
+			if(structkeyexists(arguments.sharedStruct["Users"].children,"Offices") EQ false){
 				ts=structnew();
 				ts.featureName="Offices";
 				ts.link="/z/admin/office/index";
-				arguments.sharedStruct["Users"].children["Manage Offices"]=ts;
+				arguments.sharedStruct["Users"].children["Offices"]=ts;
 			}
 			if(structkeyexists(arguments.sharedStruct["Users"].children,"Add Office") EQ false){
 				ts=structnew();
@@ -1717,9 +1723,9 @@ if(rCom.isOK() EQ false){
 		arrayappend(arguments.ss.css, "/zupload/layout-global.css");
 	}else{
 		if(request.zos.isTestServer){
-			link=request.zos.zcoreTestAdminDomain&"/zupload/layout-global.css";
+			link=request.zos.zcoreTestAdminDomain&application.zcore.skin.getVersionURL("/zupload/layout-global.css");
 		}else{
-			link=request.zos.zcoreAdminDomain&"/zupload/layout-global.css";
+			link=request.zos.zcoreAdminDomain&application.zcore.skin.getVersionURL("/zupload/layout-global.css");
 		}
 		arrayappend(arguments.ss.css, link);
 	}

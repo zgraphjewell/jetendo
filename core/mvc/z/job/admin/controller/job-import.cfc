@@ -151,8 +151,9 @@
 		form.cfcImportMethod="importFilter";
 		form.cfcImportCompleteMethod="importComplete";
 	}else{
-		fileName=application.zcore.functions.zUploadFile("filepath", request.zos.globals.privateHomedir&"zuploadsecure/user/");
-		newPath=request.zos.globals.privateHomedir&"zuploadsecure/user/"&fileName;
+		tempPath=request.zos.globals.serverprivatehomedir&'_cache/temp_files/';
+		fileName=application.zcore.functions.zUploadFile("filepath", tempPath);
+		newPath=tempPath&fileName; 
 	}
 
  
@@ -223,6 +224,14 @@
 				}
 				structappend(ts, defaultStruct, false);
 				ts=cfcImportObject[form.cfcImportMethod](ts);
+				if(structkeyexists(ts, 'errorMessage')){ 
+					dataImportCom.close();
+					if(not debug){
+						application.zcore.functions.zdeletefile(newPath); 
+					}
+					echo(ts.errorMessage);
+					abort;
+				}
 				structappend(ts, defaultJobStruct, false);
 
 				if(ts.job_title EQ "" or ts.job_type EQ ""){

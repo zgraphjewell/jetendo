@@ -12,14 +12,7 @@
 		}
 		this.getDataObject();
 		</cfscript>
-    </cffunction>
-    
-<cffunction name="getPropertyTableName" localmode="modern">
-	<cfscript>
-	return "ngm";
-	</cfscript>
-</cffunction>
-    
+    </cffunction> 
     
     <cffunction name="setColumns" localmode="modern">
     	<cfargument name="arrColumns" type="array" required="yes">
@@ -50,99 +43,7 @@
 			}
 		}
 		arguments.sharedStruct.lookupStruct.cityRenameStruct=structnew();
-
-		db.sql="show tables in `#request.zos.zcoreDatasource#` LIKE #db.param('ngm')# ";
-		qCheck=db.execute("qCheck");
-		if(qCheck.recordcount EQ 0){
-			query name="qCreate" datasource="#request.zos.zcoreDatasource#"{
-				echo("CREATE TABLE `ngm` (
-				  `ngm_id` int(11) unsigned NOT NULL AUTO_INCREMENT, 
-				  `ngm_listnum` varchar(10) NOT NULL DEFAULT '',
-				  `ngm_listprice` int(11) unsigned NOT NULL DEFAULT '0',
-				  `ngm_photocount` decimal(2,0) NOT NULL DEFAULT '0',
-				  `ngm_lstformtype` varchar(30) NOT NULL DEFAULT '',
-				  `ngm_lstpropertytype` varchar(50) NOT NULL DEFAULT '',
-				  `ngm_bedrooms` char(2) NOT NULL DEFAULT '',
-				  `ngm_fullbaths` char(2) NOT NULL DEFAULT '',
-				  `ngm_partialbaths` char(2) NOT NULL DEFAULT '',
-				  `ngm_city` varchar(30) NOT NULL DEFAULT '',
-				  `ngm_fetfrontage` varchar(25) DEFAULT NULL,
-				  `ngm_fetview` varchar(100) DEFAULT NULL,
-				  `ngm_lotsize` varchar(15) DEFAULT NULL,
-				  `ngm_fetcondition` varchar(30) DEFAULT NULL,
-				  `ngm_remarks` text,
-				  `ngm_listofficeid` varchar(15) NOT NULL DEFAULT '',
-				  `ngm_listofficename` varchar(120) NOT NULL DEFAULT '',
-				  `ngm_lotnumber` varchar(10) NOT NULL DEFAULT '',
-				  `ngm_fetbusinesstype` varchar(10) NOT NULL DEFAULT '',
-				  `ngm_fetdesign` varchar(35) DEFAULT NULL,
-				  `ngm_fetconstruction` varchar(20) DEFAULT NULL,
-				  `ngm_fetsaleincludes` varchar(100) DEFAULT NULL,
-				  `ngm_numofunits` int(2) DEFAULT NULL,
-				  `ngm_lstarea` varchar(75) DEFAULT NULL,
-				  `ngm_acreage` decimal(8,2) NOT NULL DEFAULT '0.00',
-				  `ngm_listagentid` varchar(11) DEFAULT NULL,
-				  `ngm_yearbuilt` int(4) DEFAULT NULL,
-				  `ngm_zipcode` varchar(5) NOT NULL DEFAULT '',
-				  `ngm_lststatus` char(1) NOT NULL DEFAULT '',
-				  `ngm_phototimestamp` varchar(20) DEFAULT NULL,
-				  `ngm_lakename` varchar(25) DEFAULT NULL,
-				  `ngm_licensedowner` varchar(5) DEFAULT NULL,
-				  `ngm_listagentcellph` varchar(15) NOT NULL DEFAULT '',
-				  `ngm_listagentemail` varchar(50) DEFAULT NULL,
-				  `ngm_listagentname` varchar(50) NOT NULL DEFAULT '',
-				  `ngm_rivername` varchar(35) DEFAULT NULL,
-				  `ngm_fetterrain` varchar(50) DEFAULT NULL,
-				  `ngm_mainflrbedrms` varchar(10) DEFAULT NULL,
-				  `ngm_upperflrbedrms` varchar(10) DEFAULT NULL,
-				  `ngm_lowerflrbedrooms` varchar(10) DEFAULT NULL,
-				  `ngm_totalrooms` varchar(10) DEFAULT NULL,
-				  `ngm_zoningcode` varchar(10) DEFAULT NULL,
-				  `ngm_surveyavailable` varchar(10) DEFAULT NULL,
-				  `ngm_coventants` varchar(50) DEFAULT NULL,
-				  `ngm_fetrestrictions` varchar(50) DEFAULT NULL,
-				  `ngm_fetmasterbedroom` varchar(50) DEFAULT NULL,
-				  `ngm_fetparking` varchar(50) DEFAULT NULL,
-				  `ngm_fetcooling` varchar(50) DEFAULT NULL,
-				  `ngm_fetroadsurface` varchar(50) DEFAULT NULL,
-				  `ngm_fetlake` varchar(50) DEFAULT NULL,
-				  `ngm_fetlaundrylocation` varchar(50) DEFAULT NULL,
-				  `ngm_township` varchar(30) DEFAULT NULL,
-				  `ngm_fetmilestotown` varchar(30) DEFAULT NULL,
-				  `ngm_subdivision` varchar(30) DEFAULT NULL,
-				  `ngm_fetdriveway` varchar(30) DEFAULT NULL,
-				  `ngm_fetwater` varchar(30) DEFAULT NULL,
-				  `ngm_fetsewer` varchar(30) DEFAULT NULL,
-				  `ngm_fetwindows` varchar(100) DEFAULT NULL,
-				  `ngm_fetroof` varchar(100) DEFAULT NULL,
-				  `ngm_fetbasement` varchar(100) DEFAULT NULL,
-				  `ngm_fetstyle` varchar(100) DEFAULT NULL,
-				  `ngm_fetrooms` varchar(100) DEFAULT NULL,
-				  `ngm_fetinterior` varchar(100) DEFAULT NULL,
-				  `ngm_fetexterior` varchar(100) DEFAULT NULL,
-				  `ngm_fetheating` varchar(100) DEFAULT NULL,
-				  `ngm_fetappliances` varchar(100) DEFAULT NULL,
-				  `ngm_fetfloors` varchar(100) DEFAULT NULL,
-				  `ngm_listofficeemail` varchar(30) DEFAULT NULL,
-				  `ngm_listofficephone` varchar(30) DEFAULT NULL,
-				  `ngm_listofficephone2` varchar(30) DEFAULT NULL,
-				  `ngm_agentphone` varchar(30) DEFAULT NULL,
-				  `ngm_streetnumber` varchar(10) DEFAULT NULL,
-				  `ngm_streetdirection` varchar(10) DEFAULT NULL,
-				  `ngm_streetname` varchar(30) DEFAULT NULL,
-				  `ngm_address` varchar(50) DEFAULT NULL,
-				  `ngm_state` char(2) DEFAULT NULL,
-				  `ngm_fetrecreation` varchar(50) DEFAULT NULL,
-				  `ngm_virtualtoururl` varchar(255) NOT NULL,
-				  `ngm_foreclosure` char(1) NOT NULL DEFAULT '0',
-				  `ngm_fetvow` varchar(100) NOT NULL,
-				  `ngm_csysrevisiondate` varchar(20) NOT NULL,
-				  PRIMARY KEY (`ngm_id`),
-				  UNIQUE KEY `NewIndex1` (`ngm_listnum`)
-				) ENGINE=InnoDB DEFAULT CHARSET=utf8
-				");
-			}
-		}
+ 
 		</cfscript>
         <cfsavecontent variable="db.sql">
         select city_name, state_abbr, zipcode_zip 
@@ -158,20 +59,7 @@
         <cfloop query="qZ">
             <cfscript>arguments.sharedStruct.lookupStruct.cityRenameStruct[qZ.zipcode_zip]=qZ.city_name&"|"&qZ.state_abbr;</cfscript>
         </cfloop>
-    </cffunction>
-    
-    <cffunction name="deleteListings" localmode="modern" output="no" returntype="any">
-    	<cfargument name="idlist" type="string" required="yes">
-    	<cfscript>
-		var db=request.zos.queryObject;
-		var arrId=listtoarray(mid(replace(arguments.idlist," ","","ALL"),2,len(arguments.idlist)-2),"','");
-		super.deleteListings(arguments.idlist);
-		db.sql="DELETE FROM #db.table("ngm", request.zos.zcoreDatasource)#  
-		WHERE ngm_listnum LIKE #db.param('#this.mls_id#-%')# and 
-		ngm_listnum IN (#db.trustedSQL(arguments.idlist)#)";
-		db.execute("q"); 
-		</cfscript>
-    </cffunction>
+    </cffunction> 
 
     <cffunction name="getDataObject" localmode="modern" output="no">
     	<cfscript>
@@ -334,31 +222,17 @@
 		rs.listing_data_detailcache2=listing_data_detailcache2;
 		rs.listing_data_detailcache3=listing_data_detailcache3;
 		
+		rs.listing_track_sysid="";
 		return {
 			listingData:rs,
 			columnIndex:columnIndex,
 			arrData:arguments.ss.arrData
 		};
 		</cfscript>
-    </cffunction>
-    
-    <cffunction name="getJoinSQL" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="joinType" type="string" required="no" default="INNER">
-		<cfscript>
-		var db=request.zos.queryObject;
-		</cfscript>
-    	<cfreturn "#arguments.joinType# JOIN #db.table("ngm", request.zos.zcoreDatasource)# ngm ON ngm.ngm_listnum = listing.listing_id">
-    </cffunction>
-    
-    <cffunction name="getPropertyListingIdSQL" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "ngm.ngm_listnum">
-    </cffunction>
-    <cffunction name="getListingIdField" localmode="modern" output="yes" returntype="any">
-    	<cfreturn "ngm_listnum">
-    </cffunction>
+    </cffunction> 
     
     <cffunction name="getDetails" localmode="modern" output="yes" returntype="any">
-    	<cfargument name="query" type="query" required="yes">
+    	<cfargument name="ss" type="struct" required="yes">
         <cfargument name="row" type="numeric" required="no" default="#1#">
         <cfargument name="fulldetails" type="boolean" required="no" default="#false#">
     	<cfscript>
@@ -367,12 +241,12 @@
 	var features=0;
 	var value=0;
 	var details=0;
-		var idx=this.baseGetDetails(arguments.query, arguments.row, arguments.fulldetails);
-		var ts=application.zcore.listingCom.parseListingId(arguments.query.listing_id[arguments.row]);
-		var a2=listtoarray(lcase(arguments.query.columnlist));
+		var idx=this.baseGetDetails(arguments.ss, arguments.row, arguments.fulldetails);
+		var ts=application.zcore.listingCom.parseListingId(arguments.ss.listing_id);
+		var a2=listtoarray(lcase(arguments.ss.columnlist));
 		for(i=1;i LTE arraylen(a2);i++){
 			column=a2[i];
-			value=arguments.query[column][arguments.row];
+			value=arguments.ss[column];
 			if(value NEQ ""){
 				idx[column]=value;
 			}else{
@@ -382,24 +256,25 @@
 		features="";
 		idx.listingSource=request.zos.listing.mlsStruct[listgetat(idx.listing_id,1,'-')].mls_disclaimer_name;
 		
-		request.lastPhotoId=arguments.query.listing_id[arguments.row];
-		if(arguments.query.ngm_photocount[arguments.row] EQ 0){
+		request.lastPhotoId=arguments.ss.listing_id;
+		arguments.ss.ngm_photocount=application.zcore.functions.zso(arguments.ss, 'ngm_photocount', true);
+		if(arguments.ss.ngm_photocount EQ 0){
 			idx["photo1"]='/z/a/listing/images/image-not-available.gif';
 		}else{	
-			for(i=1;i LTE arguments.query.ngm_photocount[arguments.row];i++){
+			for(i=1;i LTE arguments.ss.ngm_photocount;i++){
 				idx["photo"&i]='http://photos.neg.ctimls.com/neg/photos/large/#left(right(ts.mls_pid,2),1)#/#right(ts.mls_pid,1)#/#ts.mls_pid##application.zcore.functions.zNumberToLetter(i)#.jpg';
 			}
 		}
-		idx["officeName"]=arguments.query.ngm_listofficename[arguments.row];
-		idx["agentName"]=arguments.query.ngm_listagentname[arguments.row];
+		idx["officeName"]=application.zcore.functions.zso(arguments.ss, 'ngm_listofficename');
+		idx["agentName"]=application.zcore.functions.zso(arguments.ss, 'ngm_listagentname');
 		idx["features"]="";
-		idx["virtualtoururl"]=arguments.query.ngm_virtualtoururl[arguments.row];
+		idx["virtualtoururl"]=application.zcore.functions.zso(arguments.ss, 'ngm_virtualtoururl');
 		
-		idx["virtualtoururl"]=replace(idx["virtualtoururl"],"htttp:","http:");
+		idx["virtualtoururl"]=replace(application.zcore.functions.zso(idx, "virtualtoururl"),"htttp:","http:");
 		if(idx["virtualtoururl"] NEQ "" and find("http://",idx["virtualtoururl"]) EQ 0 and (find(".",idx["virtualtoururl"]) NEQ 0 and find("/",idx["virtualtoururl"]) NEQ 0)){
 			idx["virtualtoururl"]&="http://"&idx["virtualtoururl"];
 		}
-		idx["zipcode"]=arguments.query.ngm_zipcode[arguments.row];
+		idx["zipcode"]=application.zcore.functions.zso(arguments.ss, 'ngm_zipcode');
 		idx["maintfees"]="";
 		details="";
 		</cfscript>
@@ -442,93 +317,69 @@
 		var ds2=0;
 		var arrT=0;
 		var qD=0;
-		
-		 db.sql="select cast(group_concat(distinct ngm_lstarea SEPARATOR #db.param(',')#) AS CHAR) datalist 
-		 from #db.table("ngm", request.zos.zcoreDatasource)# ngm 
-		WHERE ngm_lstarea<> #db.param('')#";
+
+		db.sql="SELECT listing_data_json FROM #db.table("listing_data", request.zos.zcoreDatasource)# WHERE listing_id LIKE #db.param('3-%')# ";
 		qD=db.execute("qD");
-		arrD=listtoarray(qD.datalist);
-		dS=structnew();
-		for(i=1;i LTE arraylen(arrD);i++){
-			pos=find(" ",trim(arrD[i]));
+		ts={
+			county:{},
+			view:{},
+			condition:{},
+			style:{},
+			frontage:{}
+		}
+		for(row in qD){
+			js=deserializeJson(row.listing_data_json);
+			pos=find(" ",trim(js.ngm_lstarea));
 			if(pos NEQ 0){
-				countyName=left(trim(arrD[i]), pos-1);	
+				countyName=left(trim(js.ngm_lstarea), pos-1);	
 			}else{
 				countyName="";
 			}
-			dS[trim(arrD[i])]=countyName;	
-		}
-		
-		for(i in dS){
-			arrayappend(arrSQL,"('#this.mls_provider#','county','#dS[i]#','#i#','#request.zos.mysqlnow#','#i#','#request.zos.mysqlnow#', '0')");
-		}
-		 db.sql="select cast(group_concat(distinct ngm_fetview SEPARATOR #db.param(',')#) AS CHAR) datalist 
-		 from #db.table("ngm", request.zos.zcoreDatasource)# ngm 
-		WHERE ngm_fetview<> #db.param('')#";
-		qD=db.execute("qD");
-		arrD=listtoarray(qD.datalist);
-		dS=structnew();
-		for(i=1;i LTE arraylen(arrD);i++){
-			dS[trim(arrD[i])]=true;	
-		}
-		
-		for(i in dS){
+			ts.county[js.ngm_lstarea]=countyName;
+
+			arr1=listToArray(js.ngm_fetview, ",");
+			for(k in arr1){
+				ts.view[k]=true;
+			}
+			arr1=listToArray(js.ngm_fetcondition, ",");
+			for(k in arr1){
+				ts.condition[trim(k)]=true;
+			}
+			structdelete(ts.condition,"See Remarks");
+
+			arr1=listToArray(js.ngm_fetstyle, ",");
+			for(k in arr1){
+				ts.style[trim(k)]=true;
+			}
+			structdelete(ts.style,"See Remarks");
+			structdelete(ts.style,"See");
+			structdelete(ts.style,"S");
+
+			arr1=listToArray(js.ngm_fetfrontage, ",");
+			for(k in arr1){
+				ts.frontage[trim(k)]=trim(k);
+			}
+			ts.frontage["Lake"]="Lakefront";
+			ts.frontage["River"]="Riverfront";
+			ts.frontage["Canal"]="Canalfront";
+			structdelete(ts.frontage,"None");
+		} 
+		for(i in ts.county){
+			arrayappend(arrSQL,"('#this.mls_provider#','county','#ts.county[i]#','#i#','#request.zos.mysqlnow#','#i#','#request.zos.mysqlnow#', '0')");
+		} 
+		for(i in ts.view){
 			arrayappend(arrSQL,"('#this.mls_provider#','view','#i#','#i#','#request.zos.mysqlnow#','#i#','#request.zos.mysqlnow#', '0')");
-		}
-		 db.sql="select cast(group_concat(distinct ngm_fetcondition SEPARATOR #db.param(',')#) AS CHAR) datalist 
-		 from #db.table("ngm", request.zos.zcoreDatasource)# ngm 
-		WHERE ngm_fetcondition<> #db.param('')#";
-		qD=db.execute("qD");
-		arrD=listtoarray(qD.datalist);
-		dS=structnew();
-		for(i=1;i LTE arraylen(arrD);i++){
-			dS[trim(arrD[i])]=true;	
-		}
-		structdelete(dS,"See Remarks");
-		
-		for(i in dS){
+		} 
+		for(i in ts.condition){
 			arrayappend(arrSQL,"('#this.mls_provider#','condition','#i#','#i#','#request.zos.mysqlnow#','#i#','#request.zos.mysqlnow#', '0')");
-		}
-		 db.sql="select cast(group_concat(distinct ngm_fetstyle SEPARATOR #db.param(',')#) AS CHAR) datalist 
-		 from #db.table("ngm", request.zos.zcoreDatasource)# ngm 
-		WHERE ngm_fetstyle<> #db.param('')#";
-		qD=db.execute("qD");
-		arrD=listtoarray(qD.datalist);
-		dS=structnew();
-		for(i=1;i LTE arraylen(arrD);i++){
-			dS[trim(arrD[i])]=true;	
-		}
-		structdelete(dS,"See Remarks");
-		structdelete(dS,"See");
-		structdelete(dS,"S");
-		
-		for(i in dS){
+		} 
+		for(i in ts.style){
 			arrayappend(arrSQL,"('#this.mls_provider#','style','#i#','#i#','#request.zos.mysqlnow#','#i#','#request.zos.mysqlnow#', '0')");
 		} 
-		db.sql="select cast(group_concat(distinct ngm_fetfrontage SEPARATOR #db.param(',')#) AS CHAR) datalist 
-		from #db.table("ngm", request.zos.zcoreDatasource)# ngm 
-		WHERE ngm_fetfrontage<> #db.param('')#";
-		qD=db.execute("qD");
-		arrD=listtoarray(qD.datalist);
-		dS=structnew();
-		for(i=1;i LTE arraylen(arrD);i++){
-			dS[trim(arrD[i])]=true;	
-		}
-		ds2=structnew();
-		ds2["Lake"]="Lakefront";
-		ds2["River"]="Riverfront";
-		ds2["Canal"]="Canalfront";
-		structdelete(ds,'None');
-		for(i in dS){
-			if(structkeyexists(ds2,i)){
-				arrayappend(arrSQL,"('#this.mls_provider#','frontage','#ds2[i]#','#i#','#request.zos.mysqlnow#','#i#','#request.zos.mysqlnow#', '0')");
-			}else{
-				arrayappend(arrSQL,"('#this.mls_provider#','frontage','#i#','#i#','#request.zos.mysqlnow#','#i#','#request.zos.mysqlnow#', '0')");
-			}
-		}
-		
-		
-		
+		for(i in ts.frontage){
+			arrayappend(arrSQL,"('#this.mls_provider#','frontage','#ts.frontage[i]#','#i#','#request.zos.mysqlnow#','#i#','#request.zos.mysqlnow#', '0')");
+		}    
+ 
 		arrayappend(arrSQL,"('#this.mls_provider#','listing_type','Lots and Acreage','Lots/Acreage','#request.zos.mysqlnow#','Lots/Acreage','#request.zos.mysqlnow#', '0')");
 		arrayappend(arrSQL,"('#this.mls_provider#','listing_type','Residential','Residential','#request.zos.mysqlnow#','Residential','#request.zos.mysqlnow#', '0')");
 		arrayappend(arrSQL,"('#this.mls_provider#','listing_type','Commercial','Commercial','#request.zos.mysqlnow#','Commercial','#request.zos.mysqlnow#', '0')");

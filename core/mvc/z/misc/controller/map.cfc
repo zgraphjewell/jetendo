@@ -180,6 +180,11 @@
 		if (status == google.maps.GeocoderStatus.OK) {
 			currentMarker.setPosition(results[0].geometry.location);
 			currentGoogleMap.setCenter(results[0].geometry.location);
+
+			$("##latitude1").val(results[0].geometry.location.lat());
+			$("##longitude1").val(results[0].geometry.location.lng());
+			executeParentCallback(results[0].geometry.location.lat(), results[0].geometry.location.lng());
+
 		}else{
 			alert("The address couldn't be mapped, please check your input and try again.");
 		}
@@ -264,7 +269,7 @@
 		</div>
 		<div style="width:100%; float:left; padding-top:5px;">
 		Latitude: <input type="text" name="latitude" id="latitude1" style="width:80px;" value="" /> 
-		Longitude: <input type="text" name="longitude" id="longitude1" style="width:80px;" value="" />
+		Longitude: <input type="text" name="longitude" id="longitude1" style="width:80px;" value="" />  
 		</div>
 	</div>
 </cffunction>
